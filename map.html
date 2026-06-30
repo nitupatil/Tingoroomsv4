@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Map - TingoRooms</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+<link rel="icon" href="https://i.ibb.co/N2ZhwrRn/Gemini-Generated-Image-h4mxnvh4mxnvh4mx-2.gif">
+
+<style>
+:root {
+  --primary: #4F46E5;
+  --primary-dark: #3730A3;
+  --primary-gradient: linear-gradient(135deg, #7C3AED 0%, #4F46E5 55%, #06B6D4 100%);
+  --primary-light: #EEF2FF;
+  --primary-glow: rgba(79, 70, 229, 0.28);
+  --accent: #F97316;
+  --accent-soft: #FFF7ED;
+  --success: #16A34A;
+  --success-soft: #DCFCE7;
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --radius: 22px;
+  --safe-bottom: 112px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; }
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 10% 8%, rgba(124, 58, 237, 0.18), transparent 28%),
+    radial-gradient(circle at 92% 18%, rgba(14, 165, 233, 0.16), transparent 25%),
+    #E2E8F0;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+button, input { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+
+.app-container {
+  width: 100%;
+  max-width: 430px;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, #F8FAFC 100%);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.16);
+}
+
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(248, 250, 252, 0.88);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.76);
+}
+
+.logo {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.14);
+  border: 2px solid rgba(255,255,255,0.8);
+}
+
+.search-box { flex: 1; min-width: 0; position: relative; }
+.search-box input {
+  width: 100%;
+  height: 42px;
+  padding: 0 46px 0 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.75), 0 8px 18px rgba(15, 23, 42, 0.04);
+}
+.search-box input:focus {
+  border-color: rgba(79, 70, 229, 0.42);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.08), 0 10px 20px rgba(79, 70, 229, 0.08);
+}
+.search-box > .material-symbols-rounded {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94A3B8;
+  font-size: 20px;
+  pointer-events: none;
+}
+.search-action-btn {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  box-shadow: 0 8px 16px var(--primary-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.search-action-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+.search-action-btn:active { transform: translateY(-50%) scale(0.92); }
+
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 1200;
+  display: none;
+  max-height: min(300px, 54vh);
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.17);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.search-suggestions.show { display: block; }
+.suggestion-section-title {
+  padding: 7px 10px 5px;
+  color: #94A3B8;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.suggestion-item {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+.suggestion-item:hover,
+.suggestion-item:active { background: var(--primary-light); }
+.suggestion-item .material-symbols-rounded {
+  position: static;
+  transform: none;
+  color: var(--primary);
+  font-size: 20px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+.suggestion-main {
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+.suggestion-sub {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.suggestion-empty {
+  padding: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.map-status {
+  position: absolute;
+  top: 122px;
+  left: 12px;
+  right: 12px;
+  z-index: 680;
+  display: none;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: rgba(238, 242, 255, 0.96);
+  color: #3730A3;
+  border: 1px solid rgba(165, 180, 252, 0.60);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+.map-status.show { display: flex; }
+.map-status .material-symbols-rounded {
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+.app-toast {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 124px;
+  z-index: 1300;
+  display: none;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  color: #0F172A;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.app-toast.show { display: flex; }
+.app-toast .material-symbols-rounded {
+  color: var(--primary);
+  font-size: 20px;
+  flex: 0 0 auto;
+}
+.toast-close {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: #94A3B8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.toast-close .material-symbols-rounded { color: #94A3B8; font-size: 18px; }
+
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--primary-dark);
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-btn:active { transform: scale(0.94); background: var(--primary-light); }
+
+.map-tabs {
+  position: absolute;
+  top: 74px;
+  left: 12px;
+  right: 12px;
+  z-index: 690;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.map-tab {
+  min-height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.map-tab.active {
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  box-shadow: 0 8px 16px var(--primary-glow);
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  background: #E2E8F0;
+  z-index: 1;
+}
+
+.info-panel {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--safe-bottom) + 10px);
+  z-index: 650;
+  max-height: 37vh;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  overflow: hidden;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 8px;
+}
+.panel-title { font-size: 14px; font-weight: 900; }
+.panel-count { font-size: 11px; font-weight: 900; color: var(--primary); background: var(--primary-light); padding: 5px 9px; border-radius: 999px; }
+.map-list { max-height: calc(37vh - 48px); overflow-y: auto; padding: 0 10px 10px; }
+.map-card {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: background .18s ease, transform .18s ease;
+}
+.map-card:active { transform: scale(0.98); background: #F1F5F9; }
+.map-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  background: linear-gradient(135deg, #EEF2FF, #ECFEFF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+}
+.map-thumb.requirement { color: #EA580C; background: linear-gradient(135deg, #FFF7ED, #DCFCE7); }
+.map-thumb .material-symbols-rounded { font-size: 30px; }
+.map-info { min-width: 0; flex: 1; }
+.map-title {
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.25;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.map-sub { font-size: 11px; font-weight: 700; color: var(--text-muted); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 900;
+  background: #EEF2FF;
+  color: var(--primary);
+}
+.badge.requirement { background: #FFF7ED; color: #EA580C; }
+
+.empty-state {
+  padding: 22px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.leaflet-control-attribution { display: none; }
+.leaflet-popup-content-wrapper {
+  border-radius: 18px;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
+}
+.leaflet-popup-content { margin: 12px; font-family: 'Inter', sans-serif; min-width: 210px; }
+.popup-title { font-size: 14px; font-weight: 900; margin-bottom: 4px; }
+.popup-sub { font-size: 12px; color: var(--text-muted); font-weight: 700; margin-bottom: 8px; line-height: 1.35; }
+.popup-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 9px 10px;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.marker-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 50% 12px;
+  transform: rotate(-45deg);
+  background: var(--primary-gradient);
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.marker-dot span {
+  transform: rotate(45deg);
+  color: white;
+  font-size: 18px;
+}
+.marker-dot.needed { background: linear-gradient(135deg, #F97316, #22C55E); box-shadow: 0 8px 18px rgba(249, 115, 22, 0.32); }
+.user-location-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0EA5E9;
+  border: 4px solid white;
+  box-shadow: 0 0 0 7px rgba(14, 165, 233, .18), 0 8px 18px rgba(14, 165, 233, .30);
+}
+.tingo-user-wrap {
+  position: relative;
+  width: 58px;
+  height: 68px;
+  transform: translateY(-10px);
+}
+.tingo-user-avatar {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto;
+  object-fit: contain;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  display: block;
+}
+.tingo-user-label {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #0EA5E9, #4F46E5);
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, .20);
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.tingo-search-marker {
+  width: 38px;
+  height: 38px;
+  border-radius: 50% 50% 50% 12px;
+  transform: rotate(-45deg);
+  background: linear-gradient(135deg, #EF4444, #F97316);
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 10px 24px rgba(239, 68, 68, .34);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tingo-search-marker span {
+  transform: rotate(45deg);
+  color: #FFFFFF;
+  font-size: 20px;
+}
+
+/* Nearby posts list removed for cleaner UI */
+.info-panel { display: none !important; }
+
+/* Reusable button.html iframe loader. Existing button.html is the single source for nav. */
+#bottomNavHost { display: none; }
+.bottom-nav-frame {
+  display: block;
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 999999;
+  width: 100%;
+  max-width: 430px;
+  height: 112px;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+@media (min-width: 520px) {
+  body { display: flex; align-items: stretch; justify-content: center; padding: 22px 0; }
+  .app-container { height: calc(100vh - 44px); height: calc(100dvh - 44px); border-radius: 34px; border: 1px solid rgba(255,255,255,0.82); }
+}
+
+@media (min-width: 900px) {
+  body { display: block; padding: 0; background: #E2E8F0; }
+  .app-container { max-width: none; width: 100%; height: 100vh; margin: 0; border-radius: 0; border: 0; box-shadow: none; }
+  .header, .map-tabs, .map-status, .app-toast, .info-panel { right: 148px; }
+  .map-status, .app-toast { left: 24px; max-width: calc(100% - 196px); }
+  .info-panel { max-height: 34vh; bottom: 24px; left: 24px; max-width: calc(100% - 196px); }
+  .map-list { max-height: calc(34vh - 48px); }
+  .bottom-nav-frame {
+    top: 120px;
+    right: 24px;
+    bottom: 24px;
+    left: auto;
+    width: 96px;
+    max-width: 96px;
+    height: calc(100vh - 144px);
+    min-height: 360px;
+    transform: none;
+    border-radius: 30px;
+  }
+}
+
+@media (max-width: 374px) {
+  .bottom-nav-frame { height: 108px; }
+  .map-tab { font-size: 10px; }
+  .info-panel { bottom: calc(108px + 8px); }
+}
+</style>
+</head>
+
+<body>
+<div class="app-container">
+  <div class="header">
+    <img src="https://i.ibb.co/N2ZhwrRn/Gemini-Generated-Image-h4mxnvh4mxnvh4mx-2.gif" class="logo" alt="Tingo Logo">
+    <div class="search-box">
+      <span class="material-symbols-rounded">search</span>
+      <input type="text" id="mapSearch" placeholder="Search detailed address or area..." autocomplete="off">
+      <button class="search-action-btn" type="button" id="mapSearchBtn" title="Search">
+        <span class="material-symbols-rounded">arrow_forward</span>
+      </button>
+      <div id="mapSearchSuggestions" class="search-suggestions" aria-label="Search suggestions"></div>
+    </div>
+    <button class="icon-btn" type="button" onclick="useMyLocation()" title="Use current location">
+      <span class="material-symbols-rounded">my_location</span>
+    </button>
+  </div>
+
+  <div class="map-tabs" aria-label="Map filters">
+    <button class="map-tab active" type="button" data-mode="all" onclick="setMode('all')">All</button>
+    <button class="map-tab" type="button" data-mode="available" onclick="setMode('available')">Available</button>
+    <button class="map-tab" type="button" data-mode="needed" onclick="setMode('needed')">Needed</button>
+  </div>
+
+  <div class="map-status" id="mapStatus">
+    <span class="material-symbols-rounded">travel_explore</span>
+    <span id="mapStatusText"></span>
+  </div>
+
+  <div class="app-toast" id="appToast">
+    <span class="material-symbols-rounded">info</span>
+    <span id="appToastText"></span>
+    <button class="toast-close" type="button" onclick="hideMapNotice()">
+      <span class="material-symbols-rounded">close</span>
+    </button>
+  </div>
+
+  <div id="map"></div>
+
+
+  <div id="bottomNavHost"></div>
+  <iframe
+    id="bottomNavFrame"
+    class="bottom-nav-frame"
+    src="button.html?mode=mobile&active=map.html"
+    title="TingoRooms bottom navigation"
+    scrolling="no"
+    loading="eager"
+    allowtransparency="true"></iframe>
+</div>
+
+<script>
+const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let map;
+let allPosts = [];
+let markers = [];
+let activeMode = "all";
+let userMarker = null;
+let userLocation = null;
+let selectedMapPlace = null;
+let mapSuggestionRequestId = 0;
+let mapRenderRequestId = 0;
+let visibleMapPosts = [];
+let currentSearchTarget = null;
+let searchAreaCircle = null;
+let searchAreaMarker = null;
+
+const LOCATION_CONTEXT = "Pune, Maharashtra, India";
+const PUNE_CENTER = { lat: 18.5204, lng: 73.8567 };
+const TINGO_CHARACTER_IMG = "https://i.ibb.co/vC7LPp5C/image-removebg-preview-5.png";
+const SEARCH_AREA_RADIUS_METERS = 1800;
+
+function getStoredUser() {
+  return safeJson(localStorage.getItem("user"));
+}
+
+function getDeviceName() {
+  const ua = navigator.userAgent || "";
+  let browser = "Browser";
+  if (/Edg\//.test(ua)) browser = "Edge";
+  else if (/Chrome\//.test(ua)) browser = "Chrome";
+  else if (/Firefox\//.test(ua)) browser = "Firefox";
+  else if (/Safari\//.test(ua)) browser = "Safari";
+
+  let device = "Desktop";
+  if (/Android/i.test(ua)) device = "Android";
+  else if (/iPhone/i.test(ua)) device = "iPhone";
+  else if (/iPad/i.test(ua)) device = "iPad";
+  else if (/Windows/i.test(ua)) device = "Windows";
+  else if (/Macintosh|Mac OS/i.test(ua)) device = "Mac";
+
+  return `${browser} on ${device}`;
+}
+
+function getLocationCacheKey() {
+  const user = getStoredUser();
+  return `tingo_logged_device_location_${user && user.id ? user.id : "guest"}`;
+}
+
+function saveLoggedDeviceLocation(lat, lng, accuracy) {
+  if (!isValidCoord(lat, lng)) return;
+
+  const user = getStoredUser();
+  const payload = {
+    lat: Number(lat),
+    lng: Number(lng),
+    accuracy: Number(accuracy || 0),
+    user_id: user && user.id ? user.id : null,
+    device_name: user && user.active_device_name ? user.active_device_name : getDeviceName(),
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    localStorage.setItem(getLocationCacheKey(), JSON.stringify(payload));
+  } catch (e) {}
+}
+
+function getCachedLoggedDeviceLocation() {
+  const cached = safeJson(localStorage.getItem(getLocationCacheKey()));
+  if (!cached || !isValidCoord(cached.lat, cached.lng)) return null;
+  return cached;
+}
+
+function setLoggedDeviceMarker(lat, lng, options = {}) {
+  if (!map || !isValidCoord(lat, lng)) return;
+
+  userLocation = {
+    lat: Number(lat),
+    lng: Number(lng),
+    accuracy: Number(options.accuracy || 0)
+  };
+
+  const user = getStoredUser();
+  const deviceName = (user && user.active_device_name) || options.deviceName || getDeviceName();
+  const accuracyText = userLocation.accuracy ? `<br><span style="color:#64748B;font-size:11px;font-weight:700;">Accuracy: about ${Math.round(userLocation.accuracy)} m</span>` : "";
+  const sourceText = options.fromCache ? "Last saved device location" : "Current logged-in device location";
+
+  if (userMarker) map.removeLayer(userMarker);
+  userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: makeUserIcon(), zIndexOffset: 1000 })
+    .addTo(map)
+    .bindPopup(`<b>${sourceText}</b><br><span style="color:#64748B;font-size:11px;font-weight:700;">${escapeHtml(deviceName)}</span>${accuracyText}`);
+
+  if (options.openPopup !== false) userMarker.openPopup();
+
+  // Recalculate post distances from the logged-in device location.
+  if (allPosts.length) {
+    clearTimeout(window.__tingoUserDistanceRenderTimer);
+    window.__tingoUserDistanceRenderTimer = setTimeout(() => renderMap({ fromLocationUpdate: true }), 80);
+  } else if (options.pan !== false) {
+    map.setView([userLocation.lat, userLocation.lng], options.zoom || 15, { animate: true });
+  }
+}
+
+function loadCachedLoggedDeviceLocation() {
+  const cached = getCachedLoggedDeviceLocation();
+  if (!cached) return false;
+  setLoggedDeviceMarker(cached.lat, cached.lng, {
+    accuracy: cached.accuracy,
+    deviceName: cached.device_name,
+    fromCache: true,
+    pan: true,
+    openPopup: false,
+    zoom: 15
+  });
+  return true;
+}
+
+function requestLoggedDeviceLocation(options = {}) {
+  const silent = options.silent === true;
+
+  if (!navigator.geolocation) {
+    if (!silent) showMapNotice("Location is not supported by this browser.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    const deviceLat = pos.coords.latitude;
+    const deviceLng = pos.coords.longitude;
+    const accuracy = pos.coords.accuracy;
+
+    saveLoggedDeviceLocation(deviceLat, deviceLng, accuracy);
+    setLoggedDeviceMarker(deviceLat, deviceLng, {
+      accuracy,
+      fromCache: false,
+      pan: options.pan !== false,
+      openPopup: options.openPopup !== false,
+      zoom: options.zoom || 15
+    });
+  }, () => {
+    if (!silent) showMapNotice("Unable to get this device location. Please allow location permission and turn on GPS/location services.");
+  }, {
+    enableHighAccuracy: true,
+    timeout: 18000,
+    maximumAge: 0
+  });
+}
+
+function safeJson(value, fallback = null) {
+  try { return JSON.parse(value || "null") || fallback; }
+  catch (e) { return fallback; }
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function isValidCoord(lat, lng) {
+  const a = Number(lat);
+  const b = Number(lng);
+  return Number.isFinite(a) && Number.isFinite(b) && Math.abs(a) <= 90 && Math.abs(b) <= 180 && !(a === 0 && b === 0);
+}
+
+function cleanSearchTerm(value) {
+  return String(value || "")
+    .replace(/[,%()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeSearchValue(value) {
+  return cleanSearchTerm(value).toLowerCase();
+}
+
+function includesSmart(value, searchText) {
+  const text = normalizeSearchValue(value);
+  const q = normalizeSearchValue(searchText);
+  if (!q) return true;
+  if (text.includes(q)) return true;
+
+  const tokens = q.split(" ").filter(Boolean);
+  if (!tokens.length) return true;
+
+  return tokens.every(token => text.includes(token) || text.split(" ").some(word => word.startsWith(token)));
+}
+
+function postMatchesSearchText(post, searchText) {
+  if (!searchText) return true;
+  return [
+    post.title,
+    post.location,
+    post.type,
+    post.description,
+    post.brokerage_type,
+    post.rent,
+    post.budget,
+    post.preferred_location
+  ].some(value => includesSmart(value, searchText));
+}
+
+function getPostCoords(post) {
+  if (!post) return null;
+  const lat = Number(post.latitude || post.lat);
+  const lng = Number(post.longitude || post.lng || post.lon);
+  return isValidCoord(lat, lng) ? { lat, lng } : null;
+}
+
+function distanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const toRad = deg => deg * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function getPlaceLabel(place) {
+  const address = place.address || {};
+  return address.suburb ||
+    address.neighbourhood ||
+    address.quarter ||
+    address.city_district ||
+    address.village ||
+    address.town ||
+    address.city ||
+    place.name ||
+    String(place.display_name || "").split(",")[0] ||
+    "Location";
+}
+
+function getPlaceSubLabel(place) {
+  const address = place.address || {};
+  const parts = [
+    address.road,
+    address.suburb || address.neighbourhood || address.city_district,
+    address.city || address.town || address.county,
+    address.state
+  ].filter(Boolean);
+  return parts.length ? parts.join(", ") : (place.display_name || LOCATION_CONTEXT);
+}
+
+function showMapNotice(message, icon = "info") {
+  const toast = document.getElementById("appToast");
+  const text = document.getElementById("appToastText");
+  if (!toast || !text) return;
+  toast.querySelector(".material-symbols-rounded").textContent = icon;
+  text.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(window.__tingoMapToastTimer);
+  window.__tingoMapToastTimer = setTimeout(hideMapNotice, 4200);
+}
+
+function hideMapNotice() {
+  const toast = document.getElementById("appToast");
+  if (toast) toast.classList.remove("show");
+}
+
+function showMapStatus(message) {
+  const status = document.getElementById("mapStatus");
+  const text = document.getElementById("mapStatusText");
+  if (!status || !text) return;
+  if (!message) {
+    status.classList.remove("show");
+    text.textContent = "";
+    return;
+  }
+  text.textContent = message;
+  status.classList.add("show");
+}
+
+function hideMapStatus() {
+  showMapStatus("");
+}
+
+function showSuggestionBox(html) {
+  const box = document.getElementById("mapSearchSuggestions");
+  if (!box) return;
+  box.innerHTML = html;
+  box.classList.add("show");
+}
+
+function hideSuggestionBox() {
+  const box = document.getElementById("mapSearchSuggestions");
+  if (!box) return;
+  box.classList.remove("show");
+}
+
+async function geocodeMapLocation(text) {
+  const locationText = cleanSearchTerm(text);
+  if (!locationText) return null;
+
+  const cacheKey = "map_geo_" + locationText.toLowerCase();
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+    if (cached && isValidCoord(cached.lat, cached.lng)) return cached;
+  } catch (e) {}
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&countrycodes=in&q=${encodeURIComponent(locationText + " " + LOCATION_CONTEXT)}`;
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
+    const data = await response.json();
+    if (!data || !data[0]) return null;
+
+    const result = {
+      label: getPlaceLabel(data[0]),
+      subLabel: getPlaceSubLabel(data[0]),
+      lat: Number(data[0].lat),
+      lng: Number(data[0].lon),
+      displayName: data[0].display_name || locationText
+    };
+
+    if (isValidCoord(result.lat, result.lng)) {
+      localStorage.setItem(cacheKey, JSON.stringify(result));
+      return result;
+    }
+
+    return null;
+  } catch (err) {
+    console.warn("Map geocoding error", err);
+    return null;
+  }
+}
+
+function getModePosts() {
+  return allPosts.filter(post => activeMode === "all" || post.kind === activeMode);
+}
+
+function addPostDistances(posts, searchTarget = null) {
+  return (posts || []).map(post => {
+    const coords = getPostCoords(post);
+    const copy = { ...post };
+
+    if (coords && userLocation && isValidCoord(userLocation.lat, userLocation.lng)) {
+      copy._distanceFromUserKm = distanceKm(userLocation.lat, userLocation.lng, coords.lat, coords.lng);
+    } else {
+      copy._distanceFromUserKm = Number.POSITIVE_INFINITY;
+    }
+
+    if (coords && searchTarget && isValidCoord(searchTarget.lat, searchTarget.lng)) {
+      copy._distanceKm = distanceKm(searchTarget.lat, searchTarget.lng, coords.lat, coords.lng);
+    } else {
+      copy._distanceKm = Number.POSITIVE_INFINITY;
+    }
+
+    return copy;
+  });
+}
+
+function dedupePosts(posts) {
+  const seen = new Set();
+  const out = [];
+  (posts || []).forEach(post => {
+    const key = `${post.kind || ""}:${post.id}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(post);
+  });
+  return out;
+}
+
+function sortByDistanceThenRecent(posts, mode = "search") {
+  return [...posts].sort((a, b) => {
+    const key = mode === "user" ? "_distanceFromUserKm" : "_distanceKm";
+    const da = Number.isFinite(a[key]) ? a[key] : Number.POSITIVE_INFINITY;
+    const db = Number.isFinite(b[key]) ? b[key] : Number.POSITIVE_INFINITY;
+    if (Math.abs(da - db) > 0.01) return da - db;
+
+    const ua = Number.isFinite(a._distanceFromUserKm) ? a._distanceFromUserKm : Number.POSITIVE_INFINITY;
+    const ub = Number.isFinite(b._distanceFromUserKm) ? b._distanceFromUserKm : Number.POSITIVE_INFINITY;
+    if (Math.abs(ua - ub) > 0.01) return ua - ub;
+
+    return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+  });
+}
+
+function formatKm(km) {
+  if (!Number.isFinite(km)) return "";
+  if (km < 0.15) return "0 km";
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(km < 10 ? 1 : 0)} km`;
+}
+
+function distanceLabel(post) {
+  const searchKm = Number(post?._distanceKm);
+  const userKm = Number(post?._distanceFromUserKm);
+  if (Number.isFinite(searchKm)) return `${formatKm(searchKm)} from searched area`;
+  if (Number.isFinite(userKm)) return `${formatKm(userKm)} from you`;
+  return "";
+}
+
+function popupDistanceHtml(post) {
+  const lines = [];
+  if (Number.isFinite(Number(post?._distanceFromUserKm))) {
+    lines.push(`<span style="color:#0EA5E9;font-size:11px;font-weight:900;">From you: ${escapeHtml(formatKm(Number(post._distanceFromUserKm)))}</span>`);
+  }
+  if (Number.isFinite(Number(post?._distanceKm))) {
+    lines.push(`<span style="color:#EF4444;font-size:11px;font-weight:900;">From searched area: ${escapeHtml(formatKm(Number(post._distanceKm)))}</span>`);
+  }
+  return lines.length ? `<br>${lines.join("<br>")}` : "";
+}
+
+function isTargetServiceable(target) {
+  if (!target || !isValidCoord(target.lat, target.lng)) return true;
+  return distanceKm(PUNE_CENTER.lat, PUNE_CENTER.lng, target.lat, target.lng) <= 80;
+}
+
+function buildSavedLocationSuggestions(searchText) {
+  const q = cleanSearchTerm(searchText);
+  const seen = new Set();
+  const suggestions = [];
+
+  getModePosts().forEach(post => {
+    const fields = [
+      { label: post.location, sub: post.kind === "needed" ? "Saved requirement address" : "Saved property address", icon: post.kind === "needed" ? "person_search" : "home_work" },
+      { label: post.title, sub: post.location || (post.kind === "needed" ? "Room needed" : "Room available"), icon: "label" },
+      { label: post.type, sub: post.location || "Post type", icon: "category" }
+    ];
+
+    fields.forEach(field => {
+      const label = cleanSearchTerm(field.label);
+      if (!label || !includesSmart(label, q)) return;
+      const key = label.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      const coords = getPostCoords(post);
+      suggestions.push({
+        source: "saved",
+        label,
+        subLabel: field.sub,
+        icon: field.icon,
+        lat: coords ? coords.lat : null,
+        lng: coords ? coords.lng : null,
+        value: label
+      });
+    });
+  });
+
+  return suggestions.slice(0, 10);
+}
+
+async function fetchMapPlaceSuggestions(searchText) {
+  const q = cleanSearchTerm(searchText);
+  if (q.length < 2) return [];
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=7&countrycodes=in&q=${encodeURIComponent(q + " " + LOCATION_CONTEXT)}`;
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
+    const places = await response.json();
+
+    const seen = new Set();
+    return (places || []).map(place => {
+      const label = getPlaceLabel(place);
+      const key = `${label}:${place.lat}:${place.lon}`.toLowerCase();
+      if (!label || seen.has(key)) return null;
+      seen.add(key);
+      return {
+        source: "map",
+        label,
+        subLabel: getPlaceSubLabel(place),
+        icon: "travel_explore",
+        lat: Number(place.lat),
+        lng: Number(place.lon),
+        value: label,
+        displayName: place.display_name || label
+      };
+    }).filter(item => item && isValidCoord(item.lat, item.lng)).slice(0, 6);
+  } catch (err) {
+    console.warn("Map suggestion error", err);
+    return [];
+  }
+}
+
+function renderSuggestionList(savedSuggestions, mapSuggestions) {
+  const parts = [];
+
+  if (savedSuggestions.length) {
+    parts.push(`<div class="suggestion-section-title">Saved detailed addresses</div>`);
+    parts.push(savedSuggestions.map((item, index) => `
+      <div class="suggestion-item" data-source="saved" data-index="${index}">
+        <span class="material-symbols-rounded">${escapeHtml(item.icon)}</span>
+        <div>
+          <div class="suggestion-main">${escapeHtml(item.label)}</div>
+          <div class="suggestion-sub">${escapeHtml(item.subLabel)}</div>
+        </div>
+      </div>
+    `).join(""));
+  }
+
+  if (mapSuggestions.length) {
+    parts.push(`<div class="suggestion-section-title">Nearby Pune locations</div>`);
+    parts.push(mapSuggestions.map((item, index) => `
+      <div class="suggestion-item" data-source="map" data-index="${index}">
+        <span class="material-symbols-rounded">${escapeHtml(item.icon)}</span>
+        <div>
+          <div class="suggestion-main">${escapeHtml(item.label)}</div>
+          <div class="suggestion-sub">${escapeHtml(item.subLabel)}</div>
+        </div>
+      </div>
+    `).join(""));
+  }
+
+  if (!parts.length) {
+    return `<div class="suggestion-empty">No exact saved address yet. Continue typing or choose a nearby Pune location.</div>`;
+  }
+
+  return parts.join("");
+}
+
+function attachSuggestionEvents(savedSuggestions, mapSuggestions) {
+  const box = document.getElementById("mapSearchSuggestions");
+  const input = document.getElementById("mapSearch");
+  if (!box || !input) return;
+
+  box.querySelectorAll(".suggestion-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const source = item.dataset.source;
+      const index = Number(item.dataset.index);
+      const suggestion = source === "saved" ? savedSuggestions[index] : mapSuggestions[index];
+      if (!suggestion) return;
+
+      input.value = suggestion.value || suggestion.label;
+      selectedMapPlace = isValidCoord(suggestion.lat, suggestion.lng)
+        ? {
+            label: suggestion.label,
+            subLabel: suggestion.subLabel,
+            lat: Number(suggestion.lat),
+            lng: Number(suggestion.lng)
+          }
+        : null;
+
+      hideSuggestionBox();
+      renderMap({ focusSearch: true });
+    });
+  });
+}
+
+async function fetchMapSearchSuggestions(value) {
+  const searchText = cleanSearchTerm(value);
+  if (searchText.length < 1) {
+    hideSuggestionBox();
+    return;
+  }
+
+  const requestId = ++mapSuggestionRequestId;
+  const saved = buildSavedLocationSuggestions(searchText);
+  const places = await fetchMapPlaceSuggestions(searchText);
+
+  if (requestId !== mapSuggestionRequestId) return;
+
+  showSuggestionBox(renderSuggestionList(saved, places));
+  attachSuggestionEvents(saved, places);
+}
+
+async function resolveSearchTarget(searchText) {
+  if (selectedMapPlace && isValidCoord(selectedMapPlace.lat, selectedMapPlace.lng)) return selectedMapPlace;
+  return await geocodeMapLocation(searchText);
+}
+
+async function getFilteredMapPosts() {
+  const q = cleanSearchTerm(document.getElementById("mapSearch")?.value || "");
+  const base = getModePosts();
+
+  currentSearchTarget = null;
+
+  if (!q) {
+    const withUserDistance = addPostDistances(base, null);
+    if (userLocation && isValidCoord(userLocation.lat, userLocation.lng)) {
+      hideMapStatus();
+      return sortByDistanceThenRecent(withUserDistance, "user");
+    }
+    hideMapStatus();
+    return withUserDistance;
+  }
+
+  const target = await resolveSearchTarget(q);
+  currentSearchTarget = target && isValidCoord(target.lat, target.lng) ? target : null;
+
+  if (currentSearchTarget && !isTargetServiceable(currentSearchTarget)) {
+    showMapNotice("We are currently serviceable only in Pune. Showing Pune-area posts and suggestions.", "location_on");
+  }
+
+  const withDistance = addPostDistances(base, currentSearchTarget);
+  const textMatches = withDistance.filter(post => postMatchesSearchText(post, q));
+
+  let nearbyMatches = [];
+  if (currentSearchTarget) {
+    nearbyMatches = withDistance.filter(post => Number.isFinite(post._distanceKm) && post._distanceKm <= 35);
+    if (!nearbyMatches.length) {
+      nearbyMatches = withDistance.filter(post => Number.isFinite(post._distanceKm) && post._distanceKm <= 80);
+    }
+  }
+
+  let merged = dedupePosts([...textMatches, ...nearbyMatches]);
+
+  if (currentSearchTarget) {
+    merged = sortByDistanceThenRecent(merged, "search");
+  } else if (userLocation && isValidCoord(userLocation.lat, userLocation.lng)) {
+    merged = sortByDistanceThenRecent(merged, "user");
+  }
+
+  if (merged.length) {
+    const hasExact = textMatches.length > 0;
+    showMapStatus(hasExact
+      ? `Showing matching posts and nearby ${activeMode === "all" ? "available/needed" : activeMode} posts. Popup shows distance from you and searched area.`
+      : `No exact saved address found for “${q}”. Showing nearby ${activeMode === "all" ? "available/needed" : activeMode} posts by distance.`);
+    return merged;
+  }
+
+  showMapStatus(`No mapped posts found for “${q}”. Try another nearby Pune location.`);
+  return [];
+}
+
+function getImage(post) {
+  if (!post || !post.images) return "";
+  return String(post.images).split(",").map(x => x.trim()).filter(Boolean)[0] || "";
+}
+
+function postUrl(post) {
+  if (post.kind === "needed") return `roomdetails.html?id=${encodeURIComponent(post.id)}&type=needed&source=requirement`;
+  return `roomdetails.html?id=${encodeURIComponent(post.id)}&type=available`;
+}
+
+function initMap() {
+  map = L.map("map", { zoomControl: false }).setView([18.5204, 73.8567], 12);
+  L.control.zoom({ position: "bottomright" }).addTo(map);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(map);
+}
+
+function makeIcon(kind) {
+  const neededClass = kind === "needed" ? " needed" : "";
+  const iconName = kind === "needed" ? "person_search" : "home_work";
+  return L.divIcon({
+    className: "tingo-marker",
+    html: `<div class="marker-dot${neededClass}"><span class="material-symbols-rounded">${iconName}</span></div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 34],
+    popupAnchor: [0, -28]
+  });
+}
+
+function makeUserIcon() {
+  return L.divIcon({
+    className: "tingo-user-marker",
+    html: `
+      <div class="tingo-user-wrap">
+        <img class="tingo-user-avatar" src="${TINGO_CHARACTER_IMG}" alt="Tingoo">
+        <div class="tingo-user-label">You</div>
+      </div>
+    `,
+    iconSize: [58, 68],
+    iconAnchor: [29, 64],
+    popupAnchor: [0, -58]
+  });
+}
+
+function makeSearchIcon() {
+  return L.divIcon({
+    className: "tingo-search-area-marker",
+    html: `<div class="tingo-search-marker"><span class="material-symbols-rounded">place</span></div>`,
+    iconSize: [38, 38],
+    iconAnchor: [19, 38],
+    popupAnchor: [0, -32]
+  });
+}
+
+function clearSearchArea() {
+  if (!map) return;
+  if (searchAreaCircle) {
+    map.removeLayer(searchAreaCircle);
+    searchAreaCircle = null;
+  }
+  if (searchAreaMarker) {
+    map.removeLayer(searchAreaMarker);
+    searchAreaMarker = null;
+  }
+}
+
+function drawSearchArea(target, queryText = "") {
+  clearSearchArea();
+  if (!map || !target || !isValidCoord(target.lat, target.lng)) return;
+
+  const fromYouText = userLocation && isValidCoord(userLocation.lat, userLocation.lng)
+    ? `<br><span style="color:#0EA5E9;font-size:11px;font-weight:900;">From you: ${escapeHtml(formatKm(distanceKm(userLocation.lat, userLocation.lng, target.lat, target.lng)))}</span>`
+    : "";
+
+  const label = target.label || queryText || "Searched area";
+
+  searchAreaCircle = L.circle([target.lat, target.lng], {
+    radius: SEARCH_AREA_RADIUS_METERS,
+    color: "#EF4444",
+    weight: 2,
+    opacity: 0.72,
+    fillColor: "#EF4444",
+    fillOpacity: 0.12,
+    dashArray: "7,8"
+  }).addTo(map);
+
+  searchAreaMarker = L.marker([target.lat, target.lng], { icon: makeSearchIcon(), zIndexOffset: 900 })
+    .addTo(map)
+    .bindPopup(`<b>Searched area</b><br><span style="color:#64748B;font-size:11px;font-weight:800;">${escapeHtml(label)}</span>${fromYouText}`);
+}
+
+async function loadMapPosts() {
+  const [availableResult, neededResult] = await Promise.all([
+    db.from("room_posts")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false }),
+    db.from("room_requirements")
+      .select("*")
+      .order("created_at", { ascending: false })
+  ]);
+
+  if (availableResult.error) console.warn("Available map load error", availableResult.error);
+  if (neededResult.error) console.warn("Needed map load error", neededResult.error);
+
+  const available = (availableResult.data || []).map(item => ({ ...item, kind: "available" }));
+  const needed = (neededResult.data || [])
+    .filter(item => !String(item.status || "").toLowerCase().startsWith("inactive"))
+    .map(item => ({ ...item, kind: "needed" }));
+
+  allPosts = [...available, ...needed].filter(post => isValidCoord(post.latitude, post.longitude));
+  renderMap();
+}
+
+function filteredPosts() {
+  return visibleMapPosts;
+}
+
+async function renderMap(options = {}) {
+  const requestId = ++mapRenderRequestId;
+  const posts = await getFilteredMapPosts();
+  if (requestId !== mapRenderRequestId) return;
+
+  visibleMapPosts = posts;
+
+  markers.forEach(marker => map.removeLayer(marker));
+  markers = [];
+
+  const bounds = [];
+  const q = cleanSearchTerm(document.getElementById("mapSearch")?.value || "");
+  const hasSearch = Boolean(q);
+
+  drawSearchArea(hasSearch ? currentSearchTarget : null, q);
+
+  posts.forEach(post => {
+    const coords = getPostCoords(post);
+    if (!coords) return;
+
+    const lat = Number(coords.lat);
+    const lng = Number(coords.lng);
+    const label = post.kind === "needed" ? "Room Needed" : `₹${post.rent || "-"}`;
+    const typeText = post.type || (post.kind === "needed" ? "Requirement" : "Property");
+    const distHtml = popupDistanceHtml(post);
+
+    const popupHtml = `
+      <div class="popup-title">${escapeHtml(post.title || "Untitled Post")}</div>
+      <div class="popup-sub">${escapeHtml(label)} • ${escapeHtml(typeText)}<br>${escapeHtml(post.location || "Location")}${distHtml}</div>
+      <button class="popup-btn" onclick="window.location.href='${postUrl(post)}'">View Details</button>
+    `;
+
+    const marker = L.marker([lat, lng], { icon: makeIcon(post.kind) })
+      .addTo(map)
+      .bindPopup(popupHtml);
+
+    marker.on("click", () => highlightCard(post.id));
+    markers.push(marker);
+    bounds.push([lat, lng]);
+  });
+
+  if (hasSearch && currentSearchTarget) {
+    const searchBounds = [[currentSearchTarget.lat, currentSearchTarget.lng]];
+    posts.slice(0, 8).forEach(post => {
+      const coords = getPostCoords(post);
+      if (coords) searchBounds.push([coords.lat, coords.lng]);
+    });
+    if (userLocation && isValidCoord(userLocation.lat, userLocation.lng)) {
+      searchBounds.push([userLocation.lat, userLocation.lng]);
+    }
+    map.fitBounds(searchBounds, { paddingTopLeft: [28, 145], paddingBottomRight: [28, 132], maxZoom: 14 });
+  } else if (posts.length && userLocation && isValidCoord(userLocation.lat, userLocation.lng)) {
+    const nearBounds = [[userLocation.lat, userLocation.lng]];
+    posts.slice(0, 10).forEach(post => {
+      const coords = getPostCoords(post);
+      if (coords && (!Number.isFinite(post._distanceFromUserKm) || post._distanceFromUserKm <= 20 || nearBounds.length < 5)) {
+        nearBounds.push([coords.lat, coords.lng]);
+      }
+    });
+    map.fitBounds(nearBounds, { paddingTopLeft: [28, 145], paddingBottomRight: [28, 132], maxZoom: 14 });
+  } else if (bounds.length) {
+    map.fitBounds(bounds, { paddingTopLeft: [24, 130], paddingBottomRight: [24, 130], maxZoom: 14 });
+  }
+
+  renderList(posts);
+}
+
+function renderList(posts) {
+  // Nearby posts bottom list removed to keep the map UI clean.
+  const list = document.getElementById("mapList");
+  const count = document.getElementById("postCount");
+  if (!list || !count) return;
+  count.innerText = `${posts.length} found`;
+
+  if (!posts.length) {
+    list.innerHTML = `<div class="empty-state">No mapped posts found. Try another search or filter.</div>`;
+    return;
+  }
+
+  list.innerHTML = posts.map((post, index) => {
+    const image = getImage(post);
+    const isNeeded = post.kind === "needed";
+    const distText = distanceLabel(post);
+    const subText = isNeeded
+      ? `${post.type || "Requirement"} • ${post.location || "Location"}`
+      : `₹${post.rent || "-"} • ${post.type || "Property"} • ${post.location || "Location"}`;
+    const thumb = image && !isNeeded
+      ? `<img class="map-thumb" src="${escapeHtml(image)}" alt="Property">`
+      : `<div class="map-thumb ${isNeeded ? "requirement" : ""}"><span class="material-symbols-rounded">${isNeeded ? "person_search" : "home_work"}</span></div>`;
+
+    return `
+      <div class="map-card" id="postCard_${escapeHtml(post.id)}" onclick="focusPost(${index})">
+        ${thumb}
+        <div class="map-info">
+          <div class="map-title">${escapeHtml(post.title || "Untitled Post")}</div>
+          <div class="map-sub">${escapeHtml(subText)}</div>
+          <div class="badge ${isNeeded ? "requirement" : ""}">
+            <span class="material-symbols-rounded" style="font-size:11px;">${isNeeded ? "person_search" : "home_work"}</span>
+            ${distText ? escapeHtml(distText) : (isNeeded ? "Needed" : "Available")}
+          </div>
+        </div>
+        <span class="material-symbols-rounded" style="font-size:20px; color:#94A3B8;">chevron_right</span>
+      </div>
+    `;
+  }).join("");
+}
+
+function focusPost(index) {
+  const posts = filteredPosts();
+  const post = posts[index];
+  if (!post) return;
+
+  const coords = getPostCoords(post);
+  if (!coords) return;
+  map.setView([coords.lat, coords.lng], 16, { animate: true });
+
+  const marker = markers[index];
+  if (marker) marker.openPopup();
+  highlightCard(post.id);
+}
+
+function highlightCard(id) {
+  const card = document.getElementById(`postCard_${CSS.escape(String(id))}`);
+  if (!card) return;
+  card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  card.style.background = "#EEF2FF";
+  setTimeout(() => { card.style.background = ""; }, 900);
+}
+
+function setMode(mode) {
+  activeMode = mode;
+  document.querySelectorAll(".map-tab").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.mode === mode);
+  });
+  renderMap();
+}
+
+function useMyLocation() {
+  requestLoggedDeviceLocation({ silent: false, pan: true, openPopup: true, zoom: 16 });
+}
+
+function go(page) {
+  const isHome = page.endsWith("index.html") || page === "index.html" || page === "index";
+
+  if (isHome) {
+    window.location.href = page;
+    return;
+  }
+
+  if (window.self !== window.top) {
+    try {
+      if (parent && typeof parent.openPanel === "function" && parent.innerWidth >= 900) {
+        parent.openPanel(page);
+        return;
+      }
+    } catch (e) {}
+  }
+
+  window.location.href = page;
+}
+
+function checkLogin(page) {
+  if (String(page || "").includes("postroom.html")) {
+    go(page);
+    return;
+  }
+
+  const user = safeJson(localStorage.getItem("user"));
+  if (!user) {
+    window.location.href = `user.html?redirect=${encodeURIComponent(page)}`;
+    return;
+  }
+  go(page);
+}
+
+function openChatList() {
+  const user = safeJson(localStorage.getItem("user"));
+  if (!user) {
+    window.location.href = "user.html?redirect=chatlist";
+    return;
+  }
+  go("chat.html");
+}
+
+function updateReusableButtonsFrame() {
+  const frame = document.getElementById("bottomNavFrame");
+  if (!frame) return;
+
+  const mode = window.innerWidth >= 900 ? "desktop" : "mobile";
+  const desiredSrc = `button.html?mode=${mode}&active=map.html`;
+
+  if (frame.getAttribute("src") !== desiredSrc) {
+    frame.setAttribute("src", desiredSrc);
+  }
+}
+
+window.addEventListener("load", () => {
+  initMap();
+  updateReusableButtonsFrame();
+
+  // First show the last saved logged-in device location, then refresh with live GPS.
+  loadCachedLoggedDeviceLocation();
+  requestLoggedDeviceLocation({ silent: true, pan: true, openPopup: false, zoom: 15 });
+
+  loadMapPosts();
+});
+
+window.addEventListener("resize", () => {
+  clearTimeout(window.__tingoMapResizeTimer);
+  window.__tingoMapResizeTimer = setTimeout(() => {
+    updateReusableButtonsFrame();
+    if (map) map.invalidateSize();
+  }, 120);
+});
+
+const mapSearchInput = document.getElementById("mapSearch");
+const mapSearchBtn = document.getElementById("mapSearchBtn");
+
+mapSearchInput.addEventListener("input", () => {
+  selectedMapPlace = null;
+  clearTimeout(window.__tingoMapSearchTimer);
+  clearTimeout(window.__tingoMapSuggestionTimer);
+
+  const value = mapSearchInput.value;
+  window.__tingoMapSuggestionTimer = setTimeout(() => fetchMapSearchSuggestions(value), 90);
+  window.__tingoMapSearchTimer = setTimeout(() => renderMap({ focusSearch: true }), 260);
+});
+
+mapSearchInput.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    hideSuggestionBox();
+    renderMap({ focusSearch: true });
+  }
+});
+
+mapSearchInput.addEventListener("focus", () => {
+  if (cleanSearchTerm(mapSearchInput.value)) {
+    fetchMapSearchSuggestions(mapSearchInput.value);
+  }
+});
+
+document.addEventListener("click", event => {
+  const box = document.querySelector(".search-box");
+  if (box && !box.contains(event.target)) hideSuggestionBox();
+});
+
+if (mapSearchBtn) {
+  mapSearchBtn.addEventListener("click", () => {
+    hideSuggestionBox();
+    renderMap({ focusSearch: true });
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room Details - TingoRooms</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+
+<style>
+:root {
+  --primary: #4F46E5;
+  --primary-gradient: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  --primary-light: #EEF2FF;
+  --primary-glow: rgba(79, 70, 229, 0.3);
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --radius: 28px;
+  --safe-bottom: 90px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #E2E8F0;
+  color: var(--text-main);
+  -webkit-tap-highlight-color: transparent;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* MOBILE APP WRAPPER */
+.app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg);
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: rgba(248, 250, 252, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 2000;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+
+.back-btn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.back-btn:active { background: #F3F4F6; }
+.header-title { font-weight: 600; font-size: 18px; flex: 1; }
+
+/* IMAGE SLIDER (SWIPE GALLERY) */
+.slider-wrapper {
+  position: relative;
+  width: 100%;
+  background: #111827; /* Dark background so images pop and aren't awkwardly cropped */
+}
+
+.slider {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none; /* Hide scrollbar Firefox */
+  -webkit-overflow-scrolling: touch;
+}
+.slider::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome/Safari */
+
+.slide {
+  min-width: 100%;
+  height: 280px;
+  scroll-snap-align: center;
+  object-fit: contain; /* ENFORCES FULL VISIBILITY - NO CROPPING */
+}
+
+.slider-counter {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+/* MAIN CONTENT */
+.main-content {
+  padding: 16px;
+  padding-bottom: calc(var(--safe-bottom) + 20px);
+  flex: 1;
+}
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  padding: 20px;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  margin-bottom: 16px;
+}
+
+.title-row { margin-bottom: 12px; }
+.room-title { font-size: 22px; font-weight: 700; color: var(--text-main); margin-bottom: 6px; line-height: 1.3;}
+.room-location { display: flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 14px; }
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.rent-price { font-size: 24px; font-weight: 700; color: #059669; }
+.rent-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.deposit-box { text-align: right; }
+.deposit-price { font-size: 16px; font-weight: 600; color: var(--text-main); }
+
+.tags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tag {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+.description-text { font-size: 15px; color: var(--text-muted); line-height: 1.6; white-space: pre-wrap; }
+
+#map { height: 200px; border-radius: 12px; border: 1px solid var(--border); z-index: 10; }
+
+/* FIXED BOTTOM ACTION BAR */
+.bottom-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  padding: 12px 16px 24px 16px;
+  gap: 12px;
+  box-shadow: 0 -10px 25px rgba(0,0,0,0.04);
+  border-top: 1px solid rgba(0,0,0,0.03);
+  z-index: 2000;
+}
+
+.btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border: none;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: white;
+}
+
+.btn:active { transform: scale(0.96); }
+
+.btn-call { background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); }
+.btn-whatsapp { background: linear-gradient(135deg, #4ADE80 0%, #22C55E 100%); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
+.btn-chat { background: var(--primary-gradient); box-shadow: 0 4px 12px var(--primary-glow); }
+
+.loading-state { text-align: center; padding: 40px; color: var(--text-muted); }
+.hidden { display: none !important; }
+
+</style>
+</head>
+
+<body>
+
+<div class="app-container">
+
+  <div class="header">
+    <div class="back-btn" onclick="history.back()">
+      <span class="material-symbols-rounded">arrow_back</span>
+    </div>
+    <div class="header-title">Property Details</div>
+  </div>
+
+  <div id="loadingState" class="loading-state">
+    <span class="material-symbols-rounded" style="font-size: 40px; animation: spin 1s linear infinite;">sync</span>
+    <p style="margin-top: 10px;">Loading details...</p>
+  </div>
+
+  <div id="contentState" class="hidden">
+    
+    <div class="slider-wrapper">
+      <div class="slider" id="imageSlider" onscroll="updateSliderCounter()">
+        </div>
+      <div class="slider-counter" id="sliderCounter">1 / 1</div>
+    </div>
+
+    <div class="main-content">
+      
+      <div class="card">
+        <div class="title-row">
+          <div class="room-title" id="roomTitle">Loading...</div>
+          <div class="room-location">
+            <span class="material-symbols-rounded" style="font-size: 18px;">location_on</span>
+            <span id="roomLocation">Location</span>
+          </div>
+        </div>
+
+        <div class="price-row">
+          <div>
+            <div class="rent-price" id="roomRent">₹ 0</div>
+            <div class="rent-label">Per Month</div>
+          </div>
+          <div class="deposit-box">
+            <div class="deposit-price" id="roomDeposit">₹ 0</div>
+            <div class="rent-label">Security Deposit</div>
+          </div>
+        </div>
+
+        <div class="tags-row" id="roomTags">
+          </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <span class="material-symbols-rounded">description</span> About Property
+        </div>
+        <div class="description-text" id="roomDesc">No description provided.</div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <span class="material-symbols-rounded">map</span> Map View
+        </div>
+        <div id="map"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="bottom-action-bar hidden" id="actionBar">
+    </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0";
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let totalImages = 0;
+
+/* GET ID FROM URL
+   Supports:
+   - Room Available posts from room_posts
+   - Rooms Needed / Requirement posts from requirement tables
+*/
+const params = new URLSearchParams(window.location.search);
+const roomId =
+  params.get("id") ||
+  params.get("room") ||
+  params.get("post_id") ||
+  params.get("requirement_id");
+
+const requestedType = String(
+  params.get("type") ||
+  params.get("post_type") ||
+  params.get("listing_type") ||
+  ""
+).toLowerCase();
+
+if (!roomId || roomId === "null" || roomId === "undefined") {
+  alert("Invalid post ID. Returning to home.");
+  window.location.href = "index.html";
+} else {
+  loadRoom();
+}
+
+/* ---------------- HELPERS ---------------- */
+function isTruthy(value) {
+  if (value === true || value === 1) return true;
+  const v = String(value || "").trim().toLowerCase();
+  return v === "true" || v === "1" || v === "yes" || v === "y";
+}
+
+function firstValue(obj, keys, fallback = "") {
+  for (const key of keys) {
+    if (obj && obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== "") {
+      return obj[key];
+    }
+  }
+  return fallback;
+}
+
+function money(value, fallback = "Not mentioned") {
+  if (value === undefined || value === null || String(value).trim() === "") return fallback;
+  const num = Number(value);
+  if (!isNaN(num)) return "₹ " + num.toLocaleString("en-IN");
+  return "₹ " + value;
+}
+
+function cleanPhone(number) {
+  return String(number || "").replace(/[^\d]/g, "");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/* Tables to try.
+   Keep room_posts first for normal available rooms.
+   If URL has ?type=needed, needed tables are tried first.
+*/
+function getTableCandidates() {
+  const available = [{ table: "room_posts", kind: "available" }];
+
+  const needed = [
+    { table: "room_requirements", kind: "needed" },
+    { table: "room_requirement", kind: "needed" },
+    { table: "rooms_needed", kind: "needed" },
+    { table: "room_needed", kind: "needed" },
+    { table: "room_needs", kind: "needed" },
+    { table: "needed_rooms", kind: "needed" },
+    { table: "requirement_posts", kind: "needed" },
+    { table: "requirements", kind: "needed" }
+  ];
+
+  if (
+    requestedType.includes("need") ||
+    requestedType.includes("require") ||
+    requestedType.includes("wanted")
+  ) {
+    return [...needed, ...available];
+  }
+
+  return [...available, ...needed];
+}
+
+/* Convert both table structures into one common format */
+function normalizeRoom(raw, kind, sourceTable) {
+  const detectedKind = String(firstValue(raw, ["post_type", "listing_type", "category_type"], kind)).toLowerCase();
+  const isNeeded =
+    kind === "needed" ||
+    detectedKind.includes("need") ||
+    detectedKind.includes("require") ||
+    detectedKind.includes("wanted");
+
+  return {
+    raw,
+    id: firstValue(raw, ["id", "post_id", "requirement_id"]),
+    sourceTable,
+    postKind: isNeeded ? "needed" : "available",
+    user_id: firstValue(raw, ["user_id", "posted_by", "owner_id", "created_by", "seeker_id"]),
+    title: firstValue(raw, ["title", "post_title", "requirement_title", "room_title"], isNeeded ? "Room Requirement" : "Room Details"),
+    location: firstValue(raw, ["location", "preferred_location", "area", "locality", "address", "city"], "Location not provided"),
+    rent: firstValue(raw, ["rent", "budget", "max_budget", "monthly_budget", "expected_rent", "price", "amount"]),
+    deposit: firstValue(raw, ["deposit", "security_deposit", "max_deposit", "expected_deposit"]),
+    description: firstValue(raw, ["description", "details", "requirement", "requirements", "notes", "about"], "No additional details provided."),
+    type: firstValue(raw, ["type", "room_type", "property_type", "preferred_type", "category"], isNeeded ? "Room Needed" : "Property"),
+    images: firstValue(raw, ["images", "image_urls", "photos", "photo_urls"], ""),
+    latitude: firstValue(raw, ["latitude", "lat"]),
+    longitude: firstValue(raw, ["longitude", "lng", "lon"]),
+    contact_number: firstValue(raw, ["contact_number", "contact", "phone", "mobile"]),
+    show_contact: raw.show_contact !== undefined ? raw.show_contact : raw.show_phone !== undefined ? raw.show_phone : true,
+    whatsapp_number: firstValue(raw, ["whatsapp_number", "whatsapp", "whatsapp_no"]),
+    show_whatsapp: raw.show_whatsapp !== undefined ? raw.show_whatsapp : true,
+    brokerage_type: firstValue(raw, ["brokerage_type", "brokerage"], ""),
+    brokerage_amount: firstValue(raw, ["brokerage_amount", "brokerage_fee"], ""),
+    status: firstValue(raw, ["status"], "active")
+  };
+}
+
+/* ---------------- LOAD POST FROM AVAILABLE OR NEEDED TABLE ---------------- */
+async function loadRoom() {
+  const candidates = getTableCandidates();
+
+  for (const item of candidates) {
+    try {
+      const { data, error } = await db
+        .from(item.table)
+        .select("*")
+        .eq("id", roomId)
+        .maybeSingle();
+
+      if (data) {
+        renderRoom(normalizeRoom(data, item.kind, item.table));
+        return;
+      }
+
+      // Ignore "not found" and missing-table errors so next table can be tried.
+      if (error) {
+        console.warn(`Could not load from ${item.table}:`, error.message || error);
+      }
+    } catch (err) {
+      console.warn(`Skipped ${item.table}:`, err.message || err);
+    }
+  }
+
+  alert("Post not found or has been removed.");
+  window.location.href = "index.html";
+}
+
+/* ---------------- RENDER UI ---------------- */
+function renderRoom(room) {
+  const isNeeded = room.postKind === "needed";
+
+  // Hide loading, show content
+  document.getElementById("loadingState").classList.add("hidden");
+  document.getElementById("contentState").classList.remove("hidden");
+  document.getElementById("actionBar").classList.remove("hidden");
+
+  document.querySelector(".header-title").innerText = isNeeded ? "Requirement Details" : "Property Details";
+  document.querySelector(".section-title").innerHTML = `<span class="material-symbols-rounded">description</span> ${isNeeded ? "About Requirement" : "About Property"}`;
+
+  // Save current details page so chat/back flow can reopen the same post
+  localStorage.setItem("last_roomdetails_post", JSON.stringify({
+    id: room.id,
+    type: room.postKind,
+    table: room.sourceTable
+  }));
+
+  // 1. Image Slider
+  const slider = document.getElementById("imageSlider");
+  const images = (room.images && String(room.images).trim() !== "")
+    ? String(room.images).split(",").map(x => x.trim()).filter(Boolean)
+    : [];
+
+  if (images.length === 0) {
+    const placeholderText = isNeeded ? "Room+Requirement" : "No+Image+Available";
+    slider.innerHTML = `<img src="https://via.placeholder.com/400x300?text=${placeholderText}" class="slide">`;
+    totalImages = 1;
+  } else {
+    totalImages = images.length;
+    slider.innerHTML = images.map(imgUrl => `<img src="${escapeHtml(imgUrl)}" class="slide">`).join("");
+  }
+  document.getElementById("sliderCounter").innerText = `1 / ${totalImages}`;
+
+  // 2. Text Details
+  document.getElementById("roomTitle").innerText = room.title;
+  document.getElementById("roomLocation").innerText = room.location;
+
+  if (isNeeded) {
+    document.getElementById("roomRent").innerText = money(room.rent, "Budget not mentioned");
+    document.querySelector(".rent-label").innerText = "Budget / Month";
+    document.getElementById("roomDeposit").innerText = money(room.deposit, "Not mentioned");
+    document.querySelector(".deposit-box .rent-label").innerText = "Deposit";
+  } else {
+    document.getElementById("roomRent").innerText = money(room.rent, "₹ 0");
+    document.querySelector(".rent-label").innerText = "Per Month";
+    document.getElementById("roomDeposit").innerText = money(room.deposit, "₹ 0");
+    document.querySelector(".deposit-box .rent-label").innerText = "Security Deposit";
+  }
+
+  document.getElementById("roomDesc").innerText = room.description || "No additional details provided.";
+
+  // 3. Tags
+  let tagsHtml = `
+    <div class="tag">
+      <span class="material-symbols-rounded" style="font-size:16px;">${isNeeded ? "person_search" : "apartment"}</span>
+      ${escapeHtml(isNeeded ? "Room Needed" : room.type)}
+    </div>
+  `;
+
+  if (isNeeded && room.type && room.type !== "Room Needed") {
+    tagsHtml += `
+      <div class="tag">
+        <span class="material-symbols-rounded" style="font-size:16px;">category</span>
+        ${escapeHtml(room.type)}
+      </div>
+    `;
+  }
+
+  if (!isNeeded && room.brokerage_type) {
+    let brokerageDisplay = room.brokerage_type;
+
+    if ((room.brokerage_type === "Applicable" || room.brokerage_type === "Negotiable") && room.brokerage_amount) {
+      brokerageDisplay += ` (${money(room.brokerage_amount)})`;
+    }
+
+    tagsHtml += `
+      <div class="tag">
+        <span class="material-symbols-rounded" style="font-size:16px;">handshake</span>
+        ${escapeHtml(brokerageDisplay)}
+      </div>
+    `;
+  }
+
+  if (room.status && room.status !== "active" && room.status !== "approved") {
+    tagsHtml += `
+      <div class="tag" style="background:#FEF3C7; color:#D97706;">
+        <span class="material-symbols-rounded" style="font-size:16px;">info</span>
+        ${escapeHtml(room.status)}
+      </div>
+    `;
+  }
+
+  document.getElementById("roomTags").innerHTML = tagsHtml;
+
+  // 4. Map Init
+  const lat = parseFloat(room.latitude);
+  const lng = parseFloat(room.longitude);
+
+  if (!isNaN(lat) && !isNaN(lng)) {
+    initMap(lat, lng);
+  } else {
+    document.getElementById("map").innerHTML = "<div style='padding:20px; text-align:center; color:gray;'>Map location not provided</div>";
+  }
+
+  // 5. Action Buttons
+  renderActions(room);
+}
+
+/* ---------------- SLIDER COUNTER LOGIC ---------------- */
+function updateSliderCounter() {
+  const slider = document.getElementById("imageSlider");
+  const slideWidth = slider.clientWidth;
+  const currentSlideIndex = Math.round(slider.scrollLeft / slideWidth) + 1;
+  document.getElementById("sliderCounter").innerText = `${currentSlideIndex} / ${totalImages}`;
+}
+
+/* ---------------- LEAFLET MAP ---------------- */
+function initMap(lat, lng) {
+  const map = L.map("map", { zoomControl: false }).setView([lat, lng], 14);
+  L.control.zoom({ position: "bottomright" }).addTo(map);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  L.marker([lat, lng]).addTo(map);
+}
+
+/* ---------------- ACTION BUTTONS ---------------- */
+function renderActions(room) {
+  const actionBar = document.getElementById("actionBar");
+  let html = "";
+  const phone = cleanPhone(room.contact_number);
+  const whatsapp = cleanPhone(room.whatsapp_number || room.contact_number);
+
+  // 📞 CALL
+  if (isTruthy(room.show_contact) && phone) {
+    html += `
+      <button class="btn btn-call" onclick="window.location.href='tel:${phone}'">
+        <span class="material-symbols-rounded">call</span> Call
+      </button>
+    `;
+  }
+
+  // 💬 WHATSAPP
+  if (isTruthy(room.show_whatsapp) && whatsapp) {
+    html += `
+      <button class="btn btn-whatsapp" onclick="window.open('https://wa.me/${whatsapp}', '_blank')">
+        <span class="material-symbols-rounded">chat</span> WA
+      </button>
+    `;
+  }
+
+  // 💬 IN-APP CHAT
+  if (room.user_id) {
+    html += `
+      <button class="btn btn-chat" onclick="startChat('${escapeHtml(room.user_id)}', '${escapeHtml(room.id)}', '${room.postKind}')">
+        <span class="material-symbols-rounded">forum</span> Chat
+      </button>
+    `;
+  } else {
+    html += `
+      <button class="btn btn-chat" onclick="alert('Chat is not available for this post.')">
+        <span class="material-symbols-rounded">forum</span> Chat
+      </button>
+    `;
+  }
+
+  actionBar.innerHTML = html || `
+    <button class="btn btn-chat" onclick="history.back()">
+      <span class="material-symbols-rounded">arrow_back</span> Back
+    </button>
+  `;
+
+  // Trigger auto-action if present
+  const autoAction = params.get("auto");
+  const autoInfo = cleanPhone(params.get("info"));
+
+  if (autoAction === "call" && autoInfo && isTruthy(room.show_contact)) {
+    setTimeout(() => { window.location.href = `tel:${autoInfo}`; }, 300);
+  } else if (autoAction === "wa" && autoInfo && isTruthy(room.show_whatsapp)) {
+    setTimeout(() => { window.open(`https://wa.me/${autoInfo}`, "_blank"); }, 300);
+  }
+}
+
+/* ---------------- CHAT REDIRECT ---------------- */
+function startChat(userId, postId, postKind) {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (user && user.id === userId) {
+    alert(postKind === "needed" ? "This is your own requirement post!" : "This is your own property!");
+    return;
+  }
+
+  if (!user) {
+    localStorage.setItem("chat_redirect", JSON.stringify({ userId, roomId: postId, type: postKind }));
+    alert("Please log in to chat.");
+    window.location.href = "user.html";
+    return;
+  }
+
+  // source=roomdetails keeps browser history, so coming back opens the same details post.
+  window.location.href = `chat.html?user=${encodeURIComponent(userId)}&room=${encodeURIComponent(postId)}&source=roomdetails&type=${encodeURIComponent(postKind)}`;
+}
+
+// Loading spinner
+const style = document.createElement("style");
+style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
+document.head.appendChild(style);
+</script>
+
+</body>
+</html>

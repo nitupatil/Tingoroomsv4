@@ -1,0 +1,4085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TingoRooms</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+if (location.protocol !== "file:") {
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "86e4ee86-6134-42b0-ad76-4997d7ce02de",
+    });
+  });
+} else {
+  console.warn("OneSignal disabled on local file:// preview. Upload to GitHub Pages/HTTPS to test push notifications.");
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+
+<link rel="icon" href="https://i.ibb.co/N2ZhwrRn/Gemini-Generated-Image-h4mxnvh4mxnvh4mx-2.gif">
+
+<style>
+
+:root {
+  --primary: #4F46E5;
+  --primary-dark: #3730A3;
+  --primary-gradient: linear-gradient(135deg, #7C3AED 0%, #4F46E5 55%, #06B6D4 100%);
+  --primary-light: #EEF2FF;
+  --primary-glow: rgba(79, 70, 229, 0.28);
+  --accent: #F97316;
+  --accent-soft: #FFF7ED;
+  --success: #16A34A;
+  --success-soft: #DCFCE7;
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --radius: 22px;
+  --safe-bottom: 96px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 10% 8%, rgba(124, 58, 237, 0.18), transparent 28%),
+    radial-gradient(circle at 92% 18%, rgba(14, 165, 233, 0.16), transparent 25%),
+    radial-gradient(circle at 50% 95%, rgba(249, 115, 22, 0.14), transparent 32%),
+    #E2E8F0;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* MOBILE APP FRAME */
+.app-container {
+  width: 100%;
+  max-width: 430px;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0 auto;
+  position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(248,250,252,0.98) 44%, #F8FAFC 100%);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.16);
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-container::before,
+.app-container::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(0.2px);
+}
+
+.app-container::before {
+  width: 180px;
+  height: 180px;
+  top: -74px;
+  right: -66px;
+  border-radius: 46% 54% 60% 40%;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.14));
+}
+
+.app-container::after {
+  width: 130px;
+  height: 130px;
+  left: -62px;
+  top: 156px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.16), rgba(250, 204, 21, 0.10));
+}
+
+@media (min-width: 520px) {
+  body {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 22px 0;
+  }
+
+  .app-container {
+    height: calc(100vh - 44px);
+    height: calc(100dvh - 44px);
+    border-radius: 34px;
+    border: 1px solid rgba(255,255,255,0.82);
+  }
+}
+
+/* HEADER */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 12px 10px;
+  background: rgba(248, 250, 252, 0.86);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.76);
+}
+
+.logo {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.14);
+  border: 2px solid rgba(255,255,255,0.8);
+}
+
+.search-box {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.search-box input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px 0 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.75), 0 8px 18px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+
+.search-box input::placeholder {
+  color: #94A3B8;
+}
+
+.search-box input:focus {
+  border-color: rgba(79, 70, 229, 0.42);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.08), 0 10px 20px rgba(79, 70, 229, 0.08);
+}
+
+.search-box .material-symbols-rounded {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94A3B8;
+  font-size: 20px;
+  pointer-events: none;
+  transition: color 0.22s ease;
+}
+
+.search-box:focus-within .material-symbols-rounded {
+  color: var(--primary);
+}
+
+.notification {
+  flex: 0 0 auto;
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--primary-dark);
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.notification:active {
+  transform: scale(0.94);
+  background: var(--primary-light);
+}
+
+.notification .badge {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  width: 9px;
+  height: 9px;
+  display: none;
+  border-radius: 50%;
+  background: #EF4444;
+  border: 2px solid #FFFFFF;
+  animation: pulse 1.7s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.38); }
+  70% { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* ROOM LIST - mobile shows one property below another */
+.main-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 12px calc(var(--safe-bottom) + 14px);
+}
+
+.card {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.84);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+}
+
+.card:active {
+  transform: scale(0.97);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+/* Decreased image height to make cards compact vertically */
+.card-img-wrapper {
+  position: relative;
+  width: 100%;
+  height: clamp(110px, 32vw, 130px);
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(14, 165, 233, 0.10)),
+    #E2E8F0;
+}
+
+.card-img-wrapper img,
+.card-img-wrapper img.slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensures fully visible and auto fit */
+  display: block;
+}
+
+.card-img-wrapper .slides-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.55s ease;
+  will-change: transform;
+}
+
+.card-img-wrapper::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 58%;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.62), rgba(15, 23, 42, 0.02));
+  pointer-events: none;
+}
+
+.price-badge {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 2;
+  max-width: calc(100% - 16px);
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0F172A;
+  border: 1px solid rgba(255,255,255,0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Reduced padding for compact cards */
+.card-content {
+  padding: 8px 10px;
+}
+
+.title {
+  margin-bottom: 4px;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.owner-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.owner-name .material-symbols-rounded {
+  font-size: 15px;
+}
+
+.owner-avatar {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+.location {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 6px;
+  min-height: auto;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.location .material-symbols-rounded {
+  font-size: 15px;
+  color: var(--primary);
+  vertical-align: -3px;
+}
+
+.details-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.detail-tag {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: #F1F5F9;
+  color: #475569;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detail-tag.highlight {
+  color: #047857;
+  background: #ECFDF5;
+}
+
+.detail-tag .material-symbols-rounded {
+  flex: 0 0 auto;
+  font-size: 13px;
+}
+
+.card-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(226, 232, 240, 0.82);
+}
+
+.btn-action {
+  min-width: 0;
+  min-height: 32px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.btn-action .material-symbols-rounded {
+  font-size: 15px !important;
+}
+
+.btn-action:active {
+  transform: scale(0.94);
+}
+
+.btn-call,
+.btn-wa {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.btn-chat {
+  grid-column: 1 / -1;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  box-shadow: 0 8px 16px var(--primary-glow);
+}
+
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 70px 18px;
+  color: var(--text-muted);
+}
+
+/* BOTTOM NAVIGATION */
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 2px;
+  padding: 10px 10px max(16px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(226, 232, 240, 0.82);
+  border-radius: 24px 24px 0 0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 -14px 34px rgba(15, 23, 42, 0.08);
+}
+
+.nav-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #94A3B8;
+  font-size: 10.5px;
+  font-weight: 800;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.22s ease, transform 0.18s ease;
+}
+
+.nav-item:active {
+  transform: scale(0.94);
+}
+
+.nav-item.active {
+  color: var(--primary);
+}
+
+/* Enlarged icon wrapper and icon size */
+.nav-item .icon-wrapper {
+  position: relative;
+  min-width: 46px;
+  height: 32px;
+  padding: 3px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  transition: background 0.22s ease;
+}
+
+.nav-item.active .icon-wrapper {
+  background: var(--primary-light);
+}
+
+.nav-item .material-symbols-rounded {
+  font-size: 28px;
+}
+
+.nav-item.post-btn {
+  margin-top: -18px;
+}
+
+/* Enlarged Add Post Button */
+.nav-item.post-btn .material-symbols-rounded {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 0;
+  border-radius: 20px;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  border: 5px solid #FFFFFF;
+  box-shadow: 0 14px 24px var(--primary-glow);
+  font-size: 34px;
+}
+
+.nav-item.post-btn span:last-child {
+  margin-top: 1px;
+  color: var(--primary);
+}
+
+#msgBadge {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #EF4444;
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.32);
+  font-size: 10px;
+  line-height: 14px;
+  text-align: center;
+  font-weight: 900;
+}
+
+/* LIVE LOCATION SUGGESTIONS */
+.search-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 1400;
+  display: none;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.15);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.search-suggestions.show {
+  display: block;
+}
+
+.suggestion-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.suggestion-item:hover,
+.suggestion-item:active {
+  background: var(--primary-light);
+}
+
+.suggestion-item .material-symbols-rounded {
+  position: static;
+  transform: none;
+  color: var(--primary);
+  font-size: 20px;
+  flex: 0 0 auto;
+}
+
+.suggestion-main {
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.suggestion-sub {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.suggestion-empty {
+  padding: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.suggestion-section-title {
+  padding: 7px 10px 5px;
+  color: #94A3B8;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.search-status {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: #EEF2FF;
+  color: #3730A3;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  border: 1px solid rgba(165, 180, 252, 0.55);
+}
+
+.search-status .material-symbols-rounded {
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+/* SEPARATE PROPERTY FILTERS */
+.filter-bar {
+  position: sticky;
+  top: 65px;
+  z-index: 950;
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px 10px;
+  background: rgba(248, 250, 252, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.65);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-select,
+.filter-reset {
+  flex: 0 0 auto;
+  height: 36px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--text-main);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.04);
+  font-size: 12px;
+  font-weight: 800;
+  outline: none;
+}
+
+.filter-select {
+  max-width: 138px;
+  padding: 0 30px 0 12px;
+  cursor: pointer;
+}
+
+.filter-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 12px;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.filter-reset .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.filter-select:focus,
+.filter-reset:active {
+  border-color: rgba(79, 70, 229, 0.42);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.08);
+}
+
+@media (min-width: 900px) {
+  .filter-bar {
+    top: 83px;
+    padding: 10px 40px;
+    gap: 12px;
+  }
+
+  .filter-select,
+  .filter-reset {
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .filter-select {
+    max-width: 180px;
+  }
+
+  .panel-open .filter-bar {
+    margin-right: 30%;
+    width: 70%;
+  }
+
+  .nav-left .filter-bar {
+    margin-right: 120px;
+    width: calc(100% - 120px);
+  }
+
+  .panel-open.nav-left .filter-bar {
+    margin-right: 0;
+    margin-left: 30%;
+    width: 70%;
+  }
+}
+
+/* NOTIFICATION PANEL - keeps your existing inline JS behavior, improves the visual */
+#notificationPanel {
+  border-radius: 26px 0 0 26px;
+}
+
+#notificationList > div {
+  margin: 8px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+}
+
+/* DESKTOP OVERRIDE: strict reset to keep desktop layout exactly as it was */
+@media (min-width: 900px) {
+  .side-panel {
+    display: none;
+    position: fixed;
+    top: 22px;
+    right: 22px;
+    bottom: 22px;
+    width: min(420px, 34vw);
+    max-width: 420px;
+    overflow: hidden;
+    z-index: 1500;
+    border-radius: 30px;
+    background: var(--surface);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+  }
+
+  .side-panel .panel-close {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 1510;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    cursor: pointer;
+  }
+
+  .side-panel iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  body {
+    display: block;
+    padding: 0;
+    background-color: #E2E8F0;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .app-container {
+    max-width: none;
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    margin: 0;
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+    background: var(--bg);
+    overflow-y: auto;
+  }
+
+  .app-container::before,
+  .app-container::after {
+    display: none;
+  }
+
+  .header {
+    padding: 20px 40px;
+    width: 100%;
+    margin: 0;
+    max-width: none;
+    gap: 16px;
+  }
+
+  .search-box input {
+    height: auto;
+    padding: 12px 16px 12px 44px;
+    font-size: 14px;
+  }
+
+  .main-content {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    padding: 24px 24px calc(var(--safe-bottom) + 20px) 24px;
+    width: 100%;
+    margin: 0;
+  }
+
+  .card {
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .card-img-wrapper {
+    height: 320px;
+    aspect-ratio: auto;
+  }
+
+  .card-img-wrapper img {
+    border-radius: 0;
+  }
+
+  .card-content {
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+
+  .owner-name {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .owner-avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .location {
+    font-size: 14px;
+    margin-bottom: 16px;
+    min-height: auto;
+  }
+
+  .detail-tag {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+  }
+
+  .btn-action {
+    min-height: auto;
+    padding: 12px;
+    border-radius: 14px;
+    font-size: 14px;
+  }
+
+  .btn-chat {
+    grid-column: auto;
+  }
+
+  .bottom-nav {
+    position: fixed;
+    top: 120px;
+    right: 24px;
+    bottom: 24px;
+    left: auto;
+    width: 96px;
+    max-width: 96px;
+    padding: 16px 8px;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    border-radius: 30px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(226, 232, 240, 0.7);
+    transform: none;
+  }
+
+  .nav-item {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  .nav-item .icon-wrapper {
+    padding: 10px;
+    height: auto;
+  }
+
+  .nav-item.post-btn {
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  /* Reset desktop icons back to standard size */
+  .nav-item .material-symbols-rounded {
+    font-size: 24px;
+  }
+
+  .nav-item span {
+    margin-top: 6px;
+    font-size: 10px;
+  }
+
+  .nav-item.post-btn .material-symbols-rounded {
+    width: auto;
+    height: auto;
+    margin-top: 0;
+    font-size: 22px;
+    border-radius: 50%;
+    padding: 12px;
+    border: 0;
+  }
+
+  .side-panel {
+    display: none;
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 30%;
+    max-width: 420px;
+    background: var(--surface);
+    box-shadow: -2px 0 20px rgba(0,0,0,0.08);
+    z-index: 1500;
+    overflow: hidden;
+    border-left: 1px solid var(--border);
+    border-radius: 0;
+  }
+
+  .side-panel .panel-close {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--text-muted);
+    z-index: 1510;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .panel-open .side-panel { display: block; }
+  .panel-open .main-content { margin-right: 30%; width: 70%; }
+  .panel-open .header { margin-right: 30%; width: 70%; }
+
+  .nav-left .bottom-nav {
+    right: 24px;
+    left: auto;
+    top: 120px;
+    transform: none;
+  }
+
+  .nav-left .main-content {
+    margin-right: 120px;
+    margin-left: 0;
+    width: calc(100% - 120px);
+  }
+
+  .nav-left .header {
+    margin-right: 120px;
+    margin-left: 0;
+    width: calc(100% - 120px);
+  }
+
+  .panel-open.nav-left .bottom-nav { left: 24px; right: auto; }
+  .panel-open.nav-left .main-content { margin-right: 0; margin-left: 30%; width: 70%; }
+  .panel-open.nav-left .header { margin-right: 0; margin-left: 30%; width: 70%; }
+}
+
+@media (max-width: 374px) {
+  .main-content {
+    gap: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .card-content {
+    padding: 8px;
+  }
+
+  .title {
+    font-size: 13px;
+  }
+
+  .btn-action {
+    font-size: 10px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .nav-item span:last-child {
+    font-size: 9.5px;
+  }
+}
+
+@media (max-width: 340px) {
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+/* UPDATED: sticky type filter + Available/Needed switch + complete image fit */
+.card-img-wrapper {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(14, 165, 233, 0.08)), #F8FAFC;
+}
+
+.card-img-wrapper img,
+.card-img-wrapper img.slide {
+  object-fit: contain !important;
+  background: #F8FAFC;
+}
+
+.filter-bar {
+  align-items: center;
+}
+
+.filter-select {
+  min-width: 128px;
+}
+
+.mode-switch-wrap {
+  position: sticky;
+  top: 118px;
+  z-index: 945;
+  width: 100%;
+  padding: 0 12px 10px;
+  background: rgba(248, 250, 252, 0.80);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: padding 0.24s ease, background 0.24s ease, transform 0.24s ease, opacity 0.24s ease;
+}
+
+.mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.mode-btn {
+  min-width: 0;
+  min-height: 38px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.22s ease, opacity 0.22s ease, color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+}
+
+.mode-btn .material-symbols-rounded {
+  font-size: 18px;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+
+.mode-btn:active { transform: scale(0.96); }
+
+.mode-btn.active {
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  box-shadow: 0 8px 16px var(--primary-glow);
+}
+
+.mode-switch-wrap.compact {
+  position: fixed;
+  top: 118px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+}
+
+.mode-switch-wrap.compact .mode-switch {
+  display: contents;
+}
+
+.mode-switch-wrap.compact .mode-btn {
+  position: fixed;
+  top: 118px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--primary);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.mode-switch-wrap.compact .mode-btn.active {
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+}
+
+.mode-switch-wrap.compact .mode-label {
+  opacity: 0;
+  width: 0;
+  max-width: 0;
+  overflow: hidden;
+}
+
+.mode-switch-wrap.compact .mode-btn .material-symbols-rounded {
+  font-size: 22px;
+}
+
+.mode-switch-wrap.compact #modeAvailableBtn {
+  left: 12px;
+  transform: translateX(-2px) scale(0.96);
+}
+
+.mode-switch-wrap.compact #modeNeededBtn {
+  right: 12px;
+  transform: translateX(2px) scale(0.96);
+}
+
+.requirement-card {
+  position: relative;
+  border: 1px solid rgba(165, 180, 252, 0.60);
+  background: radial-gradient(circle at 18% 0%, rgba(79, 70, 229, 0.13), transparent 34%), radial-gradient(circle at 92% 18%, rgba(249, 115, 22, 0.12), transparent 30%), rgba(255, 255, 255, 0.96);
+}
+
+.requirement-hero {
+  position: relative;
+  min-height: 118px;
+  padding: 14px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(6, 182, 212, 0.10));
+}
+
+.requirement-hero::after {
+  content: '';
+  position: absolute;
+  right: -20px;
+  top: -24px;
+  width: 120px;
+  height: 120px;
+  border-radius: 38% 62% 48% 52%;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.34), rgba(236, 72, 153, 0.18));
+}
+
+.requirement-vector {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  width: 58px;
+  height: 58px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.25);
+  z-index: 1;
+}
+
+.requirement-vector .material-symbols-rounded {
+  font-size: 34px;
+}
+
+.requirement-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #7C2D12;
+  background: #FFEDD5;
+  font-size: 11px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.requirement-card .title {
+  padding-right: 78px;
+}
+
+.requirement-desc {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .filter-bar {
+    position: sticky;
+    top: 83px;
+    z-index: 960;
+  }
+
+  .mode-switch-wrap {
+    position: sticky;
+    top: 143px;
+    z-index: 955;
+    padding: 0 40px 12px;
+  }
+
+  .mode-switch {
+    max-width: 560px;
+  }
+
+  .mode-switch-wrap.compact {
+    position: fixed;
+    top: 145px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 0;
+  }
+
+  .mode-switch-wrap.compact .mode-btn {
+    top: 145px;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+  }
+
+  .mode-switch-wrap.compact #modeAvailableBtn { left: 40px; }
+  .mode-switch-wrap.compact #modeNeededBtn { right: 150px; }
+
+  .panel-open .mode-switch-wrap:not(.compact) {
+    margin-right: 30%;
+    width: 70%;
+  }
+
+  .nav-left .mode-switch-wrap:not(.compact) {
+    margin-right: 120px;
+    width: calc(100% - 120px);
+  }
+
+  .panel-open.nav-left .mode-switch-wrap:not(.compact) {
+    margin-right: 0;
+    margin-left: 30%;
+    width: 70%;
+  }
+
+  .nav-left .mode-switch-wrap.compact #modeNeededBtn { right: 150px; }
+  .panel-open .mode-switch-wrap.compact #modeNeededBtn { right: calc(30% + 24px); }
+  .panel-open.nav-left .mode-switch-wrap.compact #modeAvailableBtn { left: calc(30% + 24px); }
+}
+
+@media (max-width: 430px) {
+  .mode-switch-wrap.compact .mode-btn {
+    width: 42px;
+    height: 42px;
+    min-height: 42px;
+  }
+}
+
+
+
+/* MOBILE COMPACT FIX: when scrolling down, hide the whole Available/Needed switch.
+   It will fully reappear on a small upward swipe via JS removing .compact. */
+@media (max-width: 899px) {
+  .mode-switch-wrap.compact {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-16px) scale(0.98) !important;
+    pointer-events: none !important;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease !important;
+  }
+
+  .mode-switch-wrap.compact .mode-switch {
+    display: grid !important;
+    pointer-events: none !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn,
+  .mode-switch-wrap.compact #modeAvailableBtn,
+  .mode-switch-wrap.compact #modeNeededBtn {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transform: translateY(-12px) scale(0.92) !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn .material-symbols-rounded,
+  .mode-switch-wrap.compact .mode-label {
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+}
+
+
+/* FINAL DESKTOP STICKY UPDATE: keep full search/filter/mode switch visible on wide screens */
+@media (min-width: 900px) {
+  .header,
+  .filter-bar,
+  .mode-switch-wrap {
+    position: sticky !important;
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+
+  .header { top: 0 !important; z-index: 1200 !important; }
+  .filter-bar { top: 83px !important; z-index: 1190 !important; }
+
+  .mode-switch-wrap,
+  .mode-switch-wrap.compact {
+    top: 143px !important;
+    z-index: 1180 !important;
+    width: 100% !important;
+    padding: 0 40px 12px !important;
+    background: rgba(248, 250, 252, 0.88) !important;
+    pointer-events: auto !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .mode-switch-wrap.compact .mode-switch {
+    display: grid !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 38px !important;
+    padding: 0 16px !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn.active {
+    box-shadow: 0 8px 16px var(--primary-glow) !important;
+  }
+
+  .mode-switch-wrap.compact .mode-label {
+    opacity: 1 !important;
+    width: auto !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn .material-symbols-rounded {
+    font-size: 18px !important;
+  }
+
+  .mode-switch-wrap.compact #modeAvailableBtn,
+  .mode-switch-wrap.compact #modeNeededBtn {
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+
+  .panel-open .mode-switch-wrap,
+  .panel-open .mode-switch-wrap.compact {
+    margin-right: 30% !important;
+    width: 70% !important;
+  }
+
+  .nav-left .mode-switch-wrap,
+  .nav-left .mode-switch-wrap.compact {
+    margin-right: 120px !important;
+    width: calc(100% - 120px) !important;
+  }
+
+  .panel-open.nav-left .mode-switch-wrap,
+  .panel-open.nav-left .mode-switch-wrap.compact {
+    margin-right: 0 !important;
+    margin-left: 30% !important;
+    width: 70% !important;
+  }
+}
+
+
+/* FILTER ACTIVE STATE UPDATE */
+.filter-select.filter-active {
+  color: #047857 !important;
+  background: #ECFDF5 !important;
+  border-color: rgba(16, 185, 129, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.10), 0 8px 16px rgba(15, 23, 42, 0.04) !important;
+}
+
+.filter-reset {
+  display: none !important;
+}
+
+.filter-reset.visible {
+  display: inline-flex !important;
+}
+
+
+
+/* REUSABLE BUTTON.HTML IFRAME LOADER
+   button.html stays as the single editable source for the bottom/right navigation. */
+#bottomNavHost {
+  display: none;
+}
+
+.bottom-nav-frame {
+  display: block;
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 999999;
+  width: 100%;
+  max-width: 430px;
+  height: 112px;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+@media (min-width: 900px) {
+  .bottom-nav-frame {
+    top: 120px;
+    right: 24px;
+    bottom: 24px;
+    left: auto;
+    width: 96px;
+    max-width: 96px;
+    height: calc(100vh - 144px);
+    min-height: 360px;
+    transform: none;
+    border-radius: 30px;
+  }
+
+  .nav-left .bottom-nav-frame {
+    right: 24px;
+    left: auto;
+  }
+
+  .panel-open.nav-left .bottom-nav-frame {
+    left: 24px;
+    right: auto;
+  }
+}
+
+@media (max-width: 374px) {
+  .bottom-nav-frame {
+    height: 108px;
+  }
+}
+
+
+/* ADVANCED SEARCH + CARD UI UPDATE */
+.search-box input {
+  padding-right: 52px !important;
+}
+
+.search-box > .search-leading {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94A3B8;
+  font-size: 20px;
+  pointer-events: none;
+  transition: color 0.22s ease;
+}
+
+.search-box:focus-within > .search-leading {
+  color: var(--primary);
+}
+
+.search-action-btn {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 16px var(--primary-glow);
+  z-index: 2;
+}
+
+.search-action-btn:active {
+  transform: translateY(-50%) scale(0.93);
+}
+
+.search-action-btn .material-symbols-rounded {
+  position: static !important;
+  transform: none !important;
+  color: inherit !important;
+  font-size: 20px !important;
+  pointer-events: none !important;
+}
+
+.search-suggestions {
+  max-height: min(360px, 62vh);
+}
+
+.suggestion-main {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.search-status {
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.08);
+}
+
+.app-popup {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + 16px);
+  transform: translateX(-50%);
+  z-index: 3000000;
+  width: calc(100% - 24px);
+  max-width: 430px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: 22px;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(226, 232, 240, 0.94);
+  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  animation: appPopupIn 0.22s ease;
+}
+
+.app-popup.hidden {
+  display: none !important;
+}
+
+.app-popup-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  flex: 0 0 auto;
+}
+
+.app-popup-title {
+  font-size: 13px;
+  font-weight: 900;
+  margin-bottom: 2px;
+}
+
+.app-popup-message {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.app-popup-close {
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: #F1F5F9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.app-popup-close .material-symbols-rounded {
+  font-size: 18px;
+}
+
+@keyframes appPopupIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.posted-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #475569;
+  background: #F8FAFC;
+  border: 1px solid rgba(226, 232, 240, 0.88);
+}
+
+.distance-meta {
+  color: #3730A3;
+  background: #EEF2FF;
+  border: 1px solid rgba(165, 180, 252, 0.72);
+}
+
+.card-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+.btn-chat {
+  grid-column: auto !important;
+}
+
+.btn-action {
+  min-height: 34px !important;
+  border-radius: 13px !important;
+  white-space: nowrap;
+}
+
+.btn-action .material-symbols-rounded {
+  font-size: 16px !important;
+}
+
+@media (max-width: 519px) {
+  .app-container {
+    max-width: 100%;
+  }
+
+  .main-content {
+    gap: 12px !important;
+    padding: 10px 8px calc(var(--safe-bottom) + 12px) !important;
+  }
+
+  .card {
+    border-radius: 20px !important;
+  }
+
+  .card-img-wrapper {
+    height: clamp(185px, 56vw, 230px) !important;
+  }
+
+  .card-content {
+    padding: 10px 10px 11px !important;
+  }
+
+  .title {
+    font-size: 14px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .owner-name,
+  .location {
+    font-size: 11.5px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .details-row {
+    gap: 5px !important;
+  }
+
+  .detail-tag {
+    font-size: 10.5px !important;
+    padding: 5px 7px !important;
+  }
+
+  .card-actions {
+    margin-top: 7px !important;
+    padding-top: 8px !important;
+  }
+
+  .btn-action {
+    min-height: 33px !important;
+    padding: 5px 3px !important;
+    font-size: 10.3px !important;
+    gap: 2px !important;
+  }
+
+  .btn-action .material-symbols-rounded {
+    font-size: 14px !important;
+  }
+
+  .side-panel,
+  .side-panel .panel-close,
+  #panelClose {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
+
+@media (min-width: 520px) and (max-width: 899px) {
+  .app-container {
+    max-width: 720px;
+  }
+
+  .main-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    padding: 14px 14px calc(var(--safe-bottom) + 16px) !important;
+  }
+
+  .card-img-wrapper {
+    height: clamp(210px, 34vw, 260px) !important;
+  }
+
+  .btn-action {
+    font-size: 10.6px !important;
+    padding-left: 3px !important;
+    padding-right: 3px !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .search-box input {
+    padding-right: 58px !important;
+  }
+
+  .search-action-btn {
+    width: 38px;
+    height: 38px;
+    right: 6px;
+  }
+
+  .main-content {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 22px !important;
+    padding: 22px 22px calc(var(--safe-bottom) + 20px) 22px !important;
+  }
+
+  .card {
+    border-radius: 24px !important;
+    overflow: hidden;
+  }
+
+  .card-img-wrapper {
+    height: clamp(300px, 24vw, 380px) !important;
+  }
+
+  .card-content {
+    padding: 16px !important;
+  }
+
+  .title {
+    font-size: 18px !important;
+  }
+
+  .btn-action {
+    font-size: 12px !important;
+    padding: 10px 6px !important;
+  }
+
+  .app-popup {
+    right: 132px;
+    left: auto;
+    bottom: 24px;
+    transform: none;
+    max-width: 420px;
+  }
+
+  @keyframes appPopupIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app-container">
+  
+  <div class="header">
+    <img src="https://i.ibb.co/N2ZhwrRn/Gemini-Generated-Image-h4mxnvh4mxnvh4mx-2.gif" class="logo" alt="Tingo Logo">
+
+    <div class="search-box">
+      <span class="material-symbols-rounded search-leading">search</span>
+      <input type="text" id="search" placeholder="Search location or area..." autocomplete="off">
+      <button type="button" class="search-action-btn" onclick="runManualSearch()" aria-label="Search nearby posts">
+        <span class="material-symbols-rounded">arrow_forward</span>
+      </button>
+      <div id="searchSuggestions" class="search-suggestions" aria-label="Search suggestions"></div>
+    </div>
+
+    <div class="notification" onclick="openNotifications()">
+      <span class="material-symbols-rounded">notifications</span>
+      <div class="badge"></div>
+    </div>
+  </div>
+
+  <div class="filter-bar" id="filterBar" aria-label="Type and property filters">
+    <select id="filterType" class="filter-select" aria-label="Filter by type">
+      <option value="">All types</option>
+    </select>
+    <select id="filterBrokerage" class="filter-select" aria-label="Filter by brokerage">
+      <option value="">All brokerage</option>
+    </select>
+    <button type="button" id="clearFilters" class="filter-reset">
+      <span class="material-symbols-rounded">close</span>
+      Clear
+    </button>
+  </div>
+
+  <div class="mode-switch-wrap" id="modeSwitchWrap" aria-label="Switch post category">
+    <div class="mode-switch">
+      <button type="button" class="mode-btn active" id="modeAvailableBtn" onclick="setPostMode('available')">
+        <span class="material-symbols-rounded">home_work</span>
+        <span class="mode-label">Rooms Available</span>
+      </button>
+      <button type="button" class="mode-btn" id="modeNeededBtn" onclick="setPostMode('needed')">
+        <span class="material-symbols-rounded">person_search</span>
+        <span class="mode-label">Rooms Needed</span>
+      </button>
+    </div>
+  </div>
+
+
+  <div id="notificationPanel" style="
+    position:fixed;
+    top:0;
+    right:-100%;
+    width:90%;
+    max-width:400px;
+    height:100%;
+    background:white;
+    z-index:2000;
+    transition:0.3s;
+    box-shadow:-5px 0 15px rgba(0,0,0,0.1);
+    overflow-y:auto;
+  ">
+    <div style="padding:15px;font-weight:bold;border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+      Notifications
+      <span class="material-symbols-rounded" onclick="closeNotifications()" style="cursor:pointer; font-size:20px; color:gray;">close</span>
+    </div>
+    <div id="notificationList"></div>
+  </div>
+
+  <div id="appPopup" class="app-popup hidden" role="status" aria-live="polite">
+    <div class="app-popup-icon"><span class="material-symbols-rounded">info</span></div>
+    <div class="app-popup-body">
+      <div id="appPopupTitle" class="app-popup-title">TingoRooms</div>
+      <div id="appPopupMessage" class="app-popup-message"></div>
+    </div>
+    <button type="button" class="app-popup-close" onclick="hideAppPopup()" aria-label="Close popup">
+      <span class="material-symbols-rounded">close</span>
+    </button>
+  </div>
+
+  <div class="main-content" id="roomList">
+    </div>
+
+  <!-- Desktop left side panel (loads pages into iframe) -->
+  <div class="side-panel" id="sidePanel" aria-hidden="true">
+    <button class="panel-close" id="panelClose" onclick="closePanel()" title="Close">✕</button>
+    <iframe id="panelFrame" src="about:blank" title="Panel content"></iframe>
+  </div>
+
+  <!-- Reusable bottom navigation loaded from button.html -->
+  <div id="bottomNavHost"></div>
+  <iframe
+    id="bottomNavFrame"
+    class="bottom-nav-frame"
+    src="button.html?mode=mobile&active=index.html"
+    title="TingoRooms bottom navigation"
+    scrolling="no"
+    loading="eager"
+  ></iframe>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0"; 
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* Default avatar helper (gender-aware) */
+function getDefaultAvatar(gender) {
+  const male = 'https://i.ibb.co/wZVNcCDt/maleavt.png';
+  const female = 'https://i.ibb.co/SXCj3b1q/femaleavt.png';
+  if (!gender) return male;
+  const g = String(gender).toLowerCase();
+  if (g.includes('f')) return female;
+  return male;
+}
+
+/* LOCATION SEARCH SUGGESTIONS + NEARBY LOCATION HELPERS */
+const LOCATION_CONTEXT = "Pune, Maharashtra, India";
+let selectedSearchPlace = null;
+let suggestionRequestId = 0;
+let searchTimeout;
+let suggestionTimeout;
+let activePostMode = "available";
+let modeSwitchLastScroll = 0;
+let modeSwitchExpandedUntil = 0;
+
+function getCurrentSearchText() {
+  const input = document.getElementById("search");
+  return input ? input.value.trim() : "";
+}
+
+function getActiveFilters() {
+  const type = document.getElementById("filterType")?.value || "";
+  const brokerage = document.getElementById("filterBrokerage")?.value || "";
+  return { type, brokerage };
+}
+
+function hasActiveFilters() {
+  const filters = getActiveFilters();
+  return Boolean(filters.type || filters.brokerage);
+}
+
+function applyFiltersToQuery(query) {
+  const filters = getActiveFilters();
+
+  if (filters.type) {
+    query = query.ilike("type", `%${filters.type}%`);
+  }
+
+  if (filters.brokerage) {
+    query = query.ilike("brokerage_type", `%${filters.brokerage}%`);
+  }
+
+  return query;
+}
+
+function roomMatchesActiveFilters(room) {
+  const filters = getActiveFilters();
+  if (filters.type && !includesText(room.type, filters.type)) return false;
+  if (filters.brokerage && !includesText(room.brokerage_type, filters.brokerage)) return false;
+  return true;
+}
+
+function normalizeOptionText(value) {
+  return cleanSearchTerm(value);
+}
+
+function fillSelectOptions(selectId, values, defaultLabel) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+
+  const current = select.value;
+  const uniqueValues = [...new Set((values || [])
+    .map(normalizeOptionText)
+    .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b));
+
+  select.innerHTML = `<option value="">${defaultLabel}</option>` + uniqueValues
+    .map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)
+    .join("");
+
+  if (current && uniqueValues.includes(current)) {
+    select.value = current;
+  }
+}
+
+async function loadFilterOptions() {
+  const { data, error } = await db
+    .from("room_posts")
+    .select("type, brokerage_type")
+    .eq("status", "active")
+    .limit(1000);
+
+  if (error) {
+    console.warn("Filter option loading error", error);
+    return;
+  }
+
+  fillSelectOptions("filterType", (data || []).map(room => room.type), "All types");
+  fillSelectOptions("filterBrokerage", (data || []).map(room => room.brokerage_type || "No Brokerage"), "All brokerage");
+}
+
+function bindFilterEvents() {
+  ["filterType", "filterBrokerage"].forEach(id => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.addEventListener("change", () => {
+      selectedSearchPlace = null;
+      hideSuggestionBox();
+      loadRooms(getCurrentSearchText());
+    });
+  });
+
+  const clearBtn = document.getElementById("clearFilters");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      ["filterType", "filterBrokerage"].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.value = "";
+      });
+      selectedSearchPlace = null;
+      loadRooms(getCurrentSearchText());
+    });
+  }
+}
+
+function cleanSearchTerm(value) {
+  return String(value || "")
+    .replace(/[,%()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function includesText(value, searchText) {
+  return String(value || "").toLowerCase().includes(String(searchText || "").toLowerCase());
+}
+
+function getPlaceLabel(place) {
+  const address = place.address || {};
+  return address.suburb || address.neighbourhood || address.quarter || address.city_district || address.village || address.town || address.city || place.name || String(place.display_name || "").split(",")[0] || "Location";
+}
+
+function getPlaceSubLabel(place) {
+  const address = place.address || {};
+  const parts = [address.city || address.town || address.county, address.state].filter(Boolean);
+  return parts.length ? parts.join(", ") : (place.display_name || LOCATION_CONTEXT);
+}
+
+function showSuggestionBox(html) {
+  const box = document.getElementById("searchSuggestions");
+  if (!box) return;
+  box.innerHTML = html;
+  box.classList.add("show");
+}
+
+function hideSuggestionBox() {
+  const box = document.getElementById("searchSuggestions");
+  if (!box) return;
+  box.classList.remove("show");
+}
+
+function buildDatabaseSuggestions(rows, searchText) {
+  const suggestions = [];
+  const seen = new Set();
+
+  function add(label, subLabel, icon, value) {
+    const cleanLabel = cleanSearchTerm(label);
+    if (!cleanLabel) return;
+    const key = `${subLabel}:${cleanLabel}`.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    suggestions.push({
+      source: "database",
+      label: cleanLabel,
+      subLabel,
+      icon,
+      value: cleanSearchTerm(value || cleanLabel)
+    });
+  }
+
+  (rows || []).forEach(room => {
+    if (includesText(room.location, searchText)) {
+      add(room.location, "Location from listed properties", "location_on");
+    }
+  });
+
+  return suggestions.slice(0, 8);
+}
+
+async function fetchDatabaseSuggestions(searchText) {
+  let query = db
+    .from("room_posts")
+    .select("location, type, brokerage_type")
+    .eq("status", "active")
+    .ilike("location", `%${searchText}%`);
+
+  query = applyFiltersToQuery(query);
+
+  const { data, error } = await query.limit(60);
+
+  if (error) {
+    console.warn("Database suggestion error", error);
+    return [];
+  }
+
+  return buildDatabaseSuggestions(data || [], searchText);
+}
+
+async function fetchMapSuggestions(searchText) {
+  if (searchText.length < 1) return [];
+
+  const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=in&q=${encodeURIComponent(searchText + " " + LOCATION_CONTEXT)}`;
+  const response = await fetch(url, { headers: { "Accept": "application/json" } });
+  const places = await response.json();
+
+  const unique = [];
+  const seen = new Set();
+
+  (places || []).forEach(place => {
+    const label = getPlaceLabel(place);
+    const key = label.toLowerCase();
+    if (!label || seen.has(key)) return;
+    seen.add(key);
+    unique.push({
+      source: "map",
+      label,
+      subLabel: getPlaceSubLabel(place),
+      icon: "travel_explore",
+      lat: Number(place.lat),
+      lon: Number(place.lon),
+      displayName: place.display_name || label
+    });
+  });
+
+  return unique.slice(0, 5);
+}
+
+function renderSuggestionList(databaseSuggestions, mapSuggestions) {
+  const parts = [];
+
+  if (databaseSuggestions.length) {
+    parts.push(`<div class="suggestion-section-title">Listed locations</div>`);
+    parts.push(databaseSuggestions.map((item, index) => `
+      <div class="suggestion-item" data-source="database" data-index="${index}">
+        <span class="material-symbols-rounded">${escapeHtml(item.icon)}</span>
+        <div>
+          <div class="suggestion-main">${escapeHtml(item.label)}</div>
+          <div class="suggestion-sub">${escapeHtml(item.subLabel)}</div>
+        </div>
+      </div>
+    `).join(""));
+  }
+
+  if (mapSuggestions.length) {
+    parts.push(`<div class="suggestion-section-title">Nearby location ideas</div>`);
+    parts.push(mapSuggestions.map((place, index) => `
+      <div class="suggestion-item" data-source="map" data-index="${index}">
+        <span class="material-symbols-rounded">${escapeHtml(place.icon)}</span>
+        <div>
+          <div class="suggestion-main">${escapeHtml(place.label)}</div>
+          <div class="suggestion-sub">${escapeHtml(place.subLabel)}</div>
+        </div>
+      </div>
+    `).join(""));
+  }
+
+  if (!parts.length) {
+    return `<div class="suggestion-empty">No listed location found yet. Continue typing or pick a nearby location suggestion.</div>`;
+  }
+
+  return parts.join("");
+}
+
+function attachSuggestionEvents(databaseSuggestions, mapSuggestions) {
+  const box = document.getElementById("searchSuggestions");
+  if (!box) return;
+
+  box.querySelectorAll(".suggestion-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const source = item.dataset.source;
+      const index = Number(item.dataset.index);
+
+      if (source === "database") {
+        const suggestion = databaseSuggestions[index];
+        selectedSearchPlace = null;
+        document.getElementById("search").value = suggestion.value || suggestion.label;
+        hideSuggestionBox();
+        loadRooms(suggestion.value || suggestion.label);
+        return;
+      }
+
+      const place = mapSuggestions[index];
+      selectedSearchPlace = place;
+      document.getElementById("search").value = place.label;
+      hideSuggestionBox();
+      loadRooms(place.label, place);
+    });
+  });
+}
+
+async function fetchLocationSearchSuggestions(value) {
+  const searchText = cleanSearchTerm(value);
+  const box = document.getElementById("searchSuggestions");
+
+  if (!box || searchText.length < 1) {
+    hideSuggestionBox();
+    return;
+  }
+
+  const requestId = ++suggestionRequestId;
+
+  try {
+    const databaseSuggestions = await fetchDatabaseSuggestions(searchText);
+    let mapSuggestions = [];
+
+    // Database comes first. Map/location ideas are added only as a helper for nearby-area fallback.
+    if (searchText.length >= 2 && databaseSuggestions.length < 6) {
+      try {
+        mapSuggestions = await fetchMapSuggestions(searchText);
+      } catch (mapErr) {
+        console.warn("Map suggestion error", mapErr);
+      }
+    }
+
+    if (requestId !== suggestionRequestId) return;
+
+    showSuggestionBox(renderSuggestionList(databaseSuggestions, mapSuggestions));
+    attachSuggestionEvents(databaseSuggestions, mapSuggestions);
+  } catch (err) {
+    console.warn("Location suggestion error", err);
+    hideSuggestionBox();
+  }
+}
+
+// Kept as an alias so any old call still works.
+function fetchLocationSuggestions(value) {
+  return fetchLocationSearchSuggestions(value);
+}
+
+async function geocodeLocation(text) {
+  const locationText = cleanSearchTerm(text);
+  if (!locationText) return null;
+
+  const cacheKey = "geo_" + locationText.toLowerCase();
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+    if (cached && cached.lat && cached.lon) return cached;
+  } catch (e) {}
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q=${encodeURIComponent(locationText + " " + LOCATION_CONTEXT)}`;
+    const response = await fetch(url, { headers: { "Accept": "application/json" } });
+    const data = await response.json();
+    if (!data || !data[0]) return null;
+
+    const result = {
+      label: getPlaceLabel(data[0]),
+      lat: Number(data[0].lat),
+      lon: Number(data[0].lon)
+    };
+
+    localStorage.setItem(cacheKey, JSON.stringify(result));
+    return result;
+  } catch (err) {
+    console.warn("Geocoding error", err);
+    return null;
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function distanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const toRad = deg => deg * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function roomHasCoordinates(room) {
+  const lat = Number(room.latitude || room.lat);
+  const lon = Number(room.longitude || room.lng || room.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return { lat, lon };
+}
+
+async function getRoomCoordinates(room) {
+  const existing = roomHasCoordinates(room);
+  if (existing) return existing;
+  if (!room.location) return null;
+  return await geocodeLocation(room.location);
+}
+
+async function findNearbyRooms(search, selectedPlace = null) {
+  const target = selectedPlace || await geocodeLocation(search);
+  if (!target || !Number.isFinite(target.lat) || !Number.isFinite(target.lon)) return [];
+
+  const { data, error } = await db
+    .from("room_posts")
+    .select("*, users!room_posts_user_id_fkey(name)")
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  const nearby = [];
+
+  for (const room of data) {
+    const coords = await getRoomCoordinates(room);
+    if (!coords) continue;
+
+    const km = distanceKm(target.lat, target.lon, coords.lat, coords.lon);
+    room._distanceKm = km;
+    nearby.push(room);
+
+    // Be gentle with OpenStreetMap/Nominatim when room locations need geocoding.
+    if (!roomHasCoordinates(room)) await sleep(250);
+  }
+
+  nearby.sort((a, b) => a._distanceKm - b._distanceKm);
+
+  let filtered = nearby.filter(room => room._distanceKm <= 10);
+  if (!filtered.length) filtered = nearby.filter(room => room._distanceKm <= 18);
+
+  return filtered.slice(0, 12);
+}
+
+/* LOAD ROOMS */
+async function loadRooms(search = "", selectedPlace = null) {
+  const cleanSearch = cleanSearchTerm(search);
+  let query = db.from("room_posts")
+    .select("*, users!room_posts_user_id_fkey(name)")
+    .eq("status", "active");
+
+  if (cleanSearch) {
+    // Top search is only for location/area. Other property details are controlled by filters below.
+    query = query.ilike("location", `%${cleanSearch}%`);
+  }
+
+  query = applyFiltersToQuery(query);
+
+  const { data, error } = await query.order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    showAppPopup(error.message, "Error");
+    return;
+  }
+
+  if (cleanSearch && (!data || data.length === 0)) {
+    const nearbyRooms = (await findNearbyRooms(cleanSearch, selectedPlace)).filter(roomMatchesActiveFilters);
+
+    if (nearbyRooms.length > 0) {
+      renderRooms(nearbyRooms, `No exact property found in “${cleanSearch}”. Showing nearby area properties with your selected filters.`);
+      return;
+    }
+  }
+
+  renderRooms(data);
+}
+
+/* RENDER ROOMS */
+function renderRooms(rooms, statusText = "") {
+  const container = document.getElementById("roomList");
+  container.innerHTML = statusText ? `<div class="search-status"><span class="material-symbols-rounded">travel_explore</span><span>${statusText}</span></div>` : "";
+
+  if (!rooms || rooms.length === 0) {
+    container.innerHTML += `
+      <div class="no-results">
+        <span class="material-symbols-rounded" style="font-size: 56px; color: #CBD5E1; margin-bottom: 16px; display: block;">search_off</span>
+        <p style="font-size: 16px; font-weight: 500; color: #0F172A;">No rooms found for your search.</p>
+        <p style="font-size: 14px; margin-top: 8px;">Try adjusting your filters.</p>
+      </div>`;
+    return;
+  }
+
+  rooms.forEach(room => {
+    let img = "https://via.placeholder.com/400x300?text=No+Image";
+    let imagesArr = [];
+
+    if (room.images && room.images.length > 0) {
+      imagesArr = room.images.split(",").map(s => s.trim()).filter(Boolean);
+      if (imagesArr.length > 0) img = imagesArr[0];
+    } else {
+      imagesArr = [img];
+    }
+    
+    let brokerageText = "";
+    let isNoBrokerage = false;
+    if (room.brokerage_type === "No Brokerage" || !room.brokerage_type) {
+      brokerageText = "No Brokerage";
+      isNoBrokerage = true;
+    } else if (room.brokerage_amount) {
+      brokerageText = `Brokerage: ₹${room.brokerage_amount}`;
+    } else {
+      brokerageText = `Brokerage: ${room.brokerage_type}`; 
+    }
+
+    let actions = "";
+
+    if (room.show_contact && room.contact_number) {
+      actions += `
+        <button class="btn-action btn-call" onclick="triggerAction(event, 'call', '${room.id}', '${room.contact_number}')">
+          <span class="material-symbols-rounded" style="font-size: 18px;">call</span> Call
+        </button>
+      `;
+    }
+
+    if (room.show_whatsapp && room.whatsapp_number) {
+      actions += `
+        <button class="btn-action btn-wa" onclick="triggerAction(event, 'wa', '${room.id}', '${room.whatsapp_number}')">
+          <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> WhatsApp
+        </button>
+      `;
+    }
+
+    actions += `
+      <button class="btn-action btn-chat" onclick="startChat(event, '${room.id}', '${room.user_id}')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">forum</span> Chat
+      </button>
+    `;
+
+    // owner avatar + name
+    const ownerObj = room.users || room.user || {};
+    const ownerName = ownerObj.name || 'User';
+    const ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
+
+    // build slides markup (sliding track)
+    const slidesHtml = imagesArr.map((src) => `
+        <img class="slide" src="${src}" alt="${room.title}">`).join('');
+
+    container.innerHTML += `
+      <div class="card" onclick="openRoom('${room.id}')">
+        <div class="card-img-wrapper">
+          <div class="slides-track">${slidesHtml}</div>
+          <div class="price-badge">₹${room.rent}</div>
+        </div>
+        <div class="card-content">
+          <div class="title">${room.title}</div>
+          <div class="owner-name"><img class="owner-avatar" src="${ownerAvatar}" alt="owner"> ${ownerName}</div>
+          
+          <div class="location">
+            <span class="material-symbols-rounded">location_on</span> 
+            ${room.location}
+          </div>
+
+          <div class="details-row">
+            <div class="detail-tag">
+              <span class="material-symbols-rounded">apartment</span>
+              ${room.type}
+            </div>
+            <div class="detail-tag">
+              <span class="material-symbols-rounded">security</span>
+              Dep: ₹${room.deposit}
+            </div>
+            <div class="detail-tag ${isNoBrokerage ? 'highlight' : ''}">
+              <span class="material-symbols-rounded">handshake</span>
+              ${brokerageText}
+            </div>
+          </div>
+
+          <div class="card-actions">
+            ${actions}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+/* Initialize card sliders (auto-advance) */
+function initCardSliders() {
+  // horizontal right-to-left sliding, autoplay every 1s
+  document.querySelectorAll('.card-img-wrapper').forEach(wrapper => {
+    // clear existing interval if present
+    if (wrapper._sliderInterval) {
+      clearInterval(wrapper._sliderInterval);
+      wrapper._sliderInterval = null;
+    }
+
+    const track = wrapper.querySelector('.slides-track');
+    if (!track) return;
+    const slides = track.querySelectorAll('img.slide');
+    const len = slides.length;
+    if (!len || len <= 1) return;
+
+    let idx = 0;
+    // ensure starting position
+    track.style.transform = `translateX(-${idx * 100}%)`;
+
+    // autoplay every 1s (1000ms)
+    wrapper._sliderInterval = setInterval(() => {
+      idx = (idx + 1) % len;
+      track.style.transform = `translateX(-${idx * 100}%)`;
+    }, 1000);
+
+    // pause on hover (desktop)
+    wrapper.addEventListener('mouseenter', () => {
+      if (wrapper._sliderInterval) {
+        clearInterval(wrapper._sliderInterval);
+        wrapper._sliderInterval = null;
+      }
+    });
+
+    wrapper.addEventListener('mouseleave', () => {
+      if (wrapper._sliderInterval) return;
+      wrapper._sliderInterval = setInterval(() => {
+        idx = (idx + 1) % len;
+        track.style.transform = `translateX(-${idx * 100}%)`;
+      }, 1000);
+    });
+  });
+}
+
+// Re-init sliders after rendering rooms
+const originalRenderRooms = renderRooms;
+renderRooms = function(rooms, statusText = "") {
+  originalRenderRooms(rooms, statusText);
+  initCardSliders();
+}
+
+/* REAL-TIME LOCATION SEARCH + LIVE LOCATION SUGGESTIONS */
+const searchInput = document.getElementById("search");
+
+searchInput.addEventListener("input", (e) => {
+  const value = e.target.value.trim();
+  selectedSearchPlace = null;
+
+  clearTimeout(suggestionTimeout);
+  suggestionTimeout = setTimeout(() => {
+    fetchLocationSearchSuggestions(value);
+  }, 250);
+
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    loadRooms(value);
+  }, 450);
+});
+
+searchInput.addEventListener("focus", () => {
+  const value = searchInput.value.trim();
+  if (value.length >= 1) fetchLocationSearchSuggestions(value);
+});
+
+document.addEventListener("click", (event) => {
+  const box = document.querySelector(".search-box");
+  if (box && !box.contains(event.target)) hideSuggestionBox();
+});
+
+/* NAVIGATION */
+function go(page) {
+  // Desktop: open in left side panel (30%) and keep index content (70%). Mobile: navigate.
+  if (window.innerWidth >= 900) {
+    // If navigating to index, just close panel
+    if (page.endsWith('index.html') || page === 'index.html') {
+      closePanel();
+      return;
+    }
+    openPanel(page);
+  } else {
+    window.location.href = page;
+  }
+}
+
+function openPanel(page) {
+  try {
+    const panel = document.getElementById('sidePanel');
+    const frame = document.getElementById('panelFrame');
+    const app = document.querySelector('.app-container');
+    // remove nav-left when panel opens
+    app.classList.remove('nav-left');
+    app.classList.add('panel-open');
+    panel.setAttribute('aria-hidden', 'false');
+    // Ensure full absolute URL for relative pages
+    frame.src = page;
+  } catch (e) { console.error(e); window.location.href = page; }
+}
+
+function closePanel() {
+  const panel = document.getElementById('sidePanel');
+  const frame = document.getElementById('panelFrame');
+  const app = document.querySelector('.app-container');
+  app.classList.remove('panel-open');
+  panel.setAttribute('aria-hidden', 'true');
+  // unload iframe to free resources
+  frame.src = 'about:blank';
+  // re-evaluate left-nav positioning after panel closed
+  try { updateNavLeft(); } catch (e) { /* ignore */ }
+}
+
+function updateNavLeft() {
+  const app = document.querySelector('.app-container');
+  const isIndex = location.pathname.endsWith('index.html') || location.pathname === '/' || location.pathname === '';
+  if (window.innerWidth >= 900 && isIndex && !app.classList.contains('panel-open')) {
+    app.classList.add('nav-left');
+  } else {
+    app.classList.remove('nav-left');
+  }
+}
+
+window.addEventListener('resize', updateNavLeft);
+window.addEventListener('load', updateNavLeft);
+
+/* LOGIN CHECK */
+function checkLogin(page) {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) {
+    showAppPopup("Login required", "Please login");
+    if (window.innerWidth >= 900) {
+      // open login in panel and include redirect target
+      openPanel(`user.html?redirect=${encodeURIComponent(page)}`);
+    } else {
+      window.location.href = `user.html?redirect=${page}`;
+    }
+  } else {
+    if (window.innerWidth >= 900) {
+      openPanel(page);
+    } else {
+      window.location.href = page;
+    }
+  }
+}
+
+/* LOGIN CHECK SPECIFICALLY FOR CHAT */
+async function checkLoginForChat(roomId, ownerId) {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) {
+    if (window.innerWidth >= 900) {
+      openPanel('user.html?redirect=chat');
+    } else {
+      window.location.href = "user.html?redirect=chat";
+    }
+  } else {
+    const target = `chat.html?room=${roomId}&user=${ownerId}&source=index`;
+    if (window.innerWidth >= 900) {
+      openPanel(target);
+    } else {
+      window.location.href = target;
+    }
+  }
+}
+
+/* OPEN ROOM */
+function openRoom(id) {
+  window.location.href = `roomdetails.html?id=${id}`;
+}
+
+/* START CHAT FUNCTION */
+function startChat(event, roomId, ownerId) {
+  event.stopPropagation(); // prevent card click
+
+  localStorage.setItem("chat_redirect", JSON.stringify({
+    roomId,
+    ownerId
+  }));
+
+  checkLoginForChat(roomId, ownerId);
+}
+
+/* TRIGGER CALL/WA FUNCTION */
+function triggerAction(event, type, roomId, info) {
+  event.stopPropagation();
+  window.location.href = `roomdetails.html?id=${roomId}&auto=${type}&info=${info}`;
+}
+
+/* OPEN CHAT LIST FUNCTION */
+function openChatList() {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) {
+    if (window.innerWidth >= 900) {
+      openPanel('user.html?redirect=chatlist');
+    } else {
+      window.location.href = "user.html?redirect=chatlist";
+    }
+  } else {
+    if (window.innerWidth >= 900) {
+      openPanel('chat.html');
+    } else {
+      window.location.href = "chat.html";
+    }
+  }
+}
+
+/* =========================================
+   NEW NOTIFICATION LOGIC (AUTO-READ)
+   ========================================= */
+
+/* OPEN NOTIFICATIONS */
+async function openNotifications() {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) {
+    window.location.href = "user.html";
+    return;
+  }
+
+  document.getElementById("notificationPanel").style.right = "0";
+  loadNotifications();
+}
+
+/* CLOSE NOTIFICATIONS */
+function closeNotifications() {
+  document.getElementById("notificationPanel").style.right = "-100%";
+}
+
+/* LOAD NOTIFICATIONS (UPDATED TO AUTO MARK AS READ) */
+async function loadNotifications() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  const { data } = await db
+    .from("notifications")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (!data) return;
+
+  renderNotifications(data);
+
+  // AUTO MARK AS READ AFTER LOADING
+  await db
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("user_id", user.id)
+    .eq("is_read", false);
+}
+
+/* RENDER NOTIFICATIONS */
+function renderNotifications(list) {
+  const container = document.getElementById("notificationList");
+  container.innerHTML = "";
+
+  if (!list || list.length === 0) {
+    container.innerHTML = "<p style='padding:15px; color:gray;'>No notifications</p>";
+    return;
+  }
+
+  list.forEach(n => {
+    container.innerHTML += `
+      <div style="
+        padding:12px;
+        border-bottom:1px solid #eee;
+        font-weight:${n.is_read ? "normal" : "bold"};
+        background:${n.is_read ? "#fff" : "#eef2ff"};
+      ">
+        <div>${n.title}</div>
+        <div style="font-size:12px;color:gray">${n.message}</div>
+      </div>
+    `;
+  });
+
+  updateNotificationDot(list);
+}
+
+/* RED DOT LOGIC */
+function updateNotificationDot(list) {
+  if (!list) return;
+  const hasUnread = list.some(n => !n.is_read);
+  document.querySelector(".badge").style.display = hasUnread ? "block" : "none";
+}
+
+/* REALTIME SUBSCRIPTION */
+function subscribeNotifications() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  db.channel('notifications')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'notifications',
+      filter: `user_id=eq.${user.id}`
+    }, payload => {
+      console.log("New notification:", payload);
+      loadNotifications(); // refresh
+    })
+    .subscribe();
+}
+
+/* =========================================
+   CHECK NEW MESSAGES (UNIQUE COUNT)
+   ========================================= */
+async function checkNewMessages() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  const { data } = await db
+    .from("messages")
+    .select("sender_id, room_id") // Fetches sender and room
+    .eq("receiver_id", user.id)
+    .eq("is_read", false);
+
+  if (!data) return;
+
+  // 🔥 UNIQUE CHAT COUNT (User + Property combination)
+  const uniqueChats = new Set(
+    data.map(m => m.sender_id + "_" + m.room_id)
+  );
+
+  const count = uniqueChats.size;
+
+  const navFrame = document.getElementById("bottomNavFrame");
+  try {
+    if (navFrame && navFrame.contentWindow) {
+      navFrame.contentWindow.postMessage({ type: "TINGO_MSG_BADGE", count }, "*");
+    }
+  } catch (e) {
+    console.warn("Bottom nav badge update skipped", e);
+  }
+
+  const badge = document.getElementById("msgBadge");
+  if (!badge) return;
+
+  if (count > 0) {
+    badge.innerText = count;
+    badge.style.display = "block";
+  } else {
+    badge.style.display = "none";
+  }
+}
+
+/* =========================================
+   BACKGROUND SYNC FOR ONESIGNAL
+   ========================================= */
+async function syncOneSignalId(user) {
+  const OneSignal = window.OneSignalDeferred || window.OneSignal || [];
+  OneSignal.push(async function(OneSignal) {
+    try {
+      const playerId = await OneSignal.getUserId();
+      // If we got an ID and it's missing or different from what we have locally
+      if (playerId && user.onesignal_id !== playerId) {
+        await db.from("users")
+          .update({ onesignal_id: playerId })
+          .eq("id", user.id);
+        
+        // Update local storage so we don't spam the database
+        user.onesignal_id = playerId;
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+    } catch (err) {
+      console.error("OneSignal Sync Error:", err);
+    }
+  });
+}
+
+
+
+/* UPDATED HOME FEED: dynamic type + brokerage filters, Available/Needed mode, and improved sticky switch */
+function getActiveFilters() {
+  const type = document.getElementById("filterType")?.value || "";
+  const brokerage = document.getElementById("filterBrokerage")?.value || "";
+  return { type, brokerage };
+}
+
+function hasActiveFilters() {
+  const filters = getActiveFilters();
+  return Boolean(filters.type || filters.brokerage);
+}
+
+function updateFilterUI() {
+  const filters = getActiveFilters();
+  const typeFilter = document.getElementById("filterType");
+  const brokerageFilter = document.getElementById("filterBrokerage");
+  const clearBtn = document.getElementById("clearFilters");
+
+  typeFilter?.classList.toggle("filter-active", Boolean(filters.type));
+  brokerageFilter?.classList.toggle("filter-active", Boolean(filters.brokerage));
+  clearBtn?.classList.toggle("visible", hasActiveFilters());
+}
+
+function applyFiltersToQuery(query) {
+  const filters = getActiveFilters();
+
+  if (filters.type) {
+    query = query.ilike("type", `%${filters.type}%`);
+  }
+
+  // Brokerage exists only on room_posts, so apply it only for Rooms Available.
+  if (activePostMode === "available" && filters.brokerage) {
+    if (filters.brokerage === "No Brokerage") {
+      query = query.or("brokerage_type.ilike.%No Brokerage%,brokerage_type.is.null");
+    } else {
+      query = query.ilike("brokerage_type", `%${filters.brokerage}%`);
+    }
+  }
+
+  return query;
+}
+
+function roomMatchesActiveFilters(room) {
+  const filters = getActiveFilters();
+  if (filters.type && !includesText(room.type, filters.type)) return false;
+
+  if (activePostMode === "available" && filters.brokerage) {
+    const roomBrokerage = room.brokerage_type || "No Brokerage";
+    if (!includesText(roomBrokerage, filters.brokerage)) return false;
+  }
+
+  return true;
+}
+
+async function loadFilterOptions() {
+  const [postsResult, requirementsResult] = await Promise.all([
+    db.from("room_posts").select("type, brokerage_type").limit(1000),
+    db.from("room_requirements").select("type").limit(1000)
+  ]);
+
+  if (postsResult.error) console.warn("Room post filter option loading error", postsResult.error);
+  if (requirementsResult.error) console.warn("Requirement filter option loading error", requirementsResult.error);
+
+  const allTypes = [
+    ...(postsResult.data || []).map(row => row.type),
+    ...(requirementsResult.data || []).map(row => row.type)
+  ];
+
+  const brokerageValues = (postsResult.data || [])
+    .map(row => row.brokerage_type || "No Brokerage")
+    .filter(Boolean);
+
+  fillSelectOptions("filterType", allTypes, "All types");
+  fillSelectOptions("filterBrokerage", brokerageValues, "All brokerage");
+  updateFilterUI();
+}
+
+function bindFilterEvents() {
+  ["filterType", "filterBrokerage"].forEach(id => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.addEventListener("change", () => {
+      selectedSearchPlace = null;
+      hideSuggestionBox();
+      updateFilterUI();
+      loadRooms(getCurrentSearchText());
+    });
+  });
+
+  const clearBtn = document.getElementById("clearFilters");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      ["filterType", "filterBrokerage"].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.value = "";
+      });
+      selectedSearchPlace = null;
+      updateFilterUI();
+      loadRooms(getCurrentSearchText());
+    });
+  }
+
+  updateFilterUI();
+}
+
+function setPostMode(mode) {
+  activePostMode = mode === "needed" ? "needed" : "available";
+
+  document.getElementById("modeAvailableBtn")?.classList.toggle("active", activePostMode === "available");
+  document.getElementById("modeNeededBtn")?.classList.toggle("active", activePostMode === "needed");
+  updateFilterUI();
+
+  selectedSearchPlace = null;
+  hideSuggestionBox();
+  loadRooms(getCurrentSearchText());
+}
+
+function getCurrentScrollTop() {
+  const app = document.querySelector(".app-container");
+  if (window.innerWidth >= 900) {
+    return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  }
+  return app ? app.scrollTop : 0;
+}
+
+function updateModeSwitchCompact() {
+  const wrap = document.getElementById("modeSwitchWrap");
+  if (!wrap) return;
+
+  // Desktop has enough space, so keep the full Available/Needed switch sticky and always visible.
+  if (window.innerWidth >= 900) {
+    wrap.classList.remove("compact");
+    modeSwitchLastScroll = getCurrentScrollTop();
+    return;
+  }
+
+  const current = getCurrentScrollTop();
+  const diff = current - modeSwitchLastScroll;
+
+  // Expand immediately when user swipes/scrolls slightly upward, not only at the first post.
+  if (diff < -3) {
+    wrap.classList.remove("compact");
+    modeSwitchExpandedUntil = Date.now() + 650;
+  } else if (current <= 18) {
+    wrap.classList.remove("compact");
+  } else if (diff > 6 && current > 70 && Date.now() > modeSwitchExpandedUntil) {
+    wrap.classList.add("compact");
+  }
+
+  modeSwitchLastScroll = Math.max(0, current);
+}
+
+function setupModeSwitchScroll() {
+  const app = document.querySelector(".app-container");
+  modeSwitchLastScroll = getCurrentScrollTop();
+  if (app) app.addEventListener("scroll", updateModeSwitchCompact, { passive: true });
+  window.addEventListener("scroll", updateModeSwitchCompact, { passive: true });
+  window.addEventListener("resize", () => {
+    modeSwitchLastScroll = getCurrentScrollTop();
+    updateModeSwitchCompact();
+  });
+}
+
+async function fetchDatabaseSuggestions(searchText) {
+  let tableName = activePostMode === "needed" ? "room_requirements" : "room_posts";
+  let query = db
+    .from(tableName)
+    .select("location, type")
+    .ilike("location", `%${searchText}%`);
+
+  if (activePostMode === "available") {
+    query = query.eq("status", "active");
+  }
+
+  query = applyFiltersToQuery(query);
+
+  const { data, error } = await query.limit(60);
+
+  if (error) {
+    console.warn("Database suggestion error", error);
+    return [];
+  }
+
+  return buildDatabaseSuggestions(data || [], searchText);
+}
+
+async function findNearbyRooms(search, selectedPlace = null) {
+  if (activePostMode === "needed") return [];
+
+  const target = selectedPlace || await geocodeLocation(search);
+  if (!target || !Number.isFinite(target.lat) || !Number.isFinite(target.lon)) return [];
+
+  const { data, error } = await db
+    .from("room_posts")
+    .select("*, users!room_posts_user_id_fkey(name)")
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  const nearby = [];
+
+  for (const room of data) {
+    const coords = await getRoomCoordinates(room);
+    if (!coords) continue;
+
+    const km = distanceKm(target.lat, target.lon, coords.lat, coords.lon);
+    room._distanceKm = km;
+    nearby.push(room);
+
+    if (!roomHasCoordinates(room)) await sleep(250);
+  }
+
+  nearby.sort((a, b) => a._distanceKm - b._distanceKm);
+
+  let filtered = nearby.filter(room => room._distanceKm <= 10);
+  if (!filtered.length) filtered = nearby.filter(room => room._distanceKm <= 18);
+
+  return filtered.slice(0, 12);
+}
+
+async function loadRooms(search = "", selectedPlace = null) {
+  const cleanSearch = cleanSearchTerm(search);
+
+  if (activePostMode === "needed") {
+    let query = db
+      .from("room_requirements")
+      .select("*, users!room_requirements_user_id_fkey(name)")
+      .order("created_at", { ascending: false });
+
+    if (cleanSearch) {
+      query = query.or(`location.ilike.%${cleanSearch}%,title.ilike.%${cleanSearch}%,description.ilike.%${cleanSearch}%,type.ilike.%${cleanSearch}%`);
+    }
+
+    query = applyFiltersToQuery(query);
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error(error);
+      showAppPopup(error.message, "Error");
+      return;
+    }
+
+    const visible = (data || []).filter(item => !String(item.status || "").toLowerCase().startsWith("inactive"));
+    renderRooms(visible);
+    return;
+  }
+
+  let query = db.from("room_posts")
+    .select("*, users!room_posts_user_id_fkey(name)")
+    .eq("status", "active");
+
+  if (cleanSearch) {
+    query = query.ilike("location", `%${cleanSearch}%`);
+  }
+
+  query = applyFiltersToQuery(query);
+
+  const { data, error } = await query.order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    showAppPopup(error.message, "Error");
+    return;
+  }
+
+  if (cleanSearch && (!data || data.length === 0)) {
+    const nearbyRooms = (await findNearbyRooms(cleanSearch, selectedPlace)).filter(roomMatchesActiveFilters);
+
+    if (nearbyRooms.length > 0) {
+      renderRooms(nearbyRooms, `No exact property found in “${cleanSearch}”. Showing nearby area properties with your selected filters.`);
+      return;
+    }
+  }
+
+  renderRooms(data);
+}
+
+function renderAvailableCard(room) {
+  let img = "https://via.placeholder.com/400x300?text=No+Image";
+  let imagesArr = [];
+
+  if (room.images && room.images.length > 0) {
+    imagesArr = room.images.split(",").map(s => s.trim()).filter(Boolean);
+    if (imagesArr.length > 0) img = imagesArr[0];
+  } else {
+    imagesArr = [img];
+  }
+
+  let brokerageText = "";
+  let isNoBrokerage = false;
+  if (room.brokerage_type === "No Brokerage" || !room.brokerage_type) {
+    brokerageText = "No Brokerage";
+    isNoBrokerage = true;
+  } else if (room.brokerage_amount) {
+    brokerageText = `Brokerage: ₹${room.brokerage_amount}`;
+  } else {
+    brokerageText = `Brokerage: ${room.brokerage_type}`;
+  }
+
+  let actions = "";
+
+  if (room.show_contact && room.contact_number) {
+    actions += `
+      <button class="btn-action btn-call" onclick="triggerAction(event, 'call', '${escapeHtml(room.id)}', '${escapeHtml(room.contact_number)}', 'available')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">call</span> Call
+      </button>
+    `;
+  }
+
+  if (room.show_whatsapp && room.whatsapp_number) {
+    actions += `
+      <button class="btn-action btn-wa" onclick="triggerAction(event, 'wa', '${escapeHtml(room.id)}', '${escapeHtml(room.whatsapp_number)}', 'available')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> WhatsApp
+      </button>
+    `;
+  }
+
+  actions += `
+    <button class="btn-action btn-chat" onclick="startChat(event, '${escapeHtml(room.id)}', '${escapeHtml(room.user_id)}')">
+      <span class="material-symbols-rounded" style="font-size: 18px;">forum</span> Chat
+    </button>
+  `;
+
+  const ownerObj = room.users || room.user || {};
+  const ownerName = ownerObj.name || "User";
+  const ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
+  const slidesHtml = imagesArr.map(src => `<img class="slide" src="${escapeHtml(src)}" alt="${escapeHtml(room.title || 'Room')}">`).join('');
+
+  return `
+    <div class="card" onclick="openRoom('${escapeHtml(room.id)}', 'available')">
+      <div class="card-img-wrapper">
+        <div class="slides-track">${slidesHtml}</div>
+        <div class="price-badge">₹${escapeHtml(room.rent || '')}</div>
+      </div>
+      <div class="card-content">
+        <div class="title">${escapeHtml(room.title || '')}</div>
+        <div class="owner-name"><img class="owner-avatar" src="${escapeHtml(ownerAvatar)}" alt="owner"> ${escapeHtml(ownerName)}</div>
+
+        <div class="location">
+          <span class="material-symbols-rounded">location_on</span>
+          ${escapeHtml(room.location || '')}
+        </div>
+
+        <div class="details-row">
+          <div class="detail-tag"><span class="material-symbols-rounded">apartment</span>${escapeHtml(room.type || '')}</div>
+          <div class="detail-tag"><span class="material-symbols-rounded">security</span>Dep: ₹${escapeHtml(room.deposit || '0')}</div>
+          <div class="detail-tag ${isNoBrokerage ? 'highlight' : ''}"><span class="material-symbols-rounded">handshake</span>${escapeHtml(brokerageText)}</div>
+        </div>
+
+        <div class="card-actions">${actions}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRequirementCard(req) {
+  let actions = "";
+
+  if (req.show_contact && req.contact_number) {
+    actions += `
+      <button class="btn-action btn-call" onclick="triggerAction(event, 'call', '${escapeHtml(req.id)}', '${escapeHtml(req.contact_number)}', 'requirement')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">call</span> Call
+      </button>
+    `;
+  }
+
+  if (req.show_whatsapp && req.whatsapp_number) {
+    actions += `
+      <button class="btn-action btn-wa" onclick="triggerAction(event, 'wa', '${escapeHtml(req.id)}', '${escapeHtml(req.whatsapp_number)}', 'requirement')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> WhatsApp
+      </button>
+    `;
+  }
+
+  actions += `
+    <button class="btn-action btn-chat" onclick="startChat(event, '${escapeHtml(req.id)}', '${escapeHtml(req.user_id)}')">
+      <span class="material-symbols-rounded" style="font-size: 18px;">forum</span> Chat
+    </button>
+  `;
+
+  const ownerObj = req.users || req.user || {};
+  const ownerName = req.name || ownerObj.name || "User";
+
+  return `
+    <div class="card requirement-card" onclick="openRoom('${escapeHtml(req.id)}', 'requirement')">
+      <div class="requirement-hero">
+        <div class="requirement-label"><span class="material-symbols-rounded" style="font-size:15px;">person_search</span>Room Needed</div>
+        <div class="requirement-vector"><span class="material-symbols-rounded">travel_explore</span></div>
+        <div class="title">${escapeHtml(req.title || 'Room requirement')}</div>
+        <div class="requirement-desc">${escapeHtml(req.description || 'Looking for a suitable room or roommate.')}</div>
+      </div>
+      <div class="card-content">
+        <div class="owner-name"><span class="material-symbols-rounded">account_circle</span> ${escapeHtml(ownerName)}</div>
+        <div class="location"><span class="material-symbols-rounded">location_on</span>${escapeHtml(req.location || 'Preferred location not added')}</div>
+        <div class="details-row">
+          <div class="detail-tag highlight"><span class="material-symbols-rounded">apartment</span>${escapeHtml(req.type || 'Any type')}</div>
+          <div class="detail-tag"><span class="material-symbols-rounded">verified</span>${escapeHtml(req.status || 'pending')}</div>
+        </div>
+        <div class="card-actions">${actions}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRooms(items, statusText = "") {
+  const container = document.getElementById("roomList");
+  const noun = activePostMode === "needed" ? "requirements" : "rooms";
+  container.innerHTML = statusText ? `<div class="search-status"><span class="material-symbols-rounded">travel_explore</span><span>${statusText}</span></div>` : "";
+
+  if (!items || items.length === 0) {
+    container.innerHTML += `
+      <div class="no-results">
+        <span class="material-symbols-rounded" style="font-size: 56px; color: #CBD5E1; margin-bottom: 16px; display: block;">search_off</span>
+        <p style="font-size: 16px; font-weight: 500; color: #0F172A;">No ${noun} found for your search.</p>
+        <p style="font-size: 14px; margin-top: 8px;">Try adjusting your search or type filter.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML += items.map(item => activePostMode === "needed" ? renderRequirementCard(item) : renderAvailableCard(item)).join("");
+
+  if (activePostMode === "available") {
+    initCardSliders();
+  }
+}
+
+function openRoom(id, source = null) {
+  const finalSource = source === "requirement" || activePostMode === "needed" ? "requirement" : "available";
+  if (finalSource === "requirement") {
+    window.location.href = `roomdetails.html?id=${id}&source=requirement`;
+  } else {
+    window.location.href = `roomdetails.html?id=${id}`;
+  }
+}
+
+function triggerAction(event, type, roomId, info, source = null) {
+  event.stopPropagation();
+  const sourceParam = source === "requirement" || activePostMode === "needed" ? "&source=requirement" : "";
+  window.location.href = `roomdetails.html?id=${roomId}${sourceParam}&auto=${type}&info=${info}`;
+}
+
+
+
+
+
+/* ADVANCED SEARCH ENGINE + THEME POPUP */
+const PUNE_CENTER = { lat: 18.5204, lon: 73.8567 };
+const PUNE_SERVICE_RADIUS_KM = 55;
+let appPopupTimer = null;
+
+function showAppPopup(message, title = "TingoRooms") {
+  const popup = document.getElementById("appPopup");
+  const titleEl = document.getElementById("appPopupTitle");
+  const messageEl = document.getElementById("appPopupMessage");
+  if (!popup || !messageEl) return;
+  if (titleEl) titleEl.textContent = title;
+  messageEl.textContent = message;
+  popup.classList.remove("hidden");
+  clearTimeout(appPopupTimer);
+  appPopupTimer = setTimeout(hideAppPopup, 4200);
+}
+
+function hideAppPopup() {
+  const popup = document.getElementById("appPopup");
+  if (popup) popup.classList.add("hidden");
+}
+
+function runManualSearch() {
+  const input = document.getElementById("search");
+  const value = input ? input.value.trim() : "";
+  hideSuggestionBox();
+  loadRooms(value, selectedSearchPlace);
+}
+
+function isInsidePuneServiceArea(place) {
+  if (!place || !Number.isFinite(Number(place.lat)) || !Number.isFinite(Number(place.lon))) return true;
+  return distanceKm(PUNE_CENTER.lat, PUNE_CENTER.lon, Number(place.lat), Number(place.lon)) <= PUNE_SERVICE_RADIUS_KM;
+}
+
+function getPostTimestamp(item) {
+  return item.updated_at || item.created_at || item.inserted_at || item.date || "";
+}
+
+function formatPostDate(item) {
+  const raw = getPostTimestamp(item);
+  if (!raw) return "Recently posted";
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "Recently posted";
+
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.round((startToday - startDate) / 86400000);
+  const prefix = item.updated_at && item.updated_at !== item.created_at ? "Updated" : "Posted";
+
+  if (diffDays === 0) return `${prefix} today`;
+  if (diffDays === 1) return `${prefix} yesterday`;
+
+  return `${prefix} ${date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}`;
+}
+
+function buildSearchStatus(searchText, rows, targetPlace) {
+  if (!searchText) return "";
+  const label = targetPlace?.label || targetPlace?.displayName || searchText;
+  const hasExact = rows.some(row => Number(row._distanceKm) <= 1.25 || includesText(row.location, searchText));
+  const closest = rows.find(row => Number.isFinite(Number(row._distanceKm)));
+
+  if (targetPlace && !isInsidePuneServiceArea(targetPlace)) {
+    return `We are currently serviceable in Pune only. Showing the closest Pune listings instead of “${searchText}”.`;
+  }
+
+  if (String(searchText).toLowerCase().includes("pune")) {
+    return `We are currently serviceable in Pune. Showing Pune area posts nearest to your search.`;
+  }
+
+  if (hasExact) {
+    return `Showing posts nearest to “${label}”.`;
+  }
+
+  if (closest) {
+    return `No exact match found for “${searchText}”. Showing nearby listed areas first.`;
+  }
+
+  return `No exact match found for “${searchText}”. Showing related listed areas if available.`;
+}
+
+async function loadAllSearchRowsForMode() {
+  if (activePostMode === "needed") {
+    let query = db
+      .from("room_requirements")
+      .select("*, users!room_requirements_user_id_fkey(name)")
+      .order("created_at", { ascending: false });
+
+    query = applyFiltersToQuery(query);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).filter(item => !String(item.status || "").toLowerCase().startsWith("inactive"));
+  }
+
+  let query = db
+    .from("room_posts")
+    .select("*, users!room_posts_user_id_fkey(name)")
+    .eq("status", "active");
+
+  query = applyFiltersToQuery(query);
+  const { data, error } = await query.order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+function textSearchRows(rows, searchText) {
+  const term = cleanSearchTerm(searchText).toLowerCase();
+  if (!term) return rows;
+  const words = term.split(" ").filter(Boolean);
+
+  function looseWordMatch(text, word) {
+    if (!word) return false;
+    if (text.includes(word)) return true;
+    return text.split(/\s+/).some(part => part.startsWith(word) || word.startsWith(part));
+  }
+
+  return (rows || []).filter(item => {
+    const haystack = cleanSearchTerm([
+      item.location,
+      item.title,
+      item.description,
+      item.type,
+      item.brokerage_type,
+      item.name,
+      item.users?.name
+    ].filter(Boolean).join(" ")).toLowerCase();
+
+    if (haystack.includes(term)) return true;
+
+    // Multi-word address search like "bhusari colony kothrud" should match
+    // when all words are present anywhere in the detailed address/post text.
+    if (words.length > 1 && words.every(word => looseWordMatch(haystack, word))) return true;
+
+    // While typing, show related matches for useful 3+ character fragments.
+    return words.some(word => word.length >= 3 && looseWordMatch(haystack, word));
+  });
+}
+
+async function sortRowsByTarget(rows, target) {
+  if (!target || !Number.isFinite(Number(target.lat)) || !Number.isFinite(Number(target.lon))) return [];
+  const sorted = [];
+
+  for (const row of rows || []) {
+    const coords = await getRoomCoordinates(row);
+    if (!coords) continue;
+    const km = distanceKm(Number(target.lat), Number(target.lon), coords.lat, coords.lon);
+    sorted.push({ ...row, _distanceKm: km });
+    if (!roomHasCoordinates(row)) await sleep(140);
+  }
+
+  sorted.sort((a, b) => Number(a._distanceKm) - Number(b._distanceKm));
+  return sorted;
+}
+
+async function getTargetFromSearch(searchText, selectedPlace = null) {
+  if (selectedPlace && Number.isFinite(Number(selectedPlace.lat)) && Number.isFinite(Number(selectedPlace.lon))) return selectedPlace;
+  const geo = await geocodeLocation(searchText);
+  if (!geo) return null;
+  return geo;
+}
+
+async function loadRooms(search = "", selectedPlace = null) {
+  const cleanSearch = cleanSearchTerm(search);
+
+  try {
+    const allRows = await loadAllSearchRowsForMode();
+
+    if (!cleanSearch) {
+      renderRooms(allRows);
+      return;
+    }
+
+    const target = await getTargetFromSearch(cleanSearch, selectedPlace || selectedSearchPlace);
+    const exactRows = textSearchRows(allRows, cleanSearch);
+    let finalRows = [];
+    let statusText = "";
+    const noun = activePostMode === "needed" ? "requirements" : "rooms";
+
+    const rowKey = row => String(row?.id || `${row?.title || ''}|${row?.location || ''}|${row?.created_at || ''}`);
+    const seenRows = new Set();
+    const addUniqueRows = rows => {
+      (rows || []).forEach(row => {
+        const key = rowKey(row);
+        if (!key || seenRows.has(key)) return;
+        seenRows.add(key);
+        finalRows.push(row);
+      });
+    };
+
+    if (target) {
+      if (!isInsidePuneServiceArea(target)) {
+        showAppPopup("We are currently serviceable in Pune only. You can still view the closest Pune listings below.", "Service area");
+      }
+
+      const distanceSorted = await sortRowsByTarget(allRows, target);
+      const distanceMap = new Map(distanceSorted.map(row => [rowKey(row), row]));
+      const exactWithDistance = exactRows.map(row => distanceMap.get(rowKey(row)) || row);
+      const nearbyRows = distanceSorted.filter(row => {
+        const km = Number(row._distanceKm);
+        return Number.isFinite(km) && km <= 35;
+      });
+
+      // Same behavior for Rooms Available and Rooms Needed:
+      // exact/related rows + nearby rows, then final feed sorted nearest to farthest.
+      addUniqueRows(exactWithDistance);
+      addUniqueRows(nearbyRows);
+
+      if (!finalRows.length) {
+        addUniqueRows(distanceSorted);
+      }
+
+      finalRows.sort((a, b) => {
+        const da = Number(a?._distanceKm);
+        const db = Number(b?._distanceKm);
+        const aHasDistance = Number.isFinite(da);
+        const bHasDistance = Number.isFinite(db);
+        if (aHasDistance && bHasDistance) return da - db;
+        if (aHasDistance) return -1;
+        if (bHasDistance) return 1;
+        return new Date(getPostTimestamp(b) || 0) - new Date(getPostTimestamp(a) || 0);
+      });
+
+      if (exactRows.length && finalRows.length > exactRows.length) {
+        statusText = `Showing nearest ${noun} for “${cleanSearch}”. Exact/related matches and nearby posts are sorted by distance.`;
+      } else if (exactRows.length) {
+        statusText = `Showing nearest matching ${noun} for “${cleanSearch}”.`;
+      } else {
+        statusText = buildSearchStatus(cleanSearch, finalRows, target);
+      }
+    } else {
+      addUniqueRows(exactRows);
+      statusText = finalRows.length
+        ? `Showing related ${noun} for “${cleanSearch}”. Pick a location suggestion for more accurate nearby results.`
+        : `No exact match found for “${cleanSearch}”. Try selecting one of the location suggestions.`;
+    }
+
+    renderRooms(finalRows.slice(0, 36), statusText);
+  } catch (error) {
+    console.error(error);
+    showAppPopup(error.message || "Something went wrong while loading posts.", "Search error");
+  }
+}
+
+async function fetchDatabaseSuggestions(searchText) {
+  const tableName = activePostMode === "needed" ? "room_requirements" : "room_posts";
+  const term = cleanSearchTerm(searchText).toLowerCase();
+  const safeTerm = term.replace(/[%_,]/g, " ").replace(/\s+/g, " ").trim();
+
+  async function runSuggestionQuery(selectFields, useServerSearch = false) {
+    let query = db.from(tableName).select(selectFields).limit(useServerSearch ? 120 : 450);
+    if (activePostMode === "available") query = query.eq("status", "active");
+    query = applyFiltersToQuery(query);
+
+    // Server-side partial search makes suggestions appear while typing,
+    // e.g. "katr" can return "Katraj" without waiting for exact spelling.
+    if (useServerSearch && safeTerm) {
+      query = query.or(`location.ilike.%${safeTerm}%,title.ilike.%${safeTerm}%,type.ilike.%${safeTerm}%`);
+    }
+
+    return await query;
+  }
+
+  async function loadSuggestionRows(selectFields) {
+    let searched = { data: [], error: null };
+    if (safeTerm) searched = await runSuggestionQuery(selectFields, true);
+    if (!searched.error && searched.data && searched.data.length) return searched;
+
+    // Fallback: load more rows and filter locally so partial/location words still show like YouTube suggestions.
+    const broad = await runSuggestionQuery(selectFields, false);
+    if (!broad.error) return broad;
+    return searched.error ? searched : broad;
+  }
+
+  let { data, error } = await loadSuggestionRows("id, title, location, type, latitude, longitude");
+
+  // If any older table does not have latitude/longitude, keep suggestions working without breaking the page.
+  if (error) {
+    const message = String(error.message || "").toLowerCase();
+    if (message.includes("latitude") || message.includes("longitude") || message.includes("column") || message.includes("schema")) {
+      const fallback = await loadSuggestionRows("id, title, location, type");
+      data = fallback.data;
+      error = fallback.error;
+    }
+  }
+
+  if (error) {
+    console.warn("Database suggestion error", error);
+    return [];
+  }
+
+  const words = term.split(" ").filter(Boolean);
+  const rows = (data || []).filter(row => {
+    const text = [row.location, row.title, row.type].filter(Boolean).join(" ").toLowerCase();
+    if (!term) return true;
+    return text.includes(term) || words.some(word => {
+      if (!word) return false;
+      return text.includes(word) || text.split(/\s+/).some(part => part.startsWith(word) || word.startsWith(part));
+    });
+  });
+
+  return buildDatabaseSuggestions(rows, searchText);
+}
+
+function buildDatabaseSuggestions(rows, searchText) {
+  const suggestions = [];
+  const seen = new Set();
+  const term = cleanSearchTerm(searchText).toLowerCase();
+  const words = term.split(" ").filter(Boolean);
+
+  function cleanLower(value) {
+    return cleanSearchTerm(value).toLowerCase();
+  }
+
+  function looseWordMatch(text, word) {
+    if (!word) return false;
+    if (text.includes(word)) return true;
+    return text.split(/\s+/).some(part => part.startsWith(word) || word.startsWith(part));
+  }
+
+  function matches(value) {
+    const text = cleanLower(value);
+    if (!term) return true;
+    if (text.includes(term)) return true;
+    if (words.length > 1 && words.every(word => looseWordMatch(text, word))) return true;
+    return words.some(word => word.length >= 3 && looseWordMatch(text, word));
+  }
+
+  function scoreLabel(label, isFullAddress = false) {
+    const text = cleanLower(label);
+    let score = isFullAddress ? 40 : 10;
+    if (text === term) score += 100;
+    if (text.startsWith(term)) score += 70;
+    if (text.includes(term)) score += 45;
+    words.forEach(word => {
+      if (text.split(/\s+/).some(part => part.startsWith(word))) score += 12;
+      else if (text.includes(word)) score += 6;
+    });
+    return score;
+  }
+
+  function add(label, subLabel, icon, value, row, score = 0) {
+    const cleanLabel = cleanSearchTerm(label);
+    if (!cleanLabel) return;
+    const key = cleanLabel.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    const coords = roomHasCoordinates(row || {});
+    suggestions.push({
+      source: "database",
+      label: cleanLabel,
+      subLabel,
+      icon,
+      value: cleanSearchTerm(value || cleanLabel),
+      lat: coords?.lat,
+      lon: coords?.lon,
+      displayName: row?.location || cleanLabel,
+      _score: score
+    });
+  }
+
+  (rows || []).forEach(row => {
+    const location = row.location || "";
+    const cleanLocation = cleanSearchTerm(location);
+    const parts = String(location).split(",").map(part => cleanSearchTerm(part)).filter(Boolean);
+
+    // Always prefer full detailed addresses when any part of the address matches.
+    // Example: typing "bhusari colony kothrud" or just "kothrud" can show
+    // "Bhusari Colony, Kothrud, Pune..." instead of only the broad area.
+    if (cleanLocation && matches(cleanLocation)) {
+      add(cleanLocation, activePostMode === "needed" ? "Requirement preferred address" : "Listed address — tap to search nearby", "location_on", cleanLocation, row, scoreLabel(cleanLocation, true));
+    }
+
+    // Also show useful address chunks below, like YouTube-style suggestions.
+    const chunks = [];
+    for (let i = 0; i < parts.length; i++) {
+      chunks.push(parts[i]);
+      if (parts[i + 1]) chunks.push(`${parts[i]}, ${parts[i + 1]}`);
+      if (parts[i + 2]) chunks.push(`${parts[i]}, ${parts[i + 1]}, ${parts[i + 2]}`);
+    }
+
+    chunks.forEach(chunk => {
+      if (matches(chunk)) {
+        add(chunk, cleanLocation ? `From ${cleanLocation}` : "Saved location", "near_me", chunk, row, scoreLabel(chunk, false));
+      }
+    });
+
+    if (row.title && matches(row.title)) {
+      add(row.title, cleanLocation || "Listed post", activePostMode === "needed" ? "person_search" : "home_work", row.location || row.title, row, scoreLabel(row.title, false));
+    }
+  });
+
+  suggestions.sort((a, b) => (b._score || 0) - (a._score || 0));
+  return suggestions.slice(0, 14);
+}
+
+function attachSuggestionEvents(databaseSuggestions, mapSuggestions) {
+  const box = document.getElementById("searchSuggestions");
+  if (!box) return;
+
+  box.querySelectorAll(".suggestion-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const source = item.dataset.source;
+      const index = Number(item.dataset.index);
+
+      if (source === "database") {
+        const suggestion = databaseSuggestions[index];
+        selectedSearchPlace = Number.isFinite(Number(suggestion.lat)) && Number.isFinite(Number(suggestion.lon))
+          ? { label: suggestion.label, displayName: suggestion.displayName, lat: Number(suggestion.lat), lon: Number(suggestion.lon) }
+          : null;
+        document.getElementById("search").value = suggestion.value || suggestion.label;
+        hideSuggestionBox();
+        loadRooms(suggestion.value || suggestion.label, selectedSearchPlace);
+        return;
+      }
+
+      const place = mapSuggestions[index];
+      selectedSearchPlace = place;
+      document.getElementById("search").value = place.label;
+      hideSuggestionBox();
+      loadRooms(place.label, place);
+    });
+  });
+}
+
+function getLocalPuneAreaSuggestions(searchText, existingSuggestions = []) {
+  const term = cleanSearchTerm(searchText).toLowerCase();
+  if (!term) return [];
+
+  const existing = new Set((existingSuggestions || []).map(item => cleanSearchTerm(item.label).toLowerCase()));
+  const areas = [
+    { label: "Katraj", subLabel: "Pune, Maharashtra", lat: 18.4529, lon: 73.8652 },
+    { label: "Katraj Kondhwa Road", subLabel: "Pune, Maharashtra", lat: 18.4539, lon: 73.8908 },
+    { label: "Bhusari Colony, Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5104, lon: 73.7932 },
+    { label: "Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5074, lon: 73.8077 },
+    { label: "Paud Road, Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5081, lon: 73.8092 },
+    { label: "Bavdhan", subLabel: "Pune, Maharashtra", lat: 18.5114, lon: 73.7760 },
+    { label: "Bhukum", subLabel: "Pune, Maharashtra", lat: 18.4898, lon: 73.7308 },
+    { label: "Baner", subLabel: "Pune, Maharashtra", lat: 18.5590, lon: 73.7868 },
+    { label: "Wakad", subLabel: "Pune, Maharashtra", lat: 18.5972, lon: 73.7626 },
+    { label: "Hinjewadi", subLabel: "Pune, Maharashtra", lat: 18.5913, lon: 73.7389 },
+    { label: "Warje", subLabel: "Pune, Maharashtra", lat: 18.4873, lon: 73.8028 },
+    { label: "Karve Nagar", subLabel: "Pune, Maharashtra", lat: 18.4896, lon: 73.8217 },
+    { label: "Erandwane", subLabel: "Pune, Maharashtra", lat: 18.5094, lon: 73.8314 },
+    { label: "Hadapsar", subLabel: "Pune, Maharashtra", lat: 18.5089, lon: 73.9259 },
+    { label: "Viman Nagar", subLabel: "Pune, Maharashtra", lat: 18.5679, lon: 73.9143 },
+    { label: "Kharadi", subLabel: "Pune, Maharashtra", lat: 18.5515, lon: 73.9348 },
+    { label: "Pimple Saudagar", subLabel: "Pune, Maharashtra", lat: 18.5980, lon: 73.7972 }
+  ];
+
+  function looseMatch(label) {
+    const text = cleanSearchTerm(label).toLowerCase();
+    if (text.includes(term)) return true;
+    return text.split(/\s+/).some(part => part.startsWith(term) || term.startsWith(part));
+  }
+
+  return areas
+    .filter(area => looseMatch(area.label) && !existing.has(cleanSearchTerm(area.label).toLowerCase()))
+    .map(area => ({
+      source: "map",
+      label: area.label,
+      subLabel: area.subLabel,
+      icon: "travel_explore",
+      lat: area.lat,
+      lon: area.lon,
+      displayName: `${area.label}, ${area.subLabel}`
+    }))
+    .slice(0, 5);
+}
+
+function mergeLocationSuggestions(list) {
+  const seen = new Set();
+  const merged = [];
+  (list || []).forEach(item => {
+    const key = cleanSearchTerm(item.label).toLowerCase();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  });
+  return merged;
+}
+
+async function fetchLocationSearchSuggestions(value) {
+  const searchText = cleanSearchTerm(value);
+  const box = document.getElementById("searchSuggestions");
+
+  if (!box || searchText.length < 1) {
+    hideSuggestionBox();
+    return;
+  }
+
+  const requestId = ++suggestionRequestId;
+
+  try {
+    const databaseSuggestions = await fetchDatabaseSuggestions(searchText);
+    let mapSuggestions = getLocalPuneAreaSuggestions(searchText, databaseSuggestions);
+
+    try {
+      const liveMapSuggestions = await fetchMapSuggestions(searchText);
+      mapSuggestions = mergeLocationSuggestions([...mapSuggestions, ...liveMapSuggestions]).slice(0, 8);
+    } catch (mapErr) {
+      console.warn("Map suggestion error", mapErr);
+    }
+
+    if (requestId !== suggestionRequestId) return;
+    showSuggestionBox(renderSuggestionList(databaseSuggestions, mapSuggestions));
+    attachSuggestionEvents(databaseSuggestions, mapSuggestions);
+  } catch (err) {
+    console.warn("Location suggestion error", err);
+    hideSuggestionBox();
+  }
+}
+
+function renderAvailableCard(room) {
+  let imagesArr = [];
+  if (room.images && room.images.length > 0) {
+    imagesArr = room.images.split(",").map(s => s.trim()).filter(Boolean);
+  }
+  if (!imagesArr.length) imagesArr = ["https://via.placeholder.com/600x420?text=No+Image"];
+
+  let brokerageText = "";
+  let isNoBrokerage = false;
+  if (room.brokerage_type === "No Brokerage" || !room.brokerage_type) {
+    brokerageText = "No Brokerage";
+    isNoBrokerage = true;
+  } else if (room.brokerage_amount) {
+    brokerageText = `Brokerage: ₹${room.brokerage_amount}`;
+  } else {
+    brokerageText = `Brokerage: ${room.brokerage_type}`;
+  }
+
+  let actions = "";
+  if (room.show_contact && room.contact_number) {
+    actions += `<button class="btn-action btn-call" onclick="triggerAction(event, 'call', '${escapeHtml(room.id)}', '${escapeHtml(room.contact_number)}', 'available')"><span class="material-symbols-rounded">call</span>Call</button>`;
+  }
+  if (room.show_whatsapp && room.whatsapp_number) {
+    actions += `<button class="btn-action btn-wa" onclick="triggerAction(event, 'wa', '${escapeHtml(room.id)}', '${escapeHtml(room.whatsapp_number)}', 'available')"><span class="material-symbols-rounded">chat</span>WhatsApp</button>`;
+  }
+  actions += `<button class="btn-action btn-chat" onclick="startChat(event, '${escapeHtml(room.id)}', '${escapeHtml(room.user_id)}')"><span class="material-symbols-rounded">forum</span>Chat</button>`;
+
+  const ownerObj = room.users || room.user || {};
+  const ownerName = ownerObj.name || "User";
+  const ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
+  const slidesHtml = imagesArr.map(src => `<img class="slide" src="${escapeHtml(src)}" alt="${escapeHtml(room.title || 'Room')}">`).join('');
+  const distanceTag = Number.isFinite(Number(room._distanceKm)) ? `<div class="detail-tag distance-meta"><span class="material-symbols-rounded">near_me</span>${Number(room._distanceKm).toFixed(Number(room._distanceKm) < 10 ? 1 : 0)} km away</div>` : "";
+
+  return `
+    <div class="card" onclick="openRoom('${escapeHtml(room.id)}', 'available')">
+      <div class="card-img-wrapper">
+        <div class="slides-track">${slidesHtml}</div>
+        <div class="price-badge">₹${escapeHtml(room.rent || '')}</div>
+      </div>
+      <div class="card-content">
+        <div class="title">${escapeHtml(room.title || '')}</div>
+        <div class="owner-name"><img class="owner-avatar" src="${escapeHtml(ownerAvatar)}" alt="owner"> ${escapeHtml(ownerName)}</div>
+        <div class="location"><span class="material-symbols-rounded">location_on</span>${escapeHtml(room.location || '')}</div>
+        <div class="details-row">
+          <div class="detail-tag"><span class="material-symbols-rounded">apartment</span>${escapeHtml(room.type || '')}</div>
+          <div class="detail-tag"><span class="material-symbols-rounded">security</span>Dep: ₹${escapeHtml(room.deposit || '0')}</div>
+          <div class="detail-tag ${isNoBrokerage ? 'highlight' : ''}"><span class="material-symbols-rounded">handshake</span>${escapeHtml(brokerageText)}</div>
+          <div class="detail-tag posted-meta"><span class="material-symbols-rounded">schedule</span>${escapeHtml(formatPostDate(room))}</div>
+          ${distanceTag}
+        </div>
+        <div class="card-actions">${actions}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRequirementCard(req) {
+  let actions = "";
+  if (req.show_contact && req.contact_number) {
+    actions += `<button class="btn-action btn-call" onclick="triggerAction(event, 'call', '${escapeHtml(req.id)}', '${escapeHtml(req.contact_number)}', 'requirement')"><span class="material-symbols-rounded">call</span>Call</button>`;
+  }
+  if (req.show_whatsapp && req.whatsapp_number) {
+    actions += `<button class="btn-action btn-wa" onclick="triggerAction(event, 'wa', '${escapeHtml(req.id)}', '${escapeHtml(req.whatsapp_number)}', 'requirement')"><span class="material-symbols-rounded">chat</span>WhatsApp</button>`;
+  }
+  actions += `<button class="btn-action btn-chat" onclick="startChat(event, '${escapeHtml(req.id)}', '${escapeHtml(req.user_id)}')"><span class="material-symbols-rounded">forum</span>Chat</button>`;
+
+  const ownerObj = req.users || req.user || {};
+  const ownerName = req.name || ownerObj.name || "User";
+  const distanceTag = Number.isFinite(Number(req._distanceKm)) ? `<div class="detail-tag distance-meta"><span class="material-symbols-rounded">near_me</span>${Number(req._distanceKm).toFixed(Number(req._distanceKm) < 10 ? 1 : 0)} km away</div>` : "";
+
+  return `
+    <div class="card requirement-card" onclick="openRoom('${escapeHtml(req.id)}', 'requirement')">
+      <div class="requirement-hero">
+        <div class="requirement-label"><span class="material-symbols-rounded" style="font-size:15px;">person_search</span>Room Needed</div>
+        <div class="requirement-vector"><span class="material-symbols-rounded">travel_explore</span></div>
+        <div class="title">${escapeHtml(req.title || 'Room requirement')}</div>
+        <div class="requirement-desc">${escapeHtml(req.description || 'Looking for a suitable room or roommate.')}</div>
+      </div>
+      <div class="card-content">
+        <div class="owner-name"><span class="material-symbols-rounded">account_circle</span> ${escapeHtml(ownerName)}</div>
+        <div class="location"><span class="material-symbols-rounded">location_on</span>${escapeHtml(req.location || 'Preferred location not added')}</div>
+        <div class="details-row">
+          <div class="detail-tag highlight"><span class="material-symbols-rounded">apartment</span>${escapeHtml(req.type || 'Any type')}</div>
+          <div class="detail-tag"><span class="material-symbols-rounded">verified</span>${escapeHtml(req.status || 'pending')}</div>
+          <div class="detail-tag posted-meta"><span class="material-symbols-rounded">schedule</span>${escapeHtml(formatPostDate(req))}</div>
+          ${distanceTag}
+        </div>
+        <div class="card-actions">${actions}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* REUSABLE BUTTON.HTML SCRIPT
+   button.html is loaded through an iframe.
+   IMPORTANT: iframe width is only 96px on desktop, so button.html cannot detect desktop using its own width.
+   We pass mode=desktop/mobile from index.html to keep the exact desktop vertical nav. */
+function getCurrentPageForNav() {
+  const page = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  return page || 'index.html';
+}
+
+function updateReusableButtonsFrame() {
+  const frame = document.getElementById('bottomNavFrame');
+  if (!frame) return;
+
+  const mode = window.innerWidth >= 900 ? 'desktop' : 'mobile';
+  const active = encodeURIComponent(getCurrentPageForNav());
+  const desiredSrc = `button.html?mode=${mode}&active=${active}`;
+
+  if (frame.getAttribute('src') !== desiredSrc) {
+    frame.setAttribute('src', desiredSrc);
+  }
+}
+
+window.addEventListener('load', updateReusableButtonsFrame);
+window.addEventListener('resize', () => {
+  clearTimeout(window.__tingoNavResizeTimer);
+  window.__tingoNavResizeTimer = setTimeout(updateReusableButtonsFrame, 120);
+});
+
+/* INIT */
+loadFilterOptions();
+bindFilterEvents();
+setupModeSwitchScroll();
+loadRooms();
+
+// Check if user is logged in for alerts & periodic refreshes
+const initialUserCheck = JSON.parse(localStorage.getItem("user"));
+if (initialUserCheck) {
+  loadNotifications();
+  checkNewMessages();
+  subscribeNotifications();
+  syncOneSignalId(initialUserCheck); // Make sure returning users get their ID tracked!
+}
+
+/* =========================================
+   AUTO REFRESH INTERVAL
+   ========================================= */
+setInterval(() => {
+  // Only search if input is empty, otherwise we override the user's active search
+  const searchInput = document.getElementById("search").value;
+  if(!searchInput && !hasActiveFilters()) {
+      loadRooms();
+      loadFilterOptions();
+  }
+  loadNotifications();
+  checkNewMessages();
+}, 5000); // every 5 sec
+
+</script>
+
+</body>
+</html>

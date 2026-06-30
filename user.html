@@ -1,0 +1,1123 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User - TingoRooms</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "86e4ee86-6134-42b0-ad76-4997d7ce02de",
+    });
+  });
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+
+<style>
+:root {
+  --primary: #4F46E5;
+  --primary-gradient: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  --primary-light: #EEF2FF;
+  --primary-glow: rgba(79, 70, 229, 0.3);
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --radius: 28px;
+  --safe-bottom: 90px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #E2E8F0; /* Desktop bg */
+  color: var(--text-main);
+  -webkit-tap-highlight-color: transparent;
+  height: 100vh;
+  overflow: hidden; /* Ensure desktop body does not scroll */
+}
+
+/* MOBILE APP WRAPPER */
+.app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg);
+  height: 100vh;
+  overflow-y: auto; /* Internal scrolling for sticky elements to work */
+  overflow-x: hidden;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 900px) {
+  .app-container {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding-right: 148px;
+    min-height: 100vh;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .main-content { max-width: calc(100% - 148px); margin: 0; }
+  .header { max-width: calc(100% - 148px); margin: 0; }
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 20px;
+  background: rgba(248, 250, 252, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text-main);
+}
+
+/* MAIN CONTENT */
+.main-content {
+  padding: 20px 20px calc(var(--safe-bottom) + 20px) 20px;
+  flex: 1;
+}
+
+.card {
+  background: var(--surface);
+  padding: 24px;
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+.card h3 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  text-align: center;
+  color: var(--text-main);
+}
+
+/* FORMS */
+.input-group {
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.input-group span {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94A3B8;
+  font-size: 20px;
+  transition: color 0.3s;
+}
+
+.input-group:focus-within span {
+  color: var(--primary);
+}
+
+input, select {
+  width: 100%;
+  padding: 14px 16px 14px 44px; /* Space for icon */
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background: #F1F5F9;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-main);
+  appearance: none;
+}
+
+input::placeholder, select:invalid {
+  color: #94A3B8;
+}
+
+input:focus, select:focus {
+  border-color: #A5B4FC;
+  background: var(--surface);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+  margin-top: 8px;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+.link-text {
+  color: var(--primary);
+  text-align: center;
+  margin-top: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.timer {
+  text-align: center;
+  color: #EF4444; /* Red color */
+  margin: 16px 0;
+  font-weight: 700;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  background: #FEF2F2;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #FEE2E2;
+}
+
+.hidden { 
+  display: none !important; 
+}
+
+/* PROFILE SPECIFIC */
+.profile-card {
+  text-align: center;
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto 20px auto;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--surface);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.profile-name {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-main);
+}
+
+.profile-email {
+  color: var(--text-muted);
+  font-size: 15px;
+  margin-bottom: 32px;
+  font-weight: 500;
+}
+
+.logout-btn {
+  background: #FEF2F2;
+  color: #EF4444;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #FEE2E2;
+}
+
+.logout-btn:active {
+  background: #FEE2E2;
+}
+
+
+
+.profile-card {
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  width: 260px;
+  height: 160px;
+  transform: translateX(-50%);
+  border-radius: 0 0 140px 140px;
+  background: radial-gradient(circle at 30% 30%, rgba(99,102,241,0.25), transparent 34%),
+              linear-gradient(135deg, rgba(99,102,241,0.18), rgba(6,182,212,0.16));
+  pointer-events: none;
+}
+
+.avatar-wrapper {
+  padding: 5px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366F1, #06B6D4, #22C55E);
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.16);
+}
+
+.avatar {
+  background: #F1F5F9;
+  display: block;
+}
+
+.session-note {
+  margin: 18px 0 22px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #F8FAFC;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.session-note strong {
+  color: var(--text-main);
+}
+
+
+/* REUSABLE BUTTON.HTML IFRAME LOADER
+   button.html stays as the single editable source for the bottom/right navigation. */
+#bottomNavHost {
+  display: none;
+}
+
+.bottom-nav-frame {
+  display: block;
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 999999;
+  width: 100%;
+  max-width: 480px;
+  height: 112px;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+@media (min-width: 900px) {
+  .bottom-nav-frame {
+    top: 120px;
+    right: 24px;
+    bottom: 24px;
+    left: auto;
+    width: 96px;
+    max-width: 96px;
+    height: calc(100vh - 144px);
+    min-height: 360px;
+    transform: none;
+    border-radius: 30px;
+  }
+}
+
+@media (max-width: 374px) {
+  .bottom-nav-frame {
+    height: 108px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app-container">
+
+  <div class="header" id="pageTitle">My Account</div>
+
+  <div class="main-content">
+
+    <div id="loginBox" class="card">
+      <h3>Welcome Back</h3>
+      
+      <div class="input-group">
+        <span class="material-symbols-rounded">mail</span>
+        <input id="loginEmail" placeholder="Email Address">
+      </div>
+      <div class="input-group">
+        <span class="material-symbols-rounded">lock</span>
+        <input id="loginPassword" type="password" placeholder="Password">
+      </div>
+      
+      <button onclick="login()">Login</button>
+      <div onclick="showSignup()" class="link-text">Don't have an account? Sign Up</div>
+    </div>
+
+    <div id="signupBox" class="card hidden">
+      <h3>Create Account</h3>
+      
+      <div class="input-group">
+        <span class="material-symbols-rounded">person</span>
+        <input id="name" placeholder="Full Name">
+      </div>
+      <div class="input-group">
+        <span class="material-symbols-rounded">mail</span>
+        <input id="email" placeholder="Email Address">
+      </div>
+      <div class="input-group">
+        <span class="material-symbols-rounded">call</span>
+        <input id="mobile" placeholder="Mobile Number">
+      </div>
+      <div class="input-group">
+        <span class="material-symbols-rounded">wc</span>
+        <select id="gender">
+          <option value="" disabled selected>Select Gender</option>
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <span class="material-symbols-rounded">image</span>
+        <input id="avatar" placeholder="Avatar URL (Optional)">
+      </div>
+      <div class="input-group">
+        <span class="material-symbols-rounded">lock</span>
+        <input id="password" type="password" placeholder="Create Password">
+      </div>
+      
+      <button onclick="signup()">Send OTP</button>
+      <div onclick="showLogin()" class="link-text">Already have an account? Login</div>
+    </div>
+
+    <div id="otpBox" class="card hidden">
+      <h3>Verify OTP</h3>
+      <p style="text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+        We've sent a 6-digit code to your email.
+      </p>
+
+      <div class="input-group">
+        <span class="material-symbols-rounded">pin</span>
+        <input id="otpInput" type="number" placeholder="Enter OTP">
+      </div>
+
+      <div class="timer" id="timer">05:00</div>
+
+      <button onclick="verifyOTP()">Verify & Complete</button>
+      <div class="link-text" onclick="resendOTP()">Resend OTP</div>
+    </div>
+
+    <div id="profileBox" class="card hidden profile-card">
+      <div class="avatar-wrapper">
+        <img id="profileAvatar" class="avatar" src="https://cdn-icons-png.flaticon.com/512/149/149071.png">
+      </div>
+      <div class="profile-name" id="profileName">Loading...</div>
+      <div class="profile-email" id="profileEmail"></div>
+      <div class="session-note" id="sessionNote">
+        <strong>Active session:</strong> This device is your latest login device.
+      </div>
+      
+      <button class="logout-btn" onclick="logout()">
+        <span class="material-symbols-rounded" style="font-size: 20px;">logout</span>
+        Logout
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Reusable bottom navigation loaded from existing button.html -->
+  <div id="bottomNavHost"></div>
+  <iframe
+    id="bottomNavFrame"
+    class="bottom-nav-frame"
+    src="button.html?mode=mobile&active=user.html"
+    title="TingoRooms bottom navigation"
+    scrolling="no"
+    loading="eager"
+  ></iframe>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0"; 
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
+/* ---------------- REUSABLE BUTTON.HTML SCRIPT ----------------
+   button.html is loaded through an iframe.
+   The iframe is narrow on desktop, so this page passes mode=desktop/mobile. */
+function updateReusableButtonsFrame() {
+  const frame = document.getElementById('bottomNavFrame');
+  if (!frame) return;
+
+  const mode = window.innerWidth >= 900 ? 'desktop' : 'mobile';
+  const desiredSrc = `button.html?mode=${mode}&active=user.html`;
+
+  if (frame.getAttribute('src') !== desiredSrc) {
+    frame.setAttribute('src', desiredSrc);
+  }
+}
+
+window.addEventListener('resize', () => {
+  clearTimeout(window.__tingoNavResizeTimer);
+  window.__tingoNavResizeTimer = setTimeout(updateReusableButtonsFrame, 120);
+});
+
+
+let currentEmail = "";
+let timerInterval;
+let sessionCheckInterval;
+
+/* ---------------- USER + SESSION HELPERS ---------------- */
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch (e) {
+    return null;
+  }
+}
+
+function sanitizeUser(user) {
+  const safe = { ...(user || {}) };
+  delete safe.password;
+  delete safe.otp;
+  delete safe.otp_expiry;
+  return safe;
+}
+
+function storeUser(user) {
+  localStorage.setItem("user", JSON.stringify(sanitizeUser(user)));
+}
+
+function generateSessionToken() {
+  if (window.crypto && crypto.getRandomValues) {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+  }
+  return Date.now().toString(36) + "_" + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
+function toDbTimestamp(date) {
+  const pad = n => String(n).padStart(2, "0");
+  return (
+    date.getFullYear() + "-" +
+    pad(date.getMonth() + 1) + "-" +
+    pad(date.getDate()) + " " +
+    pad(date.getHours()) + ":" +
+    pad(date.getMinutes()) + ":" +
+    pad(date.getSeconds())
+  );
+}
+
+function getOtpExpiryTimestamp() {
+  return toDbTimestamp(new Date(Date.now() + 5 * 60000));
+}
+
+function getCurrentDbTimestamp() {
+  return toDbTimestamp(new Date());
+}
+
+function getDeviceName() {
+  const ua = navigator.userAgent || "";
+  let browser = "Browser";
+  if (/Edg\//.test(ua)) browser = "Edge";
+  else if (/Chrome\//.test(ua)) browser = "Chrome";
+  else if (/Firefox\//.test(ua)) browser = "Firefox";
+  else if (/Safari\//.test(ua)) browser = "Safari";
+
+  let device = "Desktop";
+  if (/Android/i.test(ua)) device = "Android";
+  else if (/iPhone/i.test(ua)) device = "iPhone";
+  else if (/iPad/i.test(ua)) device = "iPad";
+  else if (/Windows/i.test(ua)) device = "Windows";
+  else if (/Macintosh|Mac OS/i.test(ua)) device = "Mac";
+
+  return `${browser} on ${device}`;
+}
+
+function getDefaultAvatar(gender) {
+  const male = "https://i.ibb.co/wZVNcCDt/maleavt.png";
+  const female = "https://i.ibb.co/SXCj3b1q/femaleavt.png";
+  if (!gender) return male;
+  const g = String(gender).toLowerCase();
+  if (g.includes("f")) return female;
+  return male;
+}
+
+function isUserBlocked(user) {
+  if (!user) return "Account not found.";
+  if (user.is_active === false) return "Your account is inactive.";
+  if (user.login_enabled === false) return "Login is disabled for this account.";
+  if (user.account_health && user.account_health !== "healthy") {
+    return user.block_reason ? `Account ${user.account_health}: ${user.block_reason}` : `Account is ${user.account_health}.`;
+  }
+  return "";
+}
+
+function logoutLocal(message) {
+  localStorage.removeItem("user");
+  if (message) alert(message);
+  location.reload();
+}
+
+async function fetchFreshUser(userId) {
+  const { data, error } = await db
+    .from("users")
+    .select("id,name,email,mobile_no,is_active,created_at,avatar_url,gender,is_verified,onesignal_id,account_health,block_reason,login_enabled,active_session_token,active_device_name,last_login_at")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    console.warn("Session user fetch error:", error);
+    return null;
+  }
+  return data;
+}
+
+async function validateCurrentSession(options = {}) {
+  const silent = options.silent === true;
+  const localUser = getStoredUser();
+  if (!localUser || !localUser.id) return false;
+
+  const freshUser = await fetchFreshUser(localUser.id);
+  if (!freshUser) {
+    if (!silent) logoutLocal("Session expired. Please login again.");
+    return false;
+  }
+
+  const blockMessage = isUserBlocked(freshUser);
+  if (blockMessage) {
+    logoutLocal(blockMessage);
+    return false;
+  }
+
+  const dbToken = freshUser.active_session_token || "";
+  const localToken = localUser.active_session_token || "";
+
+  if (dbToken && localToken && dbToken !== localToken) {
+    logoutLocal("Your account was logged in on another device. This device has been logged out.");
+    return false;
+  }
+
+  if (dbToken && !localToken) {
+    logoutLocal("Session changed. Please login again.");
+    return false;
+  }
+
+  const merged = { ...localUser, ...freshUser };
+  storeUser(merged);
+  showProfile(merged);
+  return true;
+}
+
+/* ---------------- ONESIGNAL V16 HELPERS ---------------- */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function getLatestOneSignalSubscriptionId(user) {
+  return new Promise((resolve) => {
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value || null);
+    };
+
+    const OneSignalQueue = window.OneSignalDeferred || window.OneSignal || [];
+
+    try {
+      OneSignalQueue.push(async function(OneSignal) {
+        try {
+          if (OneSignal.User && typeof OneSignal.User.login === "function") {
+            await OneSignal.User.login(String(user.id));
+          }
+
+          for (let i = 0; i < 14; i++) {
+            const subId = OneSignal.User && OneSignal.User.PushSubscription
+              ? OneSignal.User.PushSubscription.id
+              : null;
+
+            if (subId) {
+              finish(subId);
+              return;
+            }
+            await delay(250);
+          }
+        } catch (err) {
+          console.error("OneSignal registration error:", err);
+        }
+        finish(null);
+      });
+    } catch (err) {
+      console.error("OneSignal queue error:", err);
+      finish(null);
+    }
+
+    setTimeout(() => finish(null), 4500);
+  });
+}
+
+async function createLatestLoginSession(user) {
+  const sessionToken = generateSessionToken();
+  const deviceName = getDeviceName();
+  const oneSignalId = await getLatestOneSignalSubscriptionId(user);
+
+  const payload = {
+    active_session_token: sessionToken,
+    active_device_name: deviceName,
+    last_login_at: getCurrentDbTimestamp()
+  };
+
+  if (oneSignalId) {
+    payload.onesignal_id = oneSignalId;
+  }
+
+  const { data, error } = await db
+    .from("users")
+    .update(payload)
+    .eq("id", user.id)
+    .select("id,name,email,mobile_no,is_active,created_at,avatar_url,gender,is_verified,onesignal_id,account_health,block_reason,login_enabled,active_session_token,active_device_name,last_login_at")
+    .single();
+
+  if (error) {
+    console.error("Session update error:", error);
+    alert("Login session could not be saved. Please try again.");
+    return null;
+  }
+
+  const updatedUser = data || { ...user, ...payload };
+  storeUser(updatedUser);
+  return updatedUser;
+}
+
+/* ---------------- INIT ---------------- */
+window.onload = async () => {
+  updateReusableButtonsFrame();
+  const user = getStoredUser();
+  if (user) {
+    await validateCurrentSession({ silent: false });
+    sessionCheckInterval = setInterval(() => {
+      validateCurrentSession({ silent: true });
+    }, 15000);
+  }
+};
+
+/* ---------------- UI SWITCHES ---------------- */
+function showSignup() {
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("signupBox").classList.remove("hidden");
+  document.getElementById("pageTitle").innerText = "Sign Up";
+}
+
+function showLogin() {
+  document.getElementById("signupBox").classList.add("hidden");
+  document.getElementById("otpBox").classList.add("hidden");
+  document.getElementById("loginBox").classList.remove("hidden");
+  document.getElementById("pageTitle").innerText = "My Account";
+}
+
+/* ---------------- TIMER ---------------- */
+function startTimer() {
+  let time = 300;
+  const timerElement = document.getElementById("timer");
+
+  clearInterval(timerInterval);
+
+  timerInterval = setInterval(() => {
+    let min = Math.floor(time / 60);
+    let sec = time % 60;
+
+    timerElement.innerText = `${String(min).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+
+    time--;
+
+    if (time < 0) {
+      clearInterval(timerInterval);
+      timerElement.innerText = "Expired";
+    }
+  }, 1000);
+}
+
+/* ---------------- SEND OTP ---------------- */
+async function sendOTP(email, otp) {
+  const { data } = await db.from("app_config").select("email_api_url").single();
+
+  await fetch(data.email_api_url, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "otp",
+      email: email,
+      otp: otp
+    })
+  });
+}
+
+/* ---------------- SIGNUP ---------------- */
+async function signup() {
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  const mobile = document.getElementById("mobile").value.trim();
+  const gender = document.getElementById("gender").value;
+  const avatar = document.getElementById("avatar").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password || !name) {
+    alert("Name, Email, and Password are required.");
+    return;
+  }
+
+  const { data: existing } = await db
+    .from("users")
+    .select("*")
+    .eq("email", email);
+
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  const expiry = getOtpExpiryTimestamp();
+
+  currentEmail = email;
+  sessionStorage.setItem("pending_otp_email", email);
+
+  if (existing && existing.length > 0) {
+    const user = existing[0];
+
+    if (user.is_verified) {
+      alert("User already exists. Please login.");
+      return;
+    }
+
+    await db.from("users")
+      .update({ otp: otp.toString(), otp_expiry: expiry, name, mobile_no: mobile, gender, avatar_url: avatar, password })
+      .eq("email", email);
+
+    await sendOTP(email, otp);
+    alert("User already registered but not verified. OTP resent.");
+  } else {
+    await db.from("users").insert({
+      name: name,
+      email: email,
+      mobile_no: mobile,
+      gender: gender,
+      avatar_url: avatar,
+      password: password,
+      otp: otp.toString(),
+      otp_expiry: expiry,
+      is_verified: false
+    });
+
+    await sendOTP(email, otp);
+    alert("OTP sent to your email.");
+  }
+
+  document.getElementById("signupBox").classList.add("hidden");
+  document.getElementById("otpBox").classList.remove("hidden");
+  document.getElementById("pageTitle").innerText = "Verification";
+  startTimer();
+}
+
+/* ---------------- RESEND OTP ---------------- */
+async function resendOTP() {
+  if (!currentEmail) currentEmail = sessionStorage.getItem("pending_otp_email") || "";
+  if (!currentEmail) return;
+
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  const expiry = getOtpExpiryTimestamp();
+
+  await db.from("users")
+    .update({ otp: otp.toString(), otp_expiry: expiry })
+    .eq("email", currentEmail);
+
+  await sendOTP(currentEmail, otp);
+  alert("OTP resent");
+  startTimer();
+}
+
+/* ---------------- VERIFY OTP ---------------- */
+function parseOtpExpiry(value) {
+  if (!value) return null;
+  const text = String(value).trim();
+
+  // Supabase may return timestamp without timezone as either
+  // "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DDTHH:mm:ss".
+  // This parser keeps it as local time to match the way we save it.
+  const normalized = text.replace("T", " ").split(".")[0];
+  const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/);
+
+  if (match) {
+    const [, y, m, d, h, min, sec] = match.map(Number);
+    return new Date(y, m - 1, d, h, min, sec);
+  }
+
+  const fallback = new Date(text);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function normalizeOtpValue(value) {
+  return String(value || "")
+    .replace(/\s+/g, "")
+    .replace(/[^0-9]/g, "")
+    .trim();
+}
+
+async function verifyOTP() {
+  const enteredOtp = normalizeOtpValue(document.getElementById("otpInput").value);
+  const emailForOtp = String(currentEmail || sessionStorage.getItem("pending_otp_email") || "").trim().toLowerCase();
+
+  if (!emailForOtp) {
+    alert("Email session missing. Please sign up again.");
+    showSignup();
+    return;
+  }
+
+  if (!enteredOtp) {
+    alert("Please enter OTP.");
+    return;
+  }
+
+  // More reliable flow:
+  // 1. Fetch row by email only
+  // 2. Compare OTP in JavaScript after normalizing
+  // This avoids false Invalid OTP caused by text/number formatting or Supabase .eq() mismatch.
+  const { data, error } = await db
+    .from("users")
+    .select("*")
+    .eq("email", emailForOtp)
+    .limit(1);
+
+  if (error) {
+    console.error("OTP verification fetch error:", error);
+    alert("OTP verification error. Please try again.");
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("No user found for OTP email:", emailForOtp);
+    alert("Account not found for this email. Please sign up again.");
+    showSignup();
+    return;
+  }
+
+  const user = data[0];
+  const storedOtp = normalizeOtpValue(user.otp);
+
+  console.log("OTP Debug", {
+    email: emailForOtp,
+    enteredOtp,
+    storedOtp,
+    otpExpiry: user.otp_expiry,
+    isVerified: user.is_verified
+  });
+
+  if (!storedOtp) {
+    alert("No active OTP found. Please resend OTP.");
+    return;
+  }
+
+  if (storedOtp !== enteredOtp) {
+    alert("Invalid OTP. Please enter the latest OTP sent to your email.");
+    return;
+  }
+
+  const expiryDate = parseOtpExpiry(user.otp_expiry);
+
+  if (expiryDate && Date.now() > expiryDate.getTime()) {
+    alert("OTP expired. Please resend OTP.");
+    return;
+  }
+
+  const { error: updateError } = await db.from("users")
+    .update({ is_verified: true, otp: null, otp_expiry: null })
+    .eq("id", user.id);
+
+  if (updateError) {
+    console.error("OTP completion update error:", updateError);
+    alert("Could not complete verification. Please try again.");
+    return;
+  }
+
+  user.is_verified = true;
+  user.otp = null;
+  user.otp_expiry = null;
+
+  const finalUser = await createLatestLoginSession(user);
+  if (!finalUser) return;
+
+  sessionStorage.removeItem("pending_otp_email");
+  alert("Account created & logged in!");
+  handleRedirect();
+}
+
+/* ---------------- LOGIN ---------------- */
+async function login() {
+  const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+  const password = document.getElementById("loginPassword").value;
+
+  const { data } = await db
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .eq("password", password)
+    .eq("is_verified", true);
+
+  if (!data || data.length === 0) {
+    alert("Invalid credentials or account not verified.");
+    return;
+  }
+
+  const user = data[0];
+  const blockMessage = isUserBlocked(user);
+  if (blockMessage) {
+    alert(blockMessage);
+    return;
+  }
+
+  const finalUser = await createLatestLoginSession(user);
+  if (!finalUser) return;
+
+  handleRedirect();
+}
+
+function handleRedirect() {
+  const params = new URLSearchParams(window.location.search);
+  const redirect = params.get("redirect");
+
+  if (redirect) {
+    if (redirect === "chat") {
+      const chatRedirect = JSON.parse(localStorage.getItem("chat_redirect"));
+      if (chatRedirect) {
+        window.location.href = `chat.html?room=${chatRedirect.roomId}&user=${chatRedirect.ownerId}&source=index`;
+      } else {
+        window.location.href = "chat.html";
+      }
+    } else if (redirect === "chatlist") {
+      window.location.href = "chat.html";
+    } else {
+      window.location.href = redirect;
+    }
+  } else {
+    window.location.href = "index.html";
+  }
+}
+
+/* ---------------- PROFILE ---------------- */
+function showProfile(user) {
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("signupBox").classList.add("hidden");
+  document.getElementById("otpBox").classList.add("hidden");
+  document.getElementById("profileBox").classList.remove("hidden");
+  document.getElementById("pageTitle").innerText = "My Profile";
+
+  document.getElementById("profileName").innerText = user.name || "User";
+  document.getElementById("profileEmail").innerText = user.email || "";
+
+  const avatarEl = document.getElementById("profileAvatar");
+  const fallback = getDefaultAvatar(user.gender);
+  avatarEl.onerror = () => {
+    avatarEl.onerror = null;
+    avatarEl.src = fallback;
+  };
+  avatarEl.src = user.avatar_url && user.avatar_url.trim() !== "" ? user.avatar_url : fallback;
+
+  const sessionNote = document.getElementById("sessionNote");
+  if (sessionNote) {
+    const device = user.active_device_name || getDeviceName();
+    const time = user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "now";
+    sessionNote.innerHTML = `<strong>Active session:</strong> ${device}<br><span>Latest login: ${time}</span>`;
+  }
+}
+
+/* ---------------- LOGOUT ---------------- */
+async function logout() {
+  const user = getStoredUser();
+
+  if (user && user.id && user.active_session_token) {
+    try {
+      await db.from("users")
+        .update({ active_session_token: null, active_device_name: null })
+        .eq("id", user.id)
+        .eq("active_session_token", user.active_session_token);
+    } catch (err) {
+      console.warn("Logout session cleanup error:", err);
+    }
+  }
+
+  localStorage.removeItem("user");
+  location.reload();
+}
+
+/* ---------------- NAVIGATION ---------------- */
+function go(page) {
+  const isHome = page.endsWith("index.html") || page === "index.html" || page === "index";
+  if (isHome) {
+    if (window.self !== window.top) {
+      try {
+        if (parent && typeof parent.closePanel === "function") {
+          parent.closePanel();
+          if (parent.location && !parent.location.pathname.endsWith("index.html")) {
+            parent.location.href = "index.html";
+          }
+          return;
+        }
+      } catch (e) {}
+    }
+    window.location.href = page;
+    return;
+  }
+
+  if (window.self !== window.top) {
+    try {
+      if (parent && typeof parent.openPanel === "function" && parent.innerWidth >= 900) {
+        parent.openPanel(page);
+        return;
+      }
+    } catch (e) {}
+  }
+  window.location.href = page;
+}
+
+async function checkLoginNav(page) {
+  const user = getStoredUser();
+  if (!user) {
+    alert("Please login first to access this feature.");
+    return;
+  }
+
+  const valid = await validateCurrentSession({ silent: false });
+  if (valid) window.location.href = page;
+}
+</script>
+
+</body>
+</html>

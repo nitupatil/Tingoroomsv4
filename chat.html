@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Chats - TingoRooms</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+
+<style>
+:root {
+  --primary: #4F46E5;
+  --primary-gradient: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  --primary-light: #EEF2FF;
+  --primary-glow: rgba(79, 70, 229, 0.3);
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --admin-gold: #F59E0B;
+  --radius: 28px;
+  --safe-bottom: 90px;
+  
+  /* WhatsApp Style Colors */
+  --wa-green: #25D366;
+  --wa-green-faded: #F0FDF4; 
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden; 
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #E2E8F0;
+  color: var(--text-main);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* RESPONSIVE DESKTOP & MOBILE WRAPPER */
+.app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg);
+  height: 100%;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* SIDEBAR & MAIN CHAT LAYOUT */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--surface);
+}
+
+.main-chat {
+  display: none; /* Hidden by default on mobile */
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--surface);
+}
+
+/* MOBILE TOGGLE LOGIC */
+.app-container.chat-active .sidebar { display: none; }
+.app-container.chat-active .main-chat { display: flex; }
+
+/* DESKTOP SPLIT VIEW */
+@media (min-width: 900px) {
+  .app-container {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding-right: 148px; /* Room for iframe */
+    height: 100vh;
+    box-shadow: none;
+    border-radius: 0;
+    flex-direction: row; /* Split view */
+  }
+
+  .sidebar {
+    display: flex !important; /* Always show */
+    width: 380px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+
+  .main-chat {
+    display: flex !important; /* Always show */
+    flex: 1;
+    position: relative;
+  }
+
+  .back-btn { display: none !important; } /* Hide back button on desktop */
+}
+
+/* HEADER STYLES */
+.header, .sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(248, 250, 252, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 1000;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  min-height: 60px;
+  flex-shrink: 0;
+}
+
+.back-btn {
+  cursor: pointer;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.back-btn:active { background: #E2E8F0; }
+
+.header-title {
+  font-weight: 600;
+  font-size: 16px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ROLE BADGES */
+.role-badge { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 700; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; }
+.role-badge.owner { background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; }
+.role-badge.seeker { background: #E0E7FF; color: #4F46E5; border: 1px solid #C7D2FE; }
+
+/* ADMIN STYLES */
+.admin-badge { background: rgba(245, 158, 11, 0.15); color: var(--admin-gold); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 700; letter-spacing: 0.5px; font-size: 10px; }
+.verified-tick { color: #3b82f6; font-size: 14px; }
+.admin-msg { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border: 1px solid rgba(245, 158, 11, 0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.admin-msg-title { font-size: 11px; color: var(--admin-gold); font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+
+/* SEARCH AREA */
+.search-wrapper {
+  padding: 12px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+  flex-shrink: 0;
+}
+
+.search-box { position: relative; width: 100%; }
+.search-box input {
+  width: 100%;
+  padding: 12px 16px 12px 44px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  background: #F1F5F9;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--text-main);
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.search-box input::placeholder { color: #94A3B8; }
+.search-box input:focus { border-color: #A5B4FC; background: var(--surface); box-shadow: 0 0 0 4px var(--primary-light); }
+.search-box .material-symbols-rounded {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94A3B8;
+  font-size: 20px;
+  transition: color 0.3s;
+}
+.search-box input:focus + .material-symbols-rounded { color: var(--primary); }
+
+/* CHAT LIST VIEW */
+.chat-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  padding-bottom: calc(var(--safe-bottom) + 20px);
+  background: var(--surface);
+}
+
+.chat-item {
+  background: var(--surface);
+  padding: 16px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+  position: relative;
+}
+
+.chat-item:last-child { border-bottom: none; }
+.chat-item:hover { background: #F8FAFC; }
+.chat-item.active-chat { background: #EEF2FF; border-left: 4px solid var(--primary); padding-left: 16px; }
+.chat-item.inactive { opacity: 0.6; background: #F8FAFC; }
+.highlight-chat { background: var(--wa-green-faded); } 
+
+.avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; margin-right: 14px; border: 1px solid var(--border); flex-shrink: 0; }
+.chat-info-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; justify-content: center; }
+.chat-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.chat-name { font-weight: 700; font-size: 16px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+.chat-time { font-size: 12px; white-space: nowrap; margin-left: 8px; font-weight: 500; }
+.chat-room-title { font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; }
+.chat-footer-row { display: flex; justify-content: space-between; align-items: center; }
+.chat-preview { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; margin-right: 8px; }
+.unread-badge { background: var(--wa-green); color: white; font-size: 12px; font-weight: 700; border-radius: 50%; min-width: 24px; height: 24px; padding: 0 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.status-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px; background: #FEE2E2; color: #DC2626; display: inline-block; margin-left: 6px; }
+
+/* ACTIVE CHAT VIEW */
+.chat-box-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  background-color: #F8FAFC;
+  background-image: linear-gradient(rgba(248, 250, 252, 0.85), rgba(248, 250, 252, 0.85)), url('https://i.ibb.co/JVxmx70/chatbg.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.empty-chat-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #F8FAFC;
+  color: #94A3B8;
+}
+
+.empty-chat-state p { margin-top: 12px; font-weight: 500; font-size: 15px; }
+
+.message { padding: 10px 14px 12px 14px; margin-bottom: 8px; border-radius: 16px; max-width: 80%; font-size: 15px; line-height: 1.4; word-wrap: break-word; position: relative; box-shadow: 0 3px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
+.message-row { display:flex; align-items:flex-end; gap:8px; margin-bottom:8px; }
+.message-row.received-row { justify-content: flex-start; }
+.message-row.sent-row { justify-content: flex-end; }
+.msg-avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.sent { background: var(--primary-gradient); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+.received { background: var(--surface); color: var(--text-main); align-self: flex-start; border-bottom-left-radius: 4px; }
+
+.date-separator {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0 14px;
+  position: relative;
+}
+.date-separator span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #64748B;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* TYPING INDICATOR */
+.typing-indicator { display: flex; align-items: center; gap: 4px; height: 20px; }
+.typing-dot { width: 6px; height: 6px; background-color: #94A3B8; border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+/* SKELETON LOADING ANIMATION */
+@keyframes pulse-bg { 0% { background-color: #E2E8F0; } 100% { background-color: #F1F5F9; } }
+.skeleton { animation: pulse-bg 1s linear infinite alternate; border-radius: 8px; }
+.skeleton-avatar { width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; margin-right: 14px; }
+.skeleton-text { height: 14px; margin-bottom: 8px; }
+.skeleton-text.short { width: 40%; }
+.skeleton-text.long { width: 80%; }
+.skeleton-item { padding: 16px 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border); background: var(--surface); }
+.skeleton-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+/* INPUT AREA */
+.input-area { background: var(--surface); padding: 12px 20px; display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border); position: relative; width: 100%; flex-shrink: 0; }
+.input-area input { flex: 1; padding: 12px 16px; border-radius: 24px; border: 1px solid var(--border); background: #F8FAFC; font-family: 'Inter', sans-serif; font-size: 15px; outline: none; transition: all 0.2s; }
+.input-area input:focus { border-color: #A5B4FC; background: var(--surface); }
+.send-btn { background: var(--primary-gradient); color: white; border: none; border-radius: 50%; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px var(--primary-glow); transition: transform 0.2s; flex-shrink: 0; }
+.send-btn:active { transform: scale(0.9); }
+.inactive-banner { background: #FEE2E2; color: #DC2626; text-align: center; padding: 12px; font-size: 13px; font-weight: 600; border-top: 1px solid #FCA5A5; width: 100%; flex-shrink: 0;}
+
+/* NAVIGATION FRAME */
+#bottomNavHost { display: none; }
+.bottom-nav-frame { display: block; position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 999999; width: 100%; max-width: 480px; height: 112px; border: 0; background: transparent; overflow: hidden; pointer-events: auto; }
+@media (min-width: 900px) {
+  .bottom-nav-frame { top: 120px; right: 24px; bottom: 24px; left: auto; width: 96px; max-width: 96px; height: calc(100vh - 144px); min-height: 360px; transform: none; border-radius: 30px; }
+}
+@media (max-width: 374px) { .bottom-nav-frame { height: 108px; } }
+
+/* When a mobile conversation is open, show only the chat UI.
+   This prevents the reusable button.html iframe from overlaying the message input. */
+@media (max-width: 899px) {
+  .app-container.chat-active .bottom-nav-frame,
+  .app-container.chat-active #bottomNavHost {
+    display: none !important;
+    pointer-events: none !important;
+  }
+
+  .app-container.chat-active .main-chat {
+    height: 100%;
+  }
+
+  .app-container.chat-active .input-area {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 1002;
+  }
+}
+
+.hidden { display: none !important; }
+</style>
+</head>
+
+<body>
+
+<div class="app-container" id="appContainer">
+
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="header-title">Messages</div>
+    </div>
+    <div class="search-wrapper" id="searchWrapper">
+      <div class="search-box">
+        <span class="material-symbols-rounded">search</span>
+        <input id="searchInput" placeholder="Search chats..." oninput="filterChats()">
+      </div>
+    </div>
+    <div id="chatListView" class="chat-list-container">
+      </div>
+  </div>
+
+  <div class="main-chat" id="mainChat">
+    
+    <div class="empty-chat-state" id="emptyChatState">
+      <span class="material-symbols-rounded" style="font-size: 64px; color: #CBD5E1;">chat</span>
+      <p>Select a chat to start messaging</p>
+    </div>
+
+    <div class="header hidden" id="chatHeader">
+      <div class="back-btn" id="backBtn" onclick="goBack()">
+        <span class="material-symbols-rounded">arrow_back</span>
+      </div>
+      <div class="header-title" id="headerTitle"></div>
+    </div>
+
+    <div id="activeChatView" class="chat-box-container hidden"></div>
+
+    <div class="input-area hidden" id="inputArea">
+      <input id="msgInput" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
+      <button class="send-btn" onclick="sendMessage()">
+        <span class="material-symbols-rounded" style="font-size: 20px; margin-left: 4px;">send</span>
+      </button>
+    </div>
+
+    <div class="inactive-banner hidden" id="inactiveBanner">
+      <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: text-bottom;">info</span>
+      This property is inactive. Chat is read-only.
+    </div>
+
+  </div>
+
+  <div id="bottomNavHost"></div>
+  <iframe
+    id="bottomNavFrame"
+    class="bottom-nav-frame"
+    src="button.html?mode=mobile&active=chat.html"
+    title="TingoRooms bottom navigation"
+    scrolling="no"
+    loading="eager"
+  ></iframe>
+
+</div>
+
+<script>
+// --- VIEWPORT / KEYBOARD FIX ---
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const container = document.getElementById('appContainer');
+    if (container && window.innerWidth < 900) {
+      container.style.height = window.visualViewport.height + 'px';
+    }
+    if (!document.getElementById("activeChatView").classList.contains("hidden")) {
+      const chatView = document.getElementById("activeChatView");
+      chatView.scrollTop = chatView.scrollHeight;
+    }
+  });
+}
+
+const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const currentUser = JSON.parse(localStorage.getItem("user"));
+if (!currentUser) window.location.href = "user.html";
+
+// Elements
+const appContainer = document.getElementById("appContainer");
+const chatListView = document.getElementById("chatListView");
+const activeChatView = document.getElementById("activeChatView");
+const inputArea = document.getElementById("inputArea");
+const inactiveBanner = document.getElementById("inactiveBanner");
+const chatHeader = document.getElementById("chatHeader");
+const emptyChatState = document.getElementById("emptyChatState");
+const headerTitle = document.getElementById("headerTitle");
+const msgInput = document.getElementById("msgInput");
+
+let allChats = [];
+let chatUser = null;
+let currentPostMeta = null;
+let currentChatUserId = null;
+let currentPostId = null;
+let currentPostType = null;
+
+// Realtime Typing & Messaging State
+let chatChannel = null;
+let isTyping = false;
+let typingTimeout = null;
+let isOtherUserTyping = false;
+let cachedMessagesHTML = "";
+
+/* GET PARAMS */
+const params = new URLSearchParams(window.location.search);
+const chatUserId = params.get("user");
+const requestedPostId = params.get("post_id") || params.get("post") || params.get("room");
+const requestedType = normalizePostType(
+  params.get("post_type") || params.get("type") || params.get("listing_type") || ""
+);
+const requestedSource = String(params.get("source") || "").toLowerCase().trim();
+const initialDirectChatOpen = isValidId(chatUserId) || isValidId(requestedPostId);
+let currentChatOpenOrigin = initialDirectChatOpen ? (requestedSource || "direct_post") : "chatlist";
+let activeHistoryGuardReady = false;
+
+/* REUSABLE BUTTON.HTML SCRIPT */
+function updateReusableButtonsFrame() {
+  const frame = document.getElementById('bottomNavFrame');
+  if (!frame) return;
+  const mode = window.innerWidth >= 900 ? 'desktop' : 'mobile';
+  const desiredSrc = `button.html?mode=${mode}&active=chat.html`;
+  if (frame.getAttribute('src') !== desiredSrc) {
+    frame.setAttribute('src', desiredSrc);
+  }
+}
+
+window.addEventListener('load', updateReusableButtonsFrame);
+window.addEventListener('resize', () => {
+  clearTimeout(window.__tingoNavResizeTimer);
+  window.__tingoNavResizeTimer = setTimeout(updateReusableButtonsFrame, 120);
+});
+
+/* INIT */
+initChatPage();
+
+async function initChatPage() {
+  // Listen for realtime chat list updates globally
+  setupGlobalChatListener();
+
+  if (isValidId(chatUserId)) {
+    openChat(chatUserId, requestedPostId, requestedType);
+    loadChats(); // Load sidebar in background
+    return;
+  }
+
+  if (isValidId(requestedPostId)) {
+    const post = await fetchPostMeta(requestedPostId, requestedType);
+    if (post && isValidId(post.user_id)) {
+      openChat(post.user_id, requestedPostId, post.postKind);
+      loadChats(); 
+      return;
+    }
+  }
+
+  loadChats();
+}
+
+function setupGlobalChatListener() {
+  db.channel('public:messages')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+      // Reload sidebar softly when any new message arrives
+      if (payload.new.receiver_id === currentUser.id || payload.new.sender_id === currentUser.id) {
+        loadChats(true);
+      }
+    })
+    .subscribe();
+}
+
+/* ---------------- SKELETON LOADERS ---------------- */
+function showChatListSkeleton() {
+  let skeletons = '';
+  for(let i = 0; i < 6; i++) {
+    skeletons += `
+      <div class="skeleton-item">
+        <div class="skeleton skeleton-avatar"></div>
+        <div class="skeleton-info">
+          <div class="skeleton skeleton-text long"></div>
+          <div class="skeleton skeleton-text short"></div>
+        </div>
+      </div>`;
+  }
+  chatListView.innerHTML = skeletons;
+}
+
+function showActiveChatSkeleton() {
+  activeChatView.innerHTML = `
+    <div class="message-row received-row" style="margin-top: auto;">
+      <div class="skeleton skeleton-avatar" style="width: 36px; height: 36px;"></div>
+      <div class="skeleton skeleton-text" style="width: 150px; height: 40px; border-radius: 16px;"></div>
+    </div>
+    <div class="message-row sent-row">
+      <div class="skeleton skeleton-text" style="width: 200px; height: 40px; border-radius: 16px;"></div>
+      <div class="skeleton skeleton-avatar" style="width: 36px; height: 36px;"></div>
+    </div>
+  `;
+}
+
+/* ---------------- BASIC HELPERS ---------------- */
+function isValidId(value) {
+  const v = String(value || "").trim();
+  return v !== "" && v !== "null" && v !== "undefined";
+}
+
+function normalizePostType(value) {
+  const v = String(value || "").toLowerCase().trim();
+  if (!v) return "";
+  if (v.includes("need") || v.includes("require") || v.includes("wanted")) return "needed";
+  if (v.includes("available") || v.includes("room") || v.includes("property")) return "available";
+  return v;
+}
+
+function firstValue(obj, keys, fallback = "") {
+  for (const key of keys) {
+    if (obj && obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== "") return obj[key];
+  }
+  return fallback;
+}
+
+function escapeHtml(str) {
+  return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function formatTime(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  const now = new Date();
+  const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  if (isToday) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+function formatTimeShort(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function getDateKey(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatDateSeparator(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  const key = getDateKey(dateStr);
+  if (key === getDateKey(today)) return "Today";
+  if (key === getDateKey(yesterday)) return "Yesterday";
+
+  return d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+const DEFAULT_MALE = 'https://i.ibb.co/wZVNcCDt/maleavt.png';
+const DEFAULT_FEMALE = 'https://i.ibb.co/SXCj3b1q/femaleavt.png';
+
+function getDefaultAvatar(gender) {
+  if (!gender) return DEFAULT_MALE;
+  const g = String(gender).toLowerCase();
+  return g.includes('f') ? DEFAULT_FEMALE : DEFAULT_MALE;
+}
+
+function resolveAvatar(url, gender) {
+  if (url && String(url).trim()) return url;
+  return getDefaultAvatar(gender);
+}
+
+/* ---------------- POST TABLE HELPERS ---------------- */
+function getPostTableCandidates(forceType = "") {
+  const type = normalizePostType(forceType || requestedType || "");
+  const available = [{ table: "room_posts", kind: "available" }];
+  const needed = [
+    { table: "room_requirements", kind: "needed" },
+    { table: "room_requirement", kind: "needed" },
+    { table: "rooms_needed", kind: "needed" },
+    { table: "room_needed", kind: "needed" },
+    { table: "room_needs", kind: "needed" },
+    { table: "needed_rooms", kind: "needed" },
+    { table: "requirement_posts", kind: "needed" },
+    { table: "requirements", kind: "needed" }
+  ];
+  if (type === "needed") return [...needed, ...available];
+  if (type === "available") return [...available, ...needed];
+  return [...available, ...needed];
+}
+
+function normalizePost(raw, kind, sourceTable) {
+  const detectedKind = normalizePostType(firstValue(raw, ["post_type", "listing_type", "category_type"], kind));
+  const isNeeded = kind === "needed" || detectedKind === "needed";
+  return {
+    raw,
+    id: firstValue(raw, ["id", "post_id", "requirement_id"]),
+    sourceTable,
+    postKind: isNeeded ? "needed" : "available",
+    user_id: firstValue(raw, ["user_id", "posted_by", "owner_id", "created_by", "seeker_id"]),
+    name: firstValue(raw, ["name", "user_name", "posted_by_name"], ""),
+    title: firstValue(raw, ["title", "post_title", "requirement_title", "room_title"], isNeeded ? "Room Requirement" : "Room Details"),
+    status: firstValue(raw, ["status"], "active")
+  };
+}
+
+async function fetchPostMeta(postId, forceType = "") {
+  if (!isValidId(postId)) return null;
+  for (const item of getPostTableCandidates(forceType)) {
+    try {
+      const { data, error } = await db.from(item.table).select("*").eq("id", postId).maybeSingle();
+      if (error) continue;
+      if (data) return normalizePost(data, item.kind, item.table);
+    } catch (err) { console.warn(err); }
+  }
+  return null;
+}
+
+function isPostChatAllowed(post) {
+  if (!post) return true;
+  const status = String(post.status || "active").toLowerCase();
+  return ["active", "approved", "new", "published"].includes(status);
+}
+
+function getMessagePostId(msg) { return firstValue(msg, ["post_id", "room_id"], null); }
+function getMessagePostType(msg) {
+  const type = normalizePostType(firstValue(msg, ["post_type", "listing_type"], ""));
+  if (type) return type;
+  if (isValidId(msg && msg.room_id)) return "available";
+  return "";
+}
+function messageMatchesPost(msg, postId, postType = "") {
+  if (isValidId(postId)) return String(getMessagePostId(msg) || "") === String(postId);
+  return !isValidId(msg && msg.post_id) && !isValidId(msg && msg.room_id);
+}
+function getPairFilter(userId) { return `and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`; }
+function buildCacheKey(prefix, postId, postType, userId) { return `${prefix}_${postType || 'direct'}_${postId || 'null'}_${userId}_${currentUser.id}`; }
+
+/* ---------------- CHAT LIST ---------------- */
+async function loadChats(background = false) {
+  const cacheKey = `tingo_chats_${currentUser.id}`;
+  const cachedChats = localStorage.getItem(cacheKey);
+
+  if (cachedChats) {
+    try {
+      allChats = JSON.parse(cachedChats);
+      if(!background) renderChats(allChats);
+    } catch (e) {
+      if(!background) showChatListSkeleton();
+    }
+  } else {
+    if(!background) showChatListSkeleton();
+  }
+
+  const { data, error } = await db
+    .from("messages")
+    .select("*")
+    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+    .order("created_at", { ascending: false });
+
+  if (error || !data || data.length === 0) {
+    if (!cachedChats) {
+      chatListView.innerHTML = `
+        <div class="empty-chat-state" style="padding: 40px 20px;">
+          <span class="material-symbols-rounded" style="font-size: 48px; color: #D1D5DB; margin-bottom: 10px;">forum</span>
+          <p style="font-size: 14px; margin:0;">No messages yet.</p>
+        </div>`;
+    }
+    return;
+  }
+
+  const map = {};
+  for (let msg of data) {
+    const otherId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+    const msgPostId = getMessagePostId(msg);
+    const msgPostType = getMessagePostType(msg);
+    const key = `${otherId}_${msgPostType || 'direct'}_${msgPostId || 'null'}`;
+
+    if (!map[key]) {
+      map[key] = {
+        otherId, postId: msgPostId, postType: msgPostType, roomId: msg.room_id,
+        last: msg.message || "", is_read: msg.is_read, last_sender_id: msg.sender_id,
+        created_at: msg.created_at, unread_count: 0, isAdminConvo: msg.is_admin_message || msg.sender_role === 'admin'
+      };
+    } else if (msg.is_admin_message || msg.sender_role === 'admin') {
+      map[key].isAdminConvo = true;
+    }
+    if (!msg.is_read && msg.receiver_id === currentUser.id) map[key].unread_count++;
+  }
+
+  const keys = Object.keys(map);
+  for (let key of keys) {
+    let chat = map[key];
+    try {
+      let post = null;
+      if (isValidId(chat.postId)) post = await fetchPostMeta(chat.postId, chat.postType);
+
+      if (chat.isAdminConvo) {
+        chat.user = { id: chat.otherId, name: "TingoRooms Support", avatar_url: "https://cdn-icons-png.flaticon.com/512/6024/6024190.png", is_verified: true };
+        chat.room = post || { title: 'Official Support', status: 'active', postKind: chat.postType || "" };
+      } else {
+        const { data: user } = await db.from("users").select("*").eq("id", chat.otherId).maybeSingle();
+        if (user) { chat.user = user; chat.room = post; } else { delete map[key]; }
+      }
+    } catch (err) { delete map[key]; }
+  }
+
+  allChats = Object.values(map);
+  allChats.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  localStorage.setItem(cacheKey, JSON.stringify(allChats));
+  renderChats(allChats);
+}
+
+function renderChats(list) {
+  chatListView.innerHTML = "";
+
+  if (!list || list.length === 0) {
+    chatListView.innerHTML = `<div class="empty-chat-state" style="padding: 40px 20px;"><p style="font-size: 14px;">No matching chats found.</p></div>`;
+    return;
+  }
+
+  list.forEach(c => {
+    let isActive = true;
+    let inactiveBadge = "";
+
+    if (c.room && c.room.status) {
+      isActive = isPostChatAllowed(c.room);
+      inactiveBadge = isActive ? "" : `<span class="status-badge">Inactive</span>`;
+    }
+    
+    // Check if this chat is the currently open one (for desktop highlighting)
+    const isCurrentChat = (currentChatUserId === c.user.id) && (String(currentPostId || "") === String(c.postId || c.roomId || ""));
+    const selectedClass = isCurrentChat ? "active-chat" : "";
+    const inactiveClass = isActive ? "" : "inactive";
+
+    let roleBadge = "";
+    let roomTag = c.room ? `${c.room.postKind === "needed" ? "Need: " : ""}${escapeHtml(c.room.title)}` : "Direct Message";
+    let prefix = "";
+
+    if (c.isAdminConvo) {
+      roleBadge = `<span class="material-symbols-rounded verified-tick" style="font-size:14px; vertical-align:middle; margin-left: 2px;">verified</span> <span class="admin-badge" style="margin-left: 2px;">ADMIN</span>`;
+      roomTag = c.room ? `Support: ${escapeHtml(c.room.title)}` : "Official Support";
+      prefix = "[Official] ";
+    } else if (c.room) {
+      if (c.room.postKind === "needed") {
+        roleBadge = (c.user.id === c.room.user_id) ? `<span class="role-badge seeker">Seeker</span>` : `<span class="role-badge owner">Owner</span>`;
+      } else {
+        roleBadge = (c.user.id === c.room.user_id) ? `<span class="role-badge owner">Owner</span>` : `<span class="role-badge seeker">Seeker</span>`;
+      }
+    }
+
+    const hasUnread = c.unread_count > 0;
+    const unreadStyle = hasUnread ? "font-weight: 600; color: var(--text-main);" : "color: var(--text-muted);";
+    const timeStyle = hasUnread ? "color: var(--wa-green); font-weight: 600;" : "color: var(--text-muted);";
+    const highlightClass = hasUnread ? "highlight-chat" : "";
+    const badgeHtml = hasUnread ? `<div class="unread-badge">${c.unread_count}</div>` : "";
+    const timeStr = formatTime(c.created_at);
+
+    const avatarUrl = resolveAvatar(c.user && c.user.avatar_url, c.user && c.user.gender);
+    const fallback = (c.user && String(c.user.gender || '').toLowerCase().includes('f')) ? DEFAULT_FEMALE : DEFAULT_MALE;
+    const safeName = escapeHtml(c.user && c.user.name ? c.user.name : "User");
+    const safeLast = escapeHtml(String(c.last || "").replace(/\n/g, ' '));
+
+    // Modify onClick to NOT redirect on desktop, just open inline.
+    const clickHandler = `onclick="handleChatClick('${c.user.id}','${c.postId || c.roomId || ''}','${c.room ? c.room.postKind : c.postType || ""}')"`;
+
+    chatListView.innerHTML += `
+      <div class="chat-item ${inactiveClass} ${highlightClass} ${selectedClass}" ${clickHandler}>
+        <img class="avatar" src="${avatarUrl}" onerror="this.onerror=null;this.src='${fallback}'" alt="${safeName}">
+        <div class="chat-info-wrapper">
+          <div class="chat-header-row">
+            <div class="chat-name">${safeName} ${roleBadge}</div>
+            <div class="chat-time" style="${timeStyle}">${timeStr}</div>
+          </div>
+          <div class="chat-room-title">${roomTag} ${inactiveBadge}</div>
+          <div class="chat-footer-row">
+            <div class="chat-preview" style="${unreadStyle}">${prefix}${safeLast}</div>
+            ${badgeHtml}
+          </div>
+        </div>
+      </div>`;
+  });
+}
+
+function filterChats() {
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = allChats.filter(c =>
+    (c.user && String(c.user.name || "").toLowerCase().includes(q)) ||
+    (c.room && c.room.title && String(c.room.title).toLowerCase().includes(q))
+  );
+  renderChats(filtered);
+}
+
+function handleChatClick(userId, postId, postKind) {
+  currentChatOpenOrigin = "chatlist";
+  activeHistoryGuardReady = false;
+  // Update URL silently so refresh maintains state
+  const safePostId = isValidId(postId) ? encodeURIComponent(postId) : "";
+  const typePart = postKind ? `&type=${encodeURIComponent(normalizePostType(postKind))}` : "";
+  const newUrl = window.location.pathname + `?user=${encodeURIComponent(userId)}&post_id=${safePostId}${typePart}`;
+  window.history.pushState({path: newUrl}, '', newUrl);
+
+  openChat(userId, postId, postKind);
+}
+
+/* ---------------- OPEN CHAT ---------------- */
+async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
+  currentChatUserId = userId;
+  currentPostId = isValidId(postIdToLoad) ? postIdToLoad : null;
+  currentPostType = normalizePostType(postTypeToLoad || requestedType || "");
+
+  // Toggle UI Layout state for mobile logic
+  appContainer.classList.add("chat-active");
+  setMobileActiveHistoryGuard();
+  
+  // Hide empty state, show main chat components
+  emptyChatState.classList.add("hidden");
+  chatHeader.classList.remove("hidden");
+  activeChatView.classList.remove("hidden");
+  
+  // Re-render sidebar to highlight selected chat
+  renderChats(allChats);
+
+  let post = null;
+  if (isValidId(currentPostId)) {
+    post = await fetchPostMeta(currentPostId, currentPostType);
+    if (post) currentPostType = post.postKind;
+  }
+  currentPostMeta = post;
+
+  const { data: adminCandidates } = await db
+    .from("messages")
+    .select("*")
+    .eq("is_admin_message", true)
+    .or(getPairFilter(userId))
+    .order("created_at", { ascending: false });
+
+  const isSupport = (adminCandidates || []).some(m => messageMatchesPost(m, currentPostId, currentPostType));
+
+  if (isSupport) {
+    headerTitle.innerHTML = `<span style="color:var(--text-main); font-size:15px; display:flex; align-items:center; gap:4px;">TingoRooms Support <span class="material-symbols-rounded verified-tick">verified</span> <span class="admin-badge">ADMIN</span></span><br><span style="font-size:12px; color:var(--primary); font-weight:500;">${post ? escapeHtml(post.title) : 'Official Support'}</span>`;
+    chatUser = { id: userId, name: 'TingoRooms Support', avatar_url: 'https://cdn-icons-png.flaticon.com/512/6024/6024190.png', gender: null };
+  } else {
+    const { data: user, error } = await db.from("users").select("*").eq("id", userId).maybeSingle();
+    if (error || !user) { alert("User not found."); goBack(); return; }
+
+    let roleBadge = `<span class="role-badge seeker">Seeker</span>`;
+    if (post && post.postKind === "needed") {
+      roleBadge = (user.id === post.user_id) ? `<span class="role-badge seeker">Seeker</span>` : `<span class="role-badge owner">Owner</span>`;
+    } else if (post && user.id === post.user_id) {
+      roleBadge = `<span class="role-badge owner">Owner</span>`;
+    }
+
+    const titlePrefix = post && post.postKind === "needed" ? "Need: " : "";
+    headerTitle.innerHTML = `<span onclick="openRoom('${post ? post.id : ''}', '${post ? post.postKind : ''}')" style="cursor:pointer; color:var(--text-main); font-size:15px;">${escapeHtml(user.name)} ${roleBadge} <br> <span style="font-size:12px; color:var(--primary); font-weight:500;">${post ? titlePrefix + escapeHtml(post.title) : 'Direct Message'}</span></span>`;
+    chatUser = user;
+  }
+
+  if (isSupport || !post || isPostChatAllowed(post)) {
+    inputArea.classList.remove("hidden");
+    inactiveBanner.classList.add("hidden");
+  } else {
+    inputArea.classList.add("hidden");
+    inactiveBanner.classList.remove("hidden");
+  }
+
+  // --- SUPABASE REALTIME SUBSCRIPTION ---
+  if (chatChannel) db.removeChannel(chatChannel);
+  const channelPostId = isValidId(currentPostId) ? currentPostId : 'general';
+  const channelPostType = currentPostType || 'direct';
+  const channelStr = `room_${channelPostType}_${channelPostId}_${[currentUser.id, userId].sort().join('_')}`;
+  
+  chatChannel = db.channel(channelStr)
+    .on('broadcast', { event: 'typing' }, (payload) => {
+      if (payload.payload.user_id === userId) {
+        isOtherUserTyping = payload.payload.is_typing;
+        renderActiveChatUI();
+      }
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+       // Refresh messages when a new DB row hits
+       loadMessages(userId, currentPostId, currentPostType, true);
+    })
+    .subscribe();
+
+  // Instant Cache Load / Skeleton Fallback
+  const cacheKey = buildCacheKey("tingo_msgs", currentPostId, currentPostType, userId);
+  if (!localStorage.getItem(cacheKey)) {
+    showActiveChatSkeleton();
+  }
+
+  loadMessages(userId, currentPostId, currentPostType);
+}
+
+/* TYPING EVENTS */
+msgInput.addEventListener('input', () => {
+  if (!chatChannel) return;
+  if (!isTyping) {
+    isTyping = true;
+    chatChannel.send({ type: 'broadcast', event: 'typing', payload: { user_id: currentUser.id, is_typing: true } });
+  }
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    isTyping = false;
+    chatChannel.send({ type: 'broadcast', event: 'typing', payload: { user_id: currentUser.id, is_typing: false } });
+  }, 1500);
+});
+
+/* ---------------- LOAD MESSAGES ---------------- */
+async function loadMessages(userId, postIdToLoad, postTypeToLoad = "", forceScroll = true) {
+  const normalizedPostType = normalizePostType(postTypeToLoad || currentPostType || "");
+  const cacheKey = buildCacheKey("tingo_msgs", postIdToLoad, normalizedPostType, userId);
+
+  if (forceScroll) {
+    const cachedHTML = localStorage.getItem(cacheKey);
+    if (cachedHTML) {
+      cachedMessagesHTML = cachedHTML;
+      renderActiveChatUI(true);
+    }
+  }
+
+  const { data, error } = await db
+    .from("messages")
+    .select("*")
+    .or(getPairFilter(userId))
+    .order("created_at", { ascending: true });
+
+  if (error || !data) return;
+
+  const threadMessages = data.filter(m => messageMatchesPost(m, postIdToLoad, normalizedPostType));
+
+  const unreadMessages = threadMessages.filter(m => m.receiver_id === currentUser.id && m.is_read === false);
+  if (unreadMessages.length > 0) {
+    const ids = unreadMessages.map(m => m.id).filter(Boolean);
+    if (ids.length > 0) {
+      await db.from("messages").update({ is_read: true }).in("id", ids);
+      loadChats(true); // update sidebar badge
+    }
+  }
+
+  let htmlString = "";
+  let lastDateKey = "";
+  threadMessages.forEach(msg => {
+    const msgDateKey = getDateKey(msg.created_at);
+    if (msgDateKey && msgDateKey !== lastDateKey) {
+      const dateLabel = formatDateSeparator(msg.created_at);
+      htmlString += `<div class="date-separator"><span>${escapeHtml(dateLabel)}</span></div>`;
+      lastDateKey = msgDateKey;
+    }
+
+    const isSent = msg.sender_id === currentUser.id;
+    const timeStr = formatTimeShort(msg.created_at);
+    const safeMsg = escapeHtml(msg.message || "").replace(/\n/g, '<br>');
+
+    if (msg.is_admin_message && !isSent) {
+      htmlString += `
+        <div class="message received admin-msg" style="width: fit-content;">
+          <div class="admin-msg-title"><span class="material-symbols-rounded" style="font-size:14px;">admin_panel_settings</span> TINGOROOMS SUPPORT</div>
+          <span>${safeMsg}</span>
+          <span style="font-size: 10px; color: rgba(255,255,255,0.7); align-self: flex-end; margin-top: 2px; margin-bottom: -4px;">${timeStr}</span>
+        </div>`;
+    } else {
+      const timeColor = isSent ? "rgba(255, 255, 255, 0.75)" : "#94A3B8";
+      const senderAvatar = isSent ? resolveAvatar(currentUser.avatar_url, currentUser.gender) : resolveAvatar(chatUser && chatUser.avatar_url, chatUser && chatUser.gender);
+      const senderFallback = isSent ? (currentUser && String(currentUser.gender || '').toLowerCase().includes('f') ? DEFAULT_FEMALE : DEFAULT_MALE) : (chatUser && String(chatUser.gender || '').toLowerCase().includes('f') ? DEFAULT_FEMALE : DEFAULT_MALE);
+
+      if (isSent) {
+        htmlString += `
+          <div class="message-row sent-row">
+            <div class="message sent"><span>${safeMsg}</span><span style="font-size: 10px; color: ${timeColor}; align-self: flex-end; margin-top: 2px; margin-bottom: -4px;">${timeStr}</span></div>
+            <img class="msg-avatar" src="${senderAvatar}" onerror="this.onerror=null;this.src='${senderFallback}'" alt="">
+          </div>`;
+      } else {
+        htmlString += `
+          <div class="message-row received-row">
+            <img class="msg-avatar" src="${senderAvatar}" onerror="this.onerror=null;this.src='${senderFallback}'" alt="">
+            <div class="message received"><span>${safeMsg}</span><span style="font-size: 10px; color: ${timeColor}; align-self: flex-end; margin-top: 2px; margin-bottom: -4px;">${timeStr}</span></div>
+          </div>`;
+      }
+    }
+  });
+
+  cachedMessagesHTML = htmlString;
+  localStorage.setItem(cacheKey, htmlString);
+  renderActiveChatUI(forceScroll);
+}
+
+function renderActiveChatUI(forceScroll = false) {
+  const baseHTML = cachedMessagesHTML || "";
+  const typingHTML = isOtherUserTyping ? `
+      <div class="message received typing-indicator-wrapper" style="width: fit-content; padding: 14px 18px;">
+        <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+      </div>` : '';
+
+  if (activeChatView.innerHTML === baseHTML + typingHTML) return;
+
+  const wasAtBottom = activeChatView.scrollHeight - activeChatView.scrollTop <= activeChatView.clientHeight + 50;
+  if (activeChatView.innerHTML !== baseHTML) activeChatView.innerHTML = baseHTML;
+
+  const existingTyping = activeChatView.querySelector('.typing-indicator-wrapper');
+  if (isOtherUserTyping && !existingTyping) {
+    const temp = document.createElement('div');
+    temp.innerHTML = typingHTML;
+    activeChatView.appendChild(temp.firstElementChild);
+  } else if (!isOtherUserTyping && existingTyping) {
+    existingTyping.remove();
+  }
+
+  if (forceScroll || wasAtBottom) {
+    activeChatView.scrollTop = activeChatView.scrollHeight;
+  }
+}
+
+/* ---------------- SEND MESSAGE ---------------- */
+async function sendMessage() {
+  const text = msgInput.value.trim();
+  if (!text || !isValidId(currentChatUserId)) return;
+  if (currentChatUserId === currentUser.id) { alert("This is your own post."); return; }
+
+  isTyping = false;
+  clearTimeout(typingTimeout);
+  if (chatChannel) chatChannel.send({ type: 'broadcast', event: 'typing', payload: { user_id: currentUser.id, is_typing: false } });
+
+  const payloadPostId = isValidId(currentPostId) ? currentPostId : null;
+  const payloadPostType = normalizePostType(currentPostType || (currentPostMeta && currentPostMeta.postKind) || requestedType || "") || null;
+
+  const { data: existingCandidates } = await db.from("messages").select("*").or(getPairFilter(currentChatUserId)).order("created_at", { ascending: true });
+  const existing = (existingCandidates || []).filter(m => messageMatchesPost(m, payloadPostId, payloadPostType));
+  
+  msgInput.value = "";
+
+  const insertPayload = {
+    sender_id: currentUser.id, receiver_id: currentChatUserId,
+    post_id: payloadPostId, post_type: payloadPostType,
+    room_id: payloadPostType === "available" ? payloadPostId : null,
+    message: text, is_read: false, is_first_message: existing.length === 0,
+    is_admin_message: false, sender_role: 'user'
+  };
+
+  const { error } = await db.from("messages").insert(insertPayload);
+  if (error) {
+    msgInput.value = text;
+    alert("Message not sent: " + error.message);
+    return;
+  }
+
+  loadMessages(currentChatUserId, payloadPostId, payloadPostType, true);
+  msgInput.focus();
+}
+
+function handleKeyPress(e) { if (e.key === "Enter") sendMessage(); }
+
+/* ---------------- NAVIGATION ---------------- */
+function buildRoomDetailsBackUrl() {
+  const postId = currentPostId || requestedPostId;
+  if (!isValidId(postId)) return "index.html";
+
+  const type = normalizePostType(
+    currentPostType ||
+    (currentPostMeta && currentPostMeta.postKind) ||
+    requestedType ||
+    ""
+  );
+
+  const typePart = type ? `&type=${encodeURIComponent(type)}` : "";
+  return `roomdetails.html?id=${encodeURIComponent(postId)}${typePart}`;
+}
+
+function shouldReturnToRoomDetails() {
+  if (!isValidId(currentPostId || requestedPostId)) return false;
+  if (currentChatOpenOrigin === "chatlist") return false;
+  return true;
+}
+
+function cameFromRoomDetailsPage() {
+  if (currentChatOpenOrigin === "roomdetails") return true;
+
+  try {
+    if (!document.referrer) return false;
+    const refUrl = new URL(document.referrer, window.location.href);
+    const refPath = String(refUrl.pathname || "").toLowerCase();
+    if (!refPath.endsWith("roomdetails.html")) return false;
+
+    const refId = refUrl.searchParams.get("id") || refUrl.searchParams.get("room") || refUrl.searchParams.get("post_id") || refUrl.searchParams.get("requirement_id");
+    const postId = currentPostId || requestedPostId;
+    return !isValidId(refId) || !isValidId(postId) || String(refId) === String(postId);
+  } catch (err) {
+    return false;
+  }
+}
+
+function needsRoomDetailsHistoryBridge() {
+  if (window.innerWidth >= 900) return false;
+  if (!shouldReturnToRoomDetails()) return false;
+
+  /*
+    If chat was opened from roomdetails.html, do NOT add an extra history entry.
+    Browser/custom back should naturally return to that same details page, then the next back goes to index.
+
+    If chat was opened directly from index/dashboard, add one temporary chat state.
+    Pressing back first lands on that temporary state, then this page replaces it with roomdetails.html.
+    Result: index -> roomdetails, with no chat/details loop.
+  */
+  return !cameFromRoomDetailsPage();
+}
+
+function setMobileActiveHistoryGuard() {
+  if (activeHistoryGuardReady) return;
+  if (!needsRoomDetailsHistoryBridge()) return;
+
+  try {
+    window.history.replaceState({ tingoPage: "chat", tingoBridgeBase: true }, "", window.location.href);
+    window.history.pushState({ tingoPage: "chat", tingoBridgeActive: true }, "", window.location.href);
+    activeHistoryGuardReady = true;
+  } catch (err) {
+    console.warn("Unable to prepare chat back navigation:", err);
+  }
+}
+
+function closeActiveChatToList(updateUrl = true) {
+  appContainer.classList.remove("chat-active");
+  chatHeader.classList.add("hidden");
+  activeChatView.classList.add("hidden");
+  inputArea.classList.add("hidden");
+  inactiveBanner.classList.add("hidden");
+  emptyChatState.classList.remove("hidden");
+
+  currentChatUserId = null;
+  currentPostId = null;
+  currentPostType = null;
+  currentPostMeta = null;
+  chatUser = null;
+  cachedMessagesHTML = "";
+  isOtherUserTyping = false;
+  currentChatOpenOrigin = "chatlist";
+  activeHistoryGuardReady = false;
+
+  if (updateUrl) {
+    const newUrl = window.location.pathname;
+    window.history.pushState({ path: newUrl, tingoChatList: true }, "", newUrl);
+  }
+
+  if (chatChannel) {
+    db.removeChannel(chatChannel);
+    chatChannel = null;
+  }
+
+  renderChats(allChats);
+}
+
+function openRoom(id, postKind = "") {
+  if (isValidId(id)) {
+    const typePart = postKind ? `&type=${encodeURIComponent(normalizePostType(postKind))}` : "";
+    window.location.href = `roomdetails.html?id=${encodeURIComponent(id)}${typePart}`;
+  }
+}
+
+function goBack() {
+  if (shouldReturnToRoomDetails()) {
+    if (cameFromRoomDetailsPage() && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    if (activeHistoryGuardReady && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+
+    window.location.replace(buildRoomDetailsBackUrl());
+    return;
+  }
+
+  closeActiveChatToList(true);
+}
+
+window.addEventListener("popstate", () => {
+  if (!appContainer.classList.contains("chat-active")) return;
+
+  if (shouldReturnToRoomDetails()) {
+    window.location.replace(buildRoomDetailsBackUrl());
+    return;
+  }
+
+  closeActiveChatToList(false);
+});
+</script>
+
+</body>
+</html>

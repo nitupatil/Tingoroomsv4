@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TingoRooms Buttons</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+
+<style id="tingo-bottom-nav-style">
+:root {
+  --primary: #4F46E5;
+  --primary-dark: #3730A3;
+  --primary-gradient: linear-gradient(135deg, #7C3AED 0%, #4F46E5 55%, #06B6D4 100%);
+  --primary-light: #EEF2FF;
+  --primary-glow: rgba(79, 70, 229, 0.28);
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  font-family: 'Inter', sans-serif;
+  background: transparent !important;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Reusable bottom navigation */
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 999999;
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 2px;
+  padding: 10px 10px max(16px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(226, 232, 240, 0.82);
+  border-radius: 24px 24px 0 0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 -14px 34px rgba(15, 23, 42, 0.08);
+}
+
+.nav-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #94A3B8;
+  font-size: 10.5px;
+  font-weight: 800;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.22s ease, transform 0.18s ease;
+}
+
+.nav-item:active {
+  transform: scale(0.94);
+}
+
+.nav-item.active {
+  color: var(--primary);
+}
+
+.nav-item .icon-wrapper {
+  position: relative;
+  min-width: 46px;
+  height: 32px;
+  padding: 3px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  transition: background 0.22s ease;
+}
+
+.nav-item.active .icon-wrapper {
+  background: var(--primary-light);
+}
+
+.nav-item .material-symbols-rounded {
+  font-size: 28px;
+}
+
+.nav-item.post-btn {
+  margin-top: -18px;
+}
+
+.nav-item.post-btn .material-symbols-rounded {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 0;
+  border-radius: 20px;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  border: 5px solid #FFFFFF;
+  box-shadow: 0 14px 24px var(--primary-glow);
+  font-size: 34px;
+}
+
+.nav-item.post-btn span:last-child {
+  margin-top: 1px;
+  color: var(--primary);
+}
+
+#msgBadge {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #EF4444;
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.32);
+  font-size: 10px;
+  line-height: 14px;
+  text-align: center;
+  font-weight: 900;
+}
+
+/* Desktop style when button.html is injected/opened normally */
+@media (min-width: 900px) {
+  .bottom-nav {
+    position: fixed;
+    top: 120px;
+    right: 24px;
+    bottom: 24px;
+    left: auto;
+    width: 96px;
+    max-width: 96px;
+    height: auto;
+    padding: 16px 8px;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    border-radius: 30px;
+    border: 1px solid rgba(226, 232, 240, 0.7);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    transform: none;
+  }
+
+  .nav-item {
+    width: 100%;
+    flex: 0 0 auto;
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  .nav-item .icon-wrapper {
+    padding: 10px;
+    height: auto;
+  }
+
+  .nav-item.post-btn {
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .nav-item .material-symbols-rounded {
+    font-size: 24px;
+  }
+
+  .nav-item span {
+    margin-top: 6px;
+    font-size: 10px;
+  }
+
+  .nav-item.post-btn .material-symbols-rounded {
+    width: auto;
+    height: auto;
+    margin-top: 0;
+    font-size: 22px;
+    border-radius: 50%;
+    padding: 12px;
+    border: 0;
+  }
+}
+
+/* Desktop style when button.html is inside the iframe.
+   Do not depend on iframe width; index.html passes ?mode=desktop. */
+body.desktop .bottom-nav {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  transform: none !important;
+  width: 96px !important;
+  max-width: 96px !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 16px 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  gap: 10px !important;
+  border-radius: 30px !important;
+  border: 1px solid rgba(226, 232, 240, 0.7) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important;
+}
+
+body.desktop .nav-item {
+  width: 100% !important;
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 10px 0 !important;
+  gap: 3px !important;
+}
+
+body.desktop .nav-item .icon-wrapper {
+  padding: 10px !important;
+  height: auto !important;
+  min-width: auto !important;
+}
+
+body.desktop .nav-item.post-btn {
+  width: 100% !important;
+  margin-top: 6px !important;
+}
+
+body.desktop .nav-item .material-symbols-rounded {
+  font-size: 24px !important;
+}
+
+body.desktop .nav-item span {
+  margin-top: 6px !important;
+  font-size: 10px !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+body.desktop .nav-item.post-btn .material-symbols-rounded {
+  width: auto !important;
+  height: auto !important;
+  margin-top: 0 !important;
+  font-size: 22px !important;
+  border-radius: 50% !important;
+  padding: 12px !important;
+  border: 0 !important;
+}
+
+@media (max-width: 374px) {
+  .nav-item span:last-child {
+    font-size: 9.5px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="bottom-nav" id="tingoBottomNav">
+  <div class="nav-item active" onclick="go('index.html')" data-pages="index.html,">
+    <div class="icon-wrapper"><span class="material-symbols-rounded">home</span></div>
+    <span>Home</span>
+  </div>
+  <div class="nav-item" onclick="openChatList()" data-pages="chat.html,chatlist.html">
+    <div class="icon-wrapper">
+      <span class="material-symbols-rounded">chat_bubble</span>
+      <div id="msgBadge" style="display:none;"></div>
+    </div>
+    <span>Chat</span>
+  </div>
+  <div class="nav-item post-btn" onclick="go('postroom.html')" data-pages="postroom.html">
+    <span class="material-symbols-rounded">add</span>
+    <span>Post</span>
+  </div>
+  <div class="nav-item" onclick="go('map.html')" data-pages="map.html">
+    <div class="icon-wrapper"><span class="material-symbols-rounded">map</span></div>
+    <span>Map</span>
+  </div>
+  <div class="nav-item" onclick="go('user.html')" data-pages="user.html">
+    <div class="icon-wrapper"><span class="material-symbols-rounded">person</span></div>
+    <span>Profile</span>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0";
+let db = null;
+
+try {
+  if (window.supabase) db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch (e) {
+  console.warn("Supabase not available in button.html", e);
+}
+
+function safeJson(value, fallback = null) {
+  try { return JSON.parse(value || "null") || fallback; }
+  catch (e) { return fallback; }
+}
+
+function getUrlParam(name) {
+  try { return new URLSearchParams(window.location.search).get(name) || ""; }
+  catch (e) { return ""; }
+}
+
+function callParentFunction(functionName, ...args) {
+  /* On local file:// iframe, browser blocks parent access. On GitHub/site same-origin it works. */
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent[functionName] === "function") {
+      window.parent[functionName](...args);
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+function navigateTop(page) {
+  try {
+    window.open(page, "_top");
+  } catch (e) {
+    window.location.href = page;
+  }
+}
+
+function go(page) {
+  if (callParentFunction("go", page)) return;
+  navigateTop(page);
+}
+
+function checkLogin(page) {
+  if (callParentFunction("checkLogin", page)) return;
+
+  const user = safeJson(localStorage.getItem("user"));
+  if (!user) {
+    alert("Login required");
+    go(`user.html?redirect=${encodeURIComponent(page)}`);
+    return;
+  }
+
+  go(page);
+}
+
+function openChatList() {
+  if (callParentFunction("openChatList")) return;
+
+  const user = safeJson(localStorage.getItem("user"));
+  if (!user) {
+    go("user.html?redirect=chatlist");
+    return;
+  }
+
+  go("chat.html");
+}
+
+function getCurrentPageName() {
+  const activeFromIndex = getUrlParam("active");
+  if (activeFromIndex) return activeFromIndex.toLowerCase();
+
+  const page = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
+  return page || "index.html";
+}
+
+function setActiveNavItem() {
+  const page = getCurrentPageName();
+  document.querySelectorAll(".nav-item").forEach(item => {
+    const pages = (item.getAttribute("data-pages") || "").toLowerCase().split(",");
+    item.classList.toggle("active", pages.includes(page));
+  });
+}
+
+function syncDesktopMode() {
+  const modeFromIndex = getUrlParam("mode");
+  let isDesktop = false;
+
+  if (modeFromIndex === "desktop") {
+    isDesktop = true;
+  } else if (modeFromIndex === "mobile") {
+    isDesktop = false;
+  } else {
+    isDesktop = window.innerWidth >= 900;
+  }
+
+  document.body.classList.toggle("desktop", isDesktop);
+}
+
+function setMsgBadge(count) {
+  const badge = document.getElementById("msgBadge");
+  if (!badge) return;
+
+  const number = Number(count || 0);
+  if (number > 0) {
+    badge.innerText = number > 99 ? "99+" : String(number);
+    badge.style.display = "block";
+  } else {
+    badge.innerText = "";
+    badge.style.display = "none";
+  }
+}
+
+async function checkButtonMessages() {
+  if (!db) return;
+  const user = safeJson(localStorage.getItem("user"));
+  if (!user || !user.id) {
+    setMsgBadge(0);
+    return;
+  }
+
+  try {
+    const { data, error } = await db
+      .from("messages")
+      .select("sender_id, room_id")
+      .eq("receiver_id", user.id)
+      .eq("is_read", false);
+
+    if (error || !data) return;
+    const uniqueChats = new Set(data.map(m => `${m.sender_id}_${m.room_id}`));
+    setMsgBadge(uniqueChats.size);
+  } catch (e) {
+    console.warn("Message badge check failed", e);
+  }
+}
+
+window.setMsgBadge = setMsgBadge;
+window.addEventListener("message", function(event) {
+  if (event && event.data && event.data.type === "TINGO_MSG_BADGE") setMsgBadge(event.data.count);
+});
+
+window.addEventListener("load", () => {
+  syncDesktopMode();
+  setActiveNavItem();
+  checkButtonMessages();
+});
+window.addEventListener("resize", syncDesktopMode);
+setInterval(syncDesktopMode, 700);
+setInterval(setActiveNavItem, 1000);
+setInterval(checkButtonMessages, 5000);
+</script>
+
+</body>
+</html>
