@@ -2650,12 +2650,12 @@ searchInput.addEventListener("input", (e) => {
   clearTimeout(suggestionTimeout);
   suggestionTimeout = setTimeout(() => {
     fetchLocationSearchSuggestions(value);
-  }, 250);
+  }, 120);
 
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     loadRooms(value);
-  }, 450);
+  }, 650);
 });
 
 searchInput.addEventListener("focus", () => {
@@ -3419,7 +3419,7 @@ function triggerAction(event, type, roomId, info, source = null) {
 
 /* ADVANCED SEARCH ENGINE + THEME POPUP */
 const PUNE_CENTER = { lat: 18.5204, lon: 73.8567 };
-const PUNE_SERVICE_RADIUS_KM = 55;
+const PUNE_SERVICE_RADIUS_KM = 130;
 let appPopupTimer = null;
 
 function showAppPopup(message, title = "TingoRooms") {
@@ -4497,6 +4497,402 @@ async function fetchLocationSearchSuggestions(value) {
   }
 }
 
+
+/* FAST PUNE DISTRICT LOCATION SEARCH OVERRIDE
+   Location suggestions are now independent from existing posts:
+   1) instant local Pune district places + colleges,
+   2) live Photon/Nominatim suggestions for buildings/roads/colleges,
+   3) saved post addresses below those.
+   Selecting any suggestion sorts posts nearest-to-farthest from that selected place. */
+const FAST_PUNE_DISTRICT_VIEWBOX = "73.20,19.45,75.10,17.75"; // west,north,east,south around Pune district
+const FAST_PUNE_DISTRICT_BOUNDS = { west: 73.20, east: 75.10, south: 17.75, north: 19.45 };
+const FAST_PUNE_CENTER = { lat: 18.5204, lon: 73.8567 };
+
+const FAST_PUNE_EXTRA_PLACES = [
+  { label: "Fergusson College", subLabel: "FC Road, Shivajinagar, Pune", lat: 18.5227, lon: 73.8399, aliases: "fc college ferguson clg fergusson clg fc road college" },
+  { label: "Savitribai Phule Pune University", subLabel: "Ganeshkhind, Pune", lat: 18.5523, lon: 73.8246, aliases: "sppu pune university pune uni university of pune unipune" },
+  { label: "COEP Technological University", subLabel: "Shivajinagar, Pune", lat: 18.5294, lon: 73.8567, aliases: "coep college of engineering pune engineering clg" },
+  { label: "MIT World Peace University", subLabel: "Kothrud, Pune", lat: 18.5184, lon: 73.8159, aliases: "mit wpu mit college mit clg kothrud mit pune" },
+  { label: "Brihan Maharashtra College of Commerce", subLabel: "BMCC Road, Deccan, Pune", lat: 18.5178, lon: 73.8395, aliases: "bmcc commerce college bmcc clg deccan" },
+  { label: "Garware College", subLabel: "Karve Road, Pune", lat: 18.5131, lon: 73.8355, aliases: "abasaheb garware college garware clg karve road" },
+  { label: "Modern College", subLabel: "Shivajinagar, Pune", lat: 18.5260, lon: 73.8492, aliases: "modern clg modern college shivajinagar" },
+  { label: "Nowrosjee Wadia College", subLabel: "Bund Garden Road, Pune", lat: 18.5335, lon: 73.8781, aliases: "wadia college wadia clg ness wadia nowrosjee" },
+  { label: "Symbiosis College", subLabel: "Senapati Bapat Road, Pune", lat: 18.5361, lon: 73.8296, aliases: "symbiosis clg sb road senapati bapat" },
+  { label: "Symbiosis International University", subLabel: "Lavale, Pune", lat: 18.5437, lon: 73.7336, aliases: "symbiosis lavale siu symbiosis university" },
+  { label: "Symbiosis Institute", subLabel: "Viman Nagar, Pune", lat: 18.5671, lon: 73.9116, aliases: "symbiosis viman nagar siib scmhrd sibm clg" },
+  { label: "Bharati Vidyapeeth University", subLabel: "Katraj, Pune", lat: 18.4572, lon: 73.8552, aliases: "bharati vidyapeeth bharti vidyapeeth katraj bvdu college clg" },
+  { label: "Sinhgad College", subLabel: "Vadgaon Budruk, Pune", lat: 18.4676, lon: 73.8357, aliases: "sinhgad clg vadgaon vadgaon budruk sinhgad institute" },
+  { label: "RMD Sinhgad College", subLabel: "Warje, Pune", lat: 18.4844, lon: 73.7998, aliases: "rmd sinhgad warje sinhagad clg" },
+  { label: "PICT College", subLabel: "Dhankawadi, Pune", lat: 18.4575, lon: 73.8500, aliases: "pict pune institute computer technology pict clg dhankawadi" },
+  { label: "VIT Pune", subLabel: "Bibwewadi, Pune", lat: 18.4643, lon: 73.8666, aliases: "vishwakarma institute technology vit college vit clg bibwewadi" },
+  { label: "VIIT Pune", subLabel: "Kondhwa, Pune", lat: 18.4615, lon: 73.8932, aliases: "viit vishwakarma institute information technology kondhwa clg" },
+  { label: "PCCOE", subLabel: "Nigdi, Pimpri-Chinchwad, Pune", lat: 18.6515, lon: 73.7612, aliases: "pccoe pimpri chinchwad college engineering nigdi clg" },
+  { label: "DY Patil College", subLabel: "Akurdi, Pimpri-Chinchwad, Pune", lat: 18.6454, lon: 73.7590, aliases: "d y patil dy patil dypatil akurdi college clg" },
+  { label: "Indira College", subLabel: "Wakad, Pune", lat: 18.6063, lon: 73.7630, aliases: "indira clg wakad tathawade iccs isbs" },
+  { label: "Sri Balaji University", subLabel: "Tathawade, Pune", lat: 18.6262, lon: 73.7480, aliases: "balaji institute sbi sbup balaji university tathawade" },
+  { label: "Arihant Institute of Business Management", subLabel: "Bavdhan, Pune", lat: 18.5114, lon: 73.7760, aliases: "arihant institute business management aibm bavdhan mba clg" },
+  { label: "FLAME University", subLabel: "Lavale, Pune", lat: 18.5217, lon: 73.7326, aliases: "flame university lavale college" },
+  { label: "JSPM College", subLabel: "Wagholi, Pune", lat: 18.5780, lon: 74.0000, aliases: "jspm wagholi college clg" },
+  { label: "Zeal College", subLabel: "Narhe, Pune", lat: 18.4475, lon: 73.8256, aliases: "zeal clg narhe zeal college" },
+  { label: "SP College", subLabel: "Sadashiv Peth, Pune", lat: 18.5104, lon: 73.8493, aliases: "sir parashurambhau college sp clg sadashiv peth" },
+  { label: "ILS Law College", subLabel: "Law College Road, Pune", lat: 18.5149, lon: 73.8287, aliases: "ils law college law clg" },
+  { label: "Pune Station", subLabel: "Pune Railway Station", lat: 18.5289, lon: 73.8744, aliases: "pune railway station pune junction station" },
+  { label: "Swargate", subLabel: "Pune, Maharashtra", lat: 18.5018, lon: 73.8636, aliases: "swargate bus stand" },
+  { label: "Magarpatta City", subLabel: "Hadapsar, Pune", lat: 18.5158, lon: 73.9272, aliases: "magarpatta magarpatta city hadapsar" },
+  { label: "Amanora Park Town", subLabel: "Hadapsar, Pune", lat: 18.5185, lon: 73.9365, aliases: "amanora amanora mall hadapsar" },
+  { label: "EON IT Park", subLabel: "Kharadi, Pune", lat: 18.5510, lon: 73.9502, aliases: "eon free zone eon it park kharadi" },
+  { label: "Rajiv Gandhi Infotech Park", subLabel: "Hinjewadi, Pune", lat: 18.5913, lon: 73.7389, aliases: "hinjewadi it park rajiv gandhi infotech park" },
+  { label: "Lonavala", subLabel: "Pune District, Maharashtra", lat: 18.7546, lon: 73.4062, aliases: "lonavla lonavala pune district" },
+  { label: "Talegaon Dabhade", subLabel: "Pune District, Maharashtra", lat: 18.7350, lon: 73.6756, aliases: "talegaon talegaon dabhade" },
+  { label: "Chakan", subLabel: "Pune District, Maharashtra", lat: 18.7606, lon: 73.8635, aliases: "chakan pune district" },
+  { label: "Rajgurunagar", subLabel: "Khed, Pune District", lat: 18.8663, lon: 73.8860, aliases: "rajgurunagar khed pune district" },
+  { label: "Manchar", subLabel: "Ambegaon, Pune District", lat: 19.0044, lon: 73.9449, aliases: "manchar ambegaon" },
+  { label: "Junnar", subLabel: "Pune District, Maharashtra", lat: 19.2070, lon: 73.8752, aliases: "junnar pune district" },
+  { label: "Shirur", subLabel: "Pune District, Maharashtra", lat: 18.8276, lon: 74.3748, aliases: "shirur pune district" },
+  { label: "Daund", subLabel: "Pune District, Maharashtra", lat: 18.4655, lon: 74.5837, aliases: "daund pune district" },
+  { label: "Baramati", subLabel: "Pune District, Maharashtra", lat: 18.1517, lon: 74.5777, aliases: "baramati pune district" },
+  { label: "Saswad", subLabel: "Purandar, Pune District", lat: 18.3435, lon: 74.0310, aliases: "saswad purandar" },
+  { label: "Jejuri", subLabel: "Purandar, Pune District", lat: 18.2765, lon: 74.1600, aliases: "jejuri pune district" },
+  { label: "Bhor", subLabel: "Pune District, Maharashtra", lat: 18.1482, lon: 73.8431, aliases: "bhor pune district" }
+];
+
+const FAST_PUNE_PLACES = mergeLocationSuggestions([
+  ...(Array.isArray(LOCAL_PUNE_PLACES) ? LOCAL_PUNE_PLACES.map(p => ({ ...p, source: "map", icon: "travel_explore", displayName: `${p.label}, ${p.subLabel}` })) : []),
+  ...FAST_PUNE_EXTRA_PLACES.map(p => ({ ...p, source: "map", icon: /college|university|institute|school|clg/i.test(`${p.label} ${p.aliases}`) ? "school" : "travel_explore", displayName: `${p.label}, ${p.subLabel}` }))
+]);
+
+function expandLocationSearchTerm(value) {
+  return cleanSearchTerm(value)
+    .replace(/\bclg\b/gi, "college")
+    .replace(/\bclge\b/gi, "college")
+    .replace(/\bcolg\b/gi, "college")
+    .replace(/\bcollage\b/gi, "college")
+    .replace(/\buni\b/gi, "university")
+    .replace(/\bengg\b/gi, "engineering")
+    .replace(/\bsoc\b/gi, "society")
+    .replace(/\bnagar\b/gi, "nagar");
+}
+
+function isInsidePuneDistrictApprox(place) {
+  if (!place || !Number.isFinite(Number(place.lat)) || !Number.isFinite(Number(place.lon))) return true;
+  const lat = Number(place.lat);
+  const lon = Number(place.lon);
+  return lon >= FAST_PUNE_DISTRICT_BOUNDS.west && lon <= FAST_PUNE_DISTRICT_BOUNDS.east && lat >= FAST_PUNE_DISTRICT_BOUNDS.south && lat <= FAST_PUNE_DISTRICT_BOUNDS.north;
+}
+
+function isInsidePuneServiceArea(place) {
+  return isInsidePuneDistrictApprox(place);
+}
+
+function getSuggestionIconFromText(text) {
+  const t = String(text || "").toLowerCase();
+  if (/college|university|institute|school|campus|clg/.test(t)) return "school";
+  if (/hospital|clinic/.test(t)) return "local_hospital";
+  if (/mall|market|shop|store/.test(t)) return "storefront";
+  if (/station|bus|metro/.test(t)) return "directions_transit";
+  if (/apartment|building|tower|society|residency|heights/.test(t)) return "apartment";
+  return "travel_explore";
+}
+
+function getLocalPuneAreaSuggestions(searchText, existingSuggestions = []) {
+  const term = expandLocationSearchTerm(searchText);
+  if (!term) return [];
+  const existing = new Set((existingSuggestions || []).map(item => normalizeSearchKey(item.label)));
+
+  return FAST_PUNE_PLACES
+    .filter(place => !existing.has(normalizeSearchKey(place.label)))
+    .map(place => {
+      const full = `${place.label} ${place.subLabel} ${place.aliases || ""}`;
+      return {
+        source: "map",
+        label: place.label,
+        subLabel: place.subLabel,
+        icon: place.icon || getSuggestionIconFromText(full),
+        lat: Number(place.lat),
+        lon: Number(place.lon),
+        displayName: place.displayName || `${place.label}, ${place.subLabel}`,
+        _score: scoreFuzzyLabel(full, term, false)
+      };
+    })
+    .filter(place => fuzzyTextMatch(`${place.label} ${place.subLabel} ${place.displayName}`, term, false) || (place._score || 0) >= 22)
+    .sort((a, b) => (b._score || 0) - (a._score || 0))
+    .slice(0, 12);
+}
+
+function photonFeatureToSuggestion(feature) {
+  const props = feature.properties || {};
+  const coords = feature.geometry?.coordinates || [];
+  const lon = Number(coords[0]);
+  const lat = Number(coords[1]);
+  const name = cleanSearchTerm(props.name || props.street || props.city || props.district || "Location");
+  const road = cleanSearchTerm(props.street || "");
+  const city = cleanSearchTerm(props.city || props.county || props.district || "Pune");
+  const state = cleanSearchTerm(props.state || "Maharashtra");
+  const labelParts = [name, road].filter(Boolean);
+  const label = [...new Set(labelParts)].slice(0, 2).join(", ") || name;
+  const subLabel = [city, state, props.postcode].filter(Boolean).join(", ");
+  const displayName = [label, subLabel].filter(Boolean).join(", ");
+  return {
+    source: "map",
+    label,
+    subLabel: subLabel || "Pune District, Maharashtra",
+    icon: getSuggestionIconFromText(`${label} ${props.osm_key || ""} ${props.osm_value || ""}`),
+    lat,
+    lon,
+    displayName,
+    _score: scoreFuzzyLabel(`${displayName} ${props.osm_key || ""} ${props.osm_value || ""}`, getCurrentSearchText(), true)
+  };
+}
+
+async function fetchPhotonSuggestions(searchText) {
+  const term = expandLocationSearchTerm(searchText);
+  if (!term) return [];
+  const queries = [term, `${term} Pune`, `${term} Pune Maharashtra`];
+  const results = [];
+
+  for (const q of queries) {
+    try {
+      const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=${FAST_PUNE_CENTER.lat}&lon=${FAST_PUNE_CENTER.lon}&limit=15&lang=en`;
+      const data = await fetchJsonSafe(url);
+      (data.features || []).forEach(feature => {
+        const suggestion = photonFeatureToSuggestion(feature);
+        if (!Number.isFinite(suggestion.lat) || !Number.isFinite(suggestion.lon)) return;
+        if (!isInsidePuneDistrictApprox(suggestion)) return;
+        const haystack = `${suggestion.label} ${suggestion.subLabel} ${suggestion.displayName}`;
+        if (fuzzyTextMatch(haystack, term, false) || results.length < 8) results.push(suggestion);
+      });
+      if (results.length >= 12) break;
+    } catch (err) {
+      console.warn("Photon location source failed", err);
+    }
+  }
+
+  return mergeLocationSuggestions(results)
+    .sort((a, b) => (b._score || 0) - (a._score || 0))
+    .slice(0, 12);
+}
+
+async function fetchMapSuggestions(searchText) {
+  const term = expandLocationSearchTerm(searchText);
+  if (term.length < 1) return [];
+
+  const base = "https://nominatim.openstreetmap.org/search";
+  const common = "format=json&addressdetails=1&namedetails=1&extratags=1&dedupe=0&countrycodes=in&limit=15";
+  const queryTexts = [
+    `${term} Pune District Maharashtra India`,
+    `${term} Pune Maharashtra India`,
+    /college|university|institute|school/i.test(term) ? `${term} college Pune Maharashtra India` : `${term} Pune`,
+    term
+  ].filter(Boolean);
+
+  const nominatimResults = [];
+  for (const q of queryTexts) {
+    const bounded = `${base}?${common}&viewbox=${encodeURIComponent(FAST_PUNE_DISTRICT_VIEWBOX)}&bounded=1&q=${encodeURIComponent(q)}`;
+    try {
+      const data = await fetchJsonSafe(bounded);
+      (data || []).forEach(place => {
+        if (!Number.isFinite(Number(place.lat)) || !Number.isFinite(Number(place.lon))) return;
+        const suggestion = osmPlaceToSuggestion(place, getSuggestionIconFromText(place.display_name));
+        if (!isInsidePuneDistrictApprox(suggestion)) return;
+        const haystack = [suggestion.label, suggestion.subLabel, suggestion.displayName].join(" ");
+        if (fuzzyTextMatch(haystack, term, false) || nominatimResults.length < 8) nominatimResults.push(suggestion);
+      });
+      if (nominatimResults.length >= 12) break;
+    } catch (err) {
+      console.warn("Nominatim location source failed", err);
+    }
+  }
+
+  let photonResults = [];
+  try {
+    photonResults = await fetchPhotonSuggestions(term);
+  } catch (err) {
+    console.warn("Photon suggestion error", err);
+  }
+
+  return mergeLocationSuggestions([...photonResults, ...nominatimResults])
+    .sort((a, b) => (b._score || 0) - (a._score || 0))
+    .slice(0, 14);
+}
+
+function renderSuggestionList(databaseSuggestions, mapSuggestions) {
+  const parts = [];
+
+  if (mapSuggestions.length) {
+    parts.push(`<div class="suggestion-section-title">Pune district locations</div>`);
+    parts.push(mapSuggestions.map((place, index) => `
+      <div class="suggestion-item" data-source="map" data-index="${index}">
+        <span class="material-symbols-rounded">${escapeHtml(place.icon || "travel_explore")}</span>
+        <div>
+          <div class="suggestion-main">${escapeHtml(place.label)}</div>
+          <div class="suggestion-sub">${escapeHtml(place.subLabel || place.displayName || "Pune District")}</div>
+        </div>
+      </div>
+    `).join(""));
+  }
+
+  if (databaseSuggestions.length) {
+    parts.push(`<div class="suggestion-section-title">Saved post addresses</div>`);
+    parts.push(databaseSuggestions.map((item, index) => `
+      <div class="suggestion-item" data-source="database" data-index="${index}">
+        <span class="material-symbols-rounded">${escapeHtml(item.icon)}</span>
+        <div>
+          <div class="suggestion-main">${escapeHtml(item.label)}</div>
+          <div class="suggestion-sub">${escapeHtml(item.subLabel)}</div>
+        </div>
+      </div>
+    `).join(""));
+  }
+
+  if (!parts.length) {
+    return `<div class="suggestion-empty">No location found yet. Try college/building/road/area name, e.g. “MIT clg”, “FC Road”, “Bhusari Colony”.</div>`;
+  }
+
+  return parts.join("");
+}
+
+async function fetchLocationSearchSuggestions(value) {
+  const searchText = cleanSearchTerm(value);
+  const box = document.getElementById("searchSuggestions");
+
+  if (!box || searchText.length < 1) {
+    hideSuggestionBox();
+    return;
+  }
+
+  const requestId = ++suggestionRequestId;
+  const instantMapSuggestions = getLocalPuneAreaSuggestions(searchText, []);
+
+  if (instantMapSuggestions.length) {
+    showSuggestionBox(renderSuggestionList([], instantMapSuggestions));
+    attachSuggestionEvents([], instantMapSuggestions);
+  } else {
+    showSuggestionBox(`<div class="suggestion-empty">Searching Pune district locations, colleges, buildings and roads...</div>`);
+  }
+
+  try {
+    const [databaseSuggestions, liveMapSuggestions] = await Promise.all([
+      fetchDatabaseSuggestions(searchText).catch(err => { console.warn("Database suggestion error", err); return []; }),
+      fetchMapSuggestions(searchText).catch(err => { console.warn("Live map suggestion error", err); return []; })
+    ]);
+
+    if (requestId !== suggestionRequestId) return;
+    const finalMapSuggestions = mergeLocationSuggestions([...instantMapSuggestions, ...liveMapSuggestions]).slice(0, 14);
+    showSuggestionBox(renderSuggestionList(databaseSuggestions, finalMapSuggestions));
+    attachSuggestionEvents(databaseSuggestions, finalMapSuggestions);
+  } catch (err) {
+    console.warn("Location suggestion error", err);
+    if (!instantMapSuggestions.length) hideSuggestionBox();
+  }
+}
+
+async function geocodeLocation(text) {
+  const locationText = cleanSearchTerm(text);
+  if (!locationText) return null;
+
+  const cacheKey = "geo_fast_pune_district_" + normalizeSearchKey(locationText);
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+    if (cached && Number.isFinite(Number(cached.lat)) && Number.isFinite(Number(cached.lon))) return cached;
+  } catch (e) {}
+
+  const local = getLocalPuneAreaSuggestions(locationText, [])[0];
+  if (local && Number.isFinite(Number(local.lat)) && Number.isFinite(Number(local.lon))) {
+    const result = { label: local.label, displayName: local.displayName || `${local.label}, ${local.subLabel}`, lat: Number(local.lat), lon: Number(local.lon) };
+    try { localStorage.setItem(cacheKey, JSON.stringify(result)); } catch (e) {}
+    return result;
+  }
+
+  try {
+    const suggestions = await fetchMapSuggestions(locationText);
+    const first = suggestions.find(item => Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lon)));
+    if (!first) return null;
+    const result = { label: first.label, displayName: first.displayName || first.label, lat: Number(first.lat), lon: Number(first.lon) };
+    try { localStorage.setItem(cacheKey, JSON.stringify(result)); } catch (e) {}
+    return result;
+  } catch (err) {
+    console.warn("Geocoding error", err);
+    return null;
+  }
+}
+
+async function loadRooms(search = "", selectedPlace = null) {
+  const cleanSearch = cleanSearchTerm(search);
+
+  try {
+    const allRows = await loadAllSearchRowsForMode();
+
+    if (!cleanSearch) {
+      renderRooms(allRows);
+      return;
+    }
+
+    const target = await getTargetFromSearch(cleanSearch, selectedPlace || selectedSearchPlace);
+    const exactRows = textSearchRows(allRows, cleanSearch);
+    let finalRows = [];
+    let statusText = "";
+    const noun = activePostMode === "needed" ? "requirements" : "rooms";
+
+    const rowKey = row => String(row?.id || `${row?.title || ''}|${row?.location || ''}|${row?.created_at || ''}`);
+    const seenRows = new Set();
+    const addUniqueRows = rows => {
+      (rows || []).forEach(row => {
+        const key = rowKey(row);
+        if (!key || seenRows.has(key)) return;
+        seenRows.add(key);
+        finalRows.push(row);
+      });
+    };
+
+    if (target) {
+      if (!isInsidePuneServiceArea(target)) {
+        showAppPopup("Showing Pune district listings nearest to your selected location.", "Pune district search");
+      }
+
+      const distanceSorted = await sortRowsByTarget(allRows, target);
+      const distanceMap = new Map(distanceSorted.map(row => [rowKey(row), row]));
+      const exactWithDistance = exactRows.map(row => distanceMap.get(rowKey(row)) || row);
+
+      // IMPORTANT: no nearby-only limit here. Selecting any college/building/area
+      // shows posts from nearest to farthest, even if there is no exact post there.
+      addUniqueRows(distanceSorted);
+      addUniqueRows(exactWithDistance);
+
+      finalRows.sort((a, b) => {
+        const da = Number(a?._distanceKm);
+        const db = Number(b?._distanceKm);
+        const aHasDistance = Number.isFinite(da);
+        const bHasDistance = Number.isFinite(db);
+        if (aHasDistance && bHasDistance) return da - db;
+        if (aHasDistance) return -1;
+        if (bHasDistance) return 1;
+        return new Date(getPostTimestamp(b) || 0) - new Date(getPostTimestamp(a) || 0);
+      });
+
+      statusText = `Showing ${noun} nearest to “${cleanSearch}” first.`;
+      if (!finalRows.length) statusText = `No post coordinates found yet. Showing related ${noun} for “${cleanSearch}”.`;
+    } else {
+      addUniqueRows(exactRows);
+      statusText = finalRows.length
+        ? `Showing related ${noun} for “${cleanSearch}”. Select a location suggestion to sort nearest first.`
+        : `No exact match found for “${cleanSearch}”. Try selecting a Pune district location suggestion.`;
+    }
+
+    renderRooms(finalRows.slice(0, 50), statusText);
+  } catch (error) {
+    console.error(error);
+    showAppPopup(error.message || "Something went wrong while loading posts.", "Search error");
+  }
+}
+
+// Faster suggestion display while typing. The old listener is kept, but this gives instant local suggestions.
+if (typeof searchInput !== "undefined" && searchInput) {
+  searchInput.addEventListener("input", (e) => {
+    const value = e.target.value.trim();
+    clearTimeout(window.__tingoFastSuggestTimer);
+    window.__tingoFastSuggestTimer = setTimeout(() => fetchLocationSearchSuggestions(value), 80);
+  });
+}
 
 /* REUSABLE BUTTON.HTML SCRIPT
    button.html is loaded through an iframe.
