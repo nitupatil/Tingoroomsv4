@@ -642,6 +642,76 @@ select#req_show_contact, select#req_show_whatsapp { padding-left: 16px; }
   cursor: pointer;
 }
 
+
+/* OLA/UBER STYLE LOCATION SUGGESTION UI */
+.suggestions-box {
+  max-height: min(360px, 58vh) !important;
+  padding: 6px !important;
+  border-radius: 18px !important;
+  background: rgba(255,255,255,0.98) !important;
+  border: 1px solid rgba(226,232,240,0.95) !important;
+  box-shadow: 0 18px 42px rgba(15,23,42,0.18) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.suggestion-item.tingo-suggestion-rich {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  padding: 11px 10px !important;
+  border-bottom: 0 !important;
+  border-radius: 14px !important;
+}
+.suggestion-item.tingo-suggestion-rich:active,
+.suggestion-item.tingo-suggestion-rich:hover {
+  background: var(--primary-light) !important;
+}
+.suggestion-icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  background: #EEF2FF;
+  font-size: 19px !important;
+  margin-top: 1px;
+}
+.suggestion-text {
+  min-width: 0;
+  flex: 1;
+}
+.suggestion-title {
+  color: var(--text-main);
+  font-size: 13.5px;
+  font-weight: 800;
+  line-height: 1.24;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.suggestion-subtitle {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.suggestion-status {
+  padding: 10px 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 </style>
 </head>
 
@@ -755,7 +825,7 @@ select#req_show_contact, select#req_show_whatsapp { padding-left: 16px; }
         
         <div class="input-group autocomplete-wrapper">
           <span class="material-symbols-rounded icon-left">search</span>
-          <input id="loc" placeholder="Search address or pin on map..." autocomplete="off">
+          <input id="loc" placeholder="Search building, society, chowk, road, galli..." autocomplete="off">
           <div id="locSuggestions" class="suggestions-box hidden"></div>
         </div>
 
@@ -877,7 +947,7 @@ select#req_show_contact, select#req_show_whatsapp { padding-left: 16px; }
 
         <div class="input-group autocomplete-wrapper">
           <span class="material-symbols-rounded icon-left">search</span>
-          <input id="req_loc" placeholder="Search preferred location or pin on map..." autocomplete="off">
+          <input id="req_loc" placeholder="Search building, society, chowk, road, galli..." autocomplete="off">
           <div id="reqLocSuggestions" class="suggestions-box hidden"></div>
         </div>
 
@@ -1593,9 +1663,456 @@ function clearRequirementForm() {
   reqSubmitBtn.disabled = false;
 }
 
-/* ---------------- MAP & GEOCODING ---------------- */
+/* ---------------- OLA / UBER STYLE PUNE DISTRICT LOCATION SEARCH ----------------
+   Works for both property location and requirement preferred location.
+   - Suggestions do not depend on existing posts.
+   - Searches Pune district POIs: buildings, societies, chowks, roads, lanes/gallis,
+     colleges, hospitals, malls, stations and areas.
+   - Shows instant local/cache results first, then live map results in realtime.
+*/
+const TINGO_PUNE_CENTER = { lat: 18.5204, lon: 73.8567 };
+const TINGO_PUNE_VIEWBOX = "73.20,19.45,75.10,17.75"; // west,north,east,south around Pune district
+const TINGO_PUNE_BOUNDS = { west: 73.20, east: 75.10, south: 17.75, north: 19.45 };
+const TINGO_LOCATION_CACHE_PREFIX = "tingo_pune_location_v4_";
+
+const TINGO_LOCAL_PUNE_PLACES = [
+  { label:"Bavdhan", subLabel:"Pune, Maharashtra", lat:18.5116, lon:73.7788, aliases:"bhavdhan bavadhan bavdan" },
+  { label:"Bhukum", subLabel:"Mulshi, Pune District", lat:18.5029, lon:73.7107, aliases:"bhukhum bhukam bhukum village" },
+  { label:"Bhusari Colony", subLabel:"Kothrud, Pune", lat:18.5078, lon:73.7952, aliases:"bhusari kothrud busari bhoosari colony" },
+  { label:"Kothrud", subLabel:"Pune, Maharashtra", lat:18.5074, lon:73.8077, aliases:"kotharud kothrud depot karve road" },
+  { label:"Karve Nagar", subLabel:"Pune, Maharashtra", lat:18.4904, lon:73.8175, aliases:"karvenagar karve nagar" },
+  { label:"Warje", subLabel:"Pune, Maharashtra", lat:18.4846, lon:73.7966, aliases:"warje malwadi" },
+  { label:"Baner", subLabel:"Pune, Maharashtra", lat:18.5590, lon:73.7868, aliases:"baner road balewadi baner" },
+  { label:"Balewadi", subLabel:"Pune, Maharashtra", lat:18.5820, lon:73.7680, aliases:"balewadi high street" },
+  { label:"Aundh", subLabel:"Pune, Maharashtra", lat:18.5593, lon:73.8078, aliases:"aundh road parihar chowk" },
+  { label:"Pashan", subLabel:"Pune, Maharashtra", lat:18.5386, lon:73.7927, aliases:"pashan sus road" },
+  { label:"Sus", subLabel:"Pune, Maharashtra", lat:18.5564, lon:73.7540, aliases:"sus gaon sus road" },
+  { label:"Hinjewadi Phase 1", subLabel:"Pune District", lat:18.5913, lon:73.7389, aliases:"hinjawadi hinjewadi phase one wakad" },
+  { label:"Hinjewadi Phase 2", subLabel:"Pune District", lat:18.5966, lon:73.7188, aliases:"hinjawadi phase two" },
+  { label:"Wakad", subLabel:"Pimpri-Chinchwad, Pune", lat:18.5973, lon:73.7898, aliases:"wakad chowk bhumkar chowk" },
+  { label:"Bhumkar Chowk", subLabel:"Wakad, Pune", lat:18.6026, lon:73.7667, aliases:"bhumkar chok bhumkar chouk wakad" },
+  { label:"Dange Chowk", subLabel:"Thergaon, Pune", lat:18.6142, lon:73.7892, aliases:"dange chok chouk" },
+  { label:"Chandani Chowk", subLabel:"Bavdhan/Kothrud, Pune", lat:18.5071, lon:73.7811, aliases:"chandni chowk chandani chok chouk" },
+  { label:"Nal Stop", subLabel:"Karve Road, Pune", lat:18.5097, lon:73.8316, aliases:"nalstop karve road" },
+  { label:"Goodluck Chowk", subLabel:"FC Road, Pune", lat:18.5209, lon:73.8413, aliases:"good luck chowk fc road deccan" },
+  { label:"Deccan Gymkhana", subLabel:"Pune, Maharashtra", lat:18.5162, lon:73.8418, aliases:"deccan gymkhana fc road" },
+  { label:"FC Road", subLabel:"Shivajinagar, Pune", lat:18.5227, lon:73.8412, aliases:"fergusson college road f c road" },
+  { label:"JM Road", subLabel:"Shivajinagar, Pune", lat:18.5196, lon:73.8476, aliases:"jangli maharaj road j m road" },
+  { label:"Shivajinagar", subLabel:"Pune, Maharashtra", lat:18.5308, lon:73.8475, aliases:"shivaji nagar court bus stand" },
+  { label:"SPPU", subLabel:"Ganeshkhind, Pune", lat:18.5526, lon:73.8246, aliases:"savitribai phule pune university pune university university of pune" },
+  { label:"COEP Technological University", subLabel:"Shivajinagar, Pune", lat:18.5294, lon:73.8564, aliases:"coep clg college engineering pune" },
+  { label:"Fergusson College", subLabel:"FC Road, Pune", lat:18.5224, lon:73.8382, aliases:"fc college fergusson clg" },
+  { label:"MIT World Peace University", subLabel:"Kothrud, Pune", lat:18.5185, lon:73.8154, aliases:"mit wpu mit college mit clg kothrud" },
+  { label:"Arihant Institute", subLabel:"Bavdhan, Pune", lat:18.5192, lon:73.7724, aliases:"arihant mba institute bavdhan arihant clg" },
+  { label:"Sinhgad College Vadgaon", subLabel:"Vadgaon Budruk, Pune", lat:18.4647, lon:73.8353, aliases:"sinhgad clg sinhgad college vadgaon budruk" },
+  { label:"Bharati Vidyapeeth", subLabel:"Katraj, Pune", lat:18.4575, lon:73.8526, aliases:"bharati vidyapeeth clg college university katraj" },
+  { label:"Symbiosis International University", subLabel:"Lavale, Pune", lat:18.5388, lon:73.7336, aliases:"symbiosis lavale clg college siu" },
+  { label:"Katraj", subLabel:"Pune, Maharashtra", lat:18.4529, lon:73.8652, aliases:"katraj chowk snake park" },
+  { label:"Katraj Chowk", subLabel:"Pune, Maharashtra", lat:18.4538, lon:73.8585, aliases:"katraj chok chouk" },
+  { label:"Swargate", subLabel:"Pune, Maharashtra", lat:18.5018, lon:73.8636, aliases:"swargate bus stand" },
+  { label:"Hadapsar", subLabel:"Pune, Maharashtra", lat:18.5089, lon:73.9259, aliases:"hadapsar gadital magarpatta amanora" },
+  { label:"Magarpatta City", subLabel:"Hadapsar, Pune", lat:18.5158, lon:73.9272, aliases:"magarpatta cybercity" },
+  { label:"Amanora Park Town", subLabel:"Hadapsar, Pune", lat:18.5182, lon:73.9396, aliases:"amanora mall township" },
+  { label:"Viman Nagar", subLabel:"Pune, Maharashtra", lat:18.5679, lon:73.9143, aliases:"viman nagar airport phoenix mall" },
+  { label:"Kharadi", subLabel:"Pune, Maharashtra", lat:18.5515, lon:73.9348, aliases:"kharadi eon it park world trade center" },
+  { label:"EON IT Park", subLabel:"Kharadi, Pune", lat:18.5512, lon:73.9514, aliases:"eon kharadi it park" },
+  { label:"Koregaon Park", subLabel:"Pune, Maharashtra", lat:18.5362, lon:73.8938, aliases:"kp koregaon park lane" },
+  { label:"Kalyani Nagar", subLabel:"Pune, Maharashtra", lat:18.5463, lon:73.9033, aliases:"kalyani nagar" },
+  { label:"Pune Railway Station", subLabel:"Pune, Maharashtra", lat:18.5289, lon:73.8744, aliases:"pune station railway pune junction" },
+  { label:"Yerawada", subLabel:"Pune, Maharashtra", lat:18.5525, lon:73.8797, aliases:"yerawada yerwada" },
+  { label:"Wagholi", subLabel:"Pune District", lat:18.5793, lon:73.9830, aliases:"wagholi baif road" },
+  { label:"Dhanori", subLabel:"Pune, Maharashtra", lat:18.5968, lon:73.8905, aliases:"dhanori lohegaon" },
+  { label:"Lohegaon", subLabel:"Pune, Maharashtra", lat:18.5993, lon:73.9143, aliases:"lohegaon airport" },
+  { label:"Pimpri", subLabel:"Pimpri-Chinchwad, Pune", lat:18.6298, lon:73.7997, aliases:"pimpri chinchwad" },
+  { label:"Chinchwad", subLabel:"Pimpri-Chinchwad, Pune", lat:18.6476, lon:73.8001, aliases:"chinchwad station" },
+  { label:"Nigdi", subLabel:"Pimpri-Chinchwad, Pune", lat:18.6518, lon:73.7612, aliases:"akurdi nigdi pradhikaran" },
+  { label:"Akurdi", subLabel:"Pimpri-Chinchwad, Pune", lat:18.6497, lon:73.7729, aliases:"akurdi railway station" },
+  { label:"Talegaon Dabhade", subLabel:"Pune District", lat:18.7350, lon:73.6751, aliases:"talegaon dabhade" },
+  { label:"Lonavala", subLabel:"Pune District", lat:18.7546, lon:73.4062, aliases:"lonavla lonavala" },
+  { label:"Pirangut", subLabel:"Mulshi, Pune District", lat:18.5120, lon:73.6845, aliases:"pirangut ghotawade phata" },
+  { label:"Lavasa Road", subLabel:"Pune District", lat:18.4459, lon:73.6711, aliases:"lavasa road mulshi" },
+  { label:"Paud Road", subLabel:"Kothrud/Bavdhan, Pune", lat:18.5079, lon:73.7867, aliases:"paud rd" },
+  { label:"Sus Road", subLabel:"Pashan/Baner, Pune", lat:18.5547, lon:73.7714, aliases:"sus road pashan" },
+  { label:"Baner Road", subLabel:"Pune, Maharashtra", lat:18.5596, lon:73.7948, aliases:"baner rd" },
+  { label:"Karve Road", subLabel:"Pune, Maharashtra", lat:18.5036, lon:73.8214, aliases:"karve rd kothrud" },
+  { label:"Senapati Bapat Road", subLabel:"Pune, Maharashtra", lat:18.5376, lon:73.8297, aliases:"sb road senapati bapat rd" },
+  { label:"Law College Road", subLabel:"Pune, Maharashtra", lat:18.5205, lon:73.8291, aliases:"law clg road law college rd" },
+  { label:"Tilak Road", subLabel:"Sadashiv Peth, Pune", lat:18.5085, lon:73.8523, aliases:"tilak rd" },
+  { label:"Laxmi Road", subLabel:"Pune, Maharashtra", lat:18.5153, lon:73.8569, aliases:"lakshmi road" },
+  { label:"Camp", subLabel:"Pune, Maharashtra", lat:18.5131, lon:73.8797, aliases:"pune camp mg road" },
+  { label:"MG Road", subLabel:"Camp, Pune", lat:18.5165, lon:73.8796, aliases:"m g road camp" },
+  { label:"Shaniwar Wada", subLabel:"Pune, Maharashtra", lat:18.5195, lon:73.8553, aliases:"shanivar wada" },
+  { label:"Dagadusheth Halwai Ganpati", subLabel:"Budhwar Peth, Pune", lat:18.5164, lon:73.8562, aliases:"dagdusheth ganpati temple" },
+  { label:"Narhe", subLabel:"Pune, Maharashtra", lat:18.4530, lon:73.8175, aliases:"narhe ambegaon" },
+  { label:"Ambegaon Budruk", subLabel:"Pune, Maharashtra", lat:18.4566, lon:73.8427, aliases:"ambegaon budruk" },
+  { label:"Dhayari", subLabel:"Pune, Maharashtra", lat:18.4475, lon:73.8076, aliases:"dhayari phata" },
+  { label:"Nanded City", subLabel:"Sinhagad Road, Pune", lat:18.4572, lon:73.7910, aliases:"nanded city sinhgad road" },
+  { label:"Sinhagad Road", subLabel:"Pune, Maharashtra", lat:18.4710, lon:73.8172, aliases:"sinhgad road sinhagad road" },
+  { label:"Wagholi Kesnand Road", subLabel:"Wagholi, Pune", lat:18.5798, lon:74.0010, aliases:"kesnand road wagholi" },
+  { label:"Moshi", subLabel:"Pimpri-Chinchwad, Pune", lat:18.6711, lon:73.8536, aliases:"moshi pradhikaran" },
+  { label:"Ravet", subLabel:"Pimpri-Chinchwad, Pune", lat:18.6512, lon:73.7347, aliases:"ravet kiwale" },
+  { label:"Punawale", subLabel:"Pimpri-Chinchwad, Pune", lat:18.6336, lon:73.7421, aliases:"punawale" },
+  { label:"Tathawade", subLabel:"Pimpri-Chinchwad, Pune", lat:18.6254, lon:73.7551, aliases:"tathawade" },
+  { label:"Kiwale", subLabel:"Pimpri-Chinchwad, Pune", lat:18.6521, lon:73.7071, aliases:"kiwale ravet" }
+];
+
+function tingoIsInsidePuneDistrict(lt, ln) {
+  const latNum = Number(lt);
+  const lonNum = Number(ln);
+  return Number.isFinite(latNum) && Number.isFinite(lonNum) &&
+    lonNum >= TINGO_PUNE_BOUNDS.west && lonNum <= TINGO_PUNE_BOUNDS.east &&
+    latNum >= TINGO_PUNE_BOUNDS.south && latNum <= TINGO_PUNE_BOUNDS.north;
+}
+
+function tingoCleanLocationText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tingoNormalizeLocationQuery(value) {
+  let text = tingoCleanLocationText(value);
+  const replacements = [
+    [/\bclg\b|\bcollage\b|\bcolg\b/g, "college"],
+    [/\bchok\b|\bchouk\b|\bchowk\b/g, "chowk"],
+    [/\bgali\b|\bgully\b|\blane\b/g, "galli"],
+    [/\bbldg\b|\bbld\b/g, "building"],
+    [/\bsoc\b|\bscty\b/g, "society"],
+    [/\bapt\b|\baprt\b|\bapartment\b/g, "apartment"],
+    [/\brd\b/g, "road"],
+    [/\bnr\b/g, "near"],
+    [/\bfata\b|\bphata\b/g, "phata"],
+    [/\bpunee\b|\bpoona\b/g, "pune"],
+    [/\bhavdhan\b|\bbavadhan\b|\bbavdan\b/g, "bavdhan"],
+    [/\bbhukhum\b|\bbhukam\b/g, "bhukum"],
+    [/\bkotharud\b/g, "kothrud"],
+    [/\bhinjawadi\b/g, "hinjewadi"]
+  ];
+  replacements.forEach(([pattern, replacement]) => { text = text.replace(pattern, replacement); });
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function tingoLevenshtein(a, b) {
+  a = tingoCleanLocationText(a);
+  b = tingoCleanLocationText(b);
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let previous = i - 1;
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const old = row[j];
+      row[j] = Math.min(
+        row[j] + 1,
+        row[j - 1] + 1,
+        previous + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+      previous = old;
+    }
+  }
+  return row[b.length];
+}
+
+function tingoTextScore(term, haystack) {
+  const q = tingoNormalizeLocationQuery(term);
+  const h = tingoNormalizeLocationQuery(haystack);
+  if (!q || !h) return 0;
+  if (h === q) return 100;
+  if (h.startsWith(q)) return 92;
+  if (h.includes(q)) return 82;
+  const words = q.split(" ").filter(Boolean);
+  let score = 0;
+  words.forEach(word => {
+    if (h.includes(word)) score += 18;
+    else if (word.length >= 4) {
+      const closest = h.split(" ").some(hw => Math.abs(hw.length - word.length) <= 2 && tingoLevenshtein(hw, word) <= 2);
+      if (closest) score += 10;
+    }
+  });
+  return Math.min(score, 75);
+}
+
+function tingoIconForLocation(text) {
+  const t = tingoCleanLocationText(text);
+  if (/college|university|institute|school|academy|clg/.test(t)) return "school";
+  if (/hospital|clinic|medical|doctor|health/.test(t)) return "local_hospital";
+  if (/mall|market|store|shop|complex/.test(t)) return "storefront";
+  if (/station|railway|metro|bus|depot|airport/.test(t)) return "directions_transit";
+  if (/road|street|lane|galli|gully|chowk|phata|naka|circle|bridge/.test(t)) return "alt_route";
+  if (/society|apartment|building|tower|residency|heights|villa|park|city|colony|nagar/.test(t)) return "apartment";
+  return "location_on";
+}
+
+function tingoDeduplicateSuggestions(items) {
+  const seen = new Set();
+  const final = [];
+  (items || []).forEach(item => {
+    const latVal = Number(item.lat);
+    const lonVal = Number(item.lon);
+    if (!item || !item.label || !Number.isFinite(latVal) || !Number.isFinite(lonVal)) return;
+    if (!tingoIsInsidePuneDistrict(latVal, lonVal)) return;
+    const key = `${tingoCleanLocationText(item.label)}_${latVal.toFixed(4)}_${lonVal.toFixed(4)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    final.push({
+      source: item.source || "map",
+      label: item.label,
+      subLabel: item.subLabel || "Pune District, Maharashtra",
+      displayName: item.displayName || `${item.label}, ${item.subLabel || "Pune District, Maharashtra"}`,
+      lat: latVal,
+      lon: lonVal,
+      icon: item.icon || tingoIconForLocation(`${item.label} ${item.subLabel || ""}`),
+      score: item.score || 0
+    });
+  });
+  return final;
+}
+
+function tingoLocalSuggestions(term, limit = 8) {
+  const query = tingoNormalizeLocationQuery(term);
+  if (!query) return [];
+  return tingoDeduplicateSuggestions(TINGO_LOCAL_PUNE_PLACES.map(place => {
+    const haystack = `${place.label} ${place.subLabel} ${place.aliases || ""}`;
+    const score = tingoTextScore(query, haystack);
+    return {
+      source: "local",
+      label: place.label,
+      subLabel: place.subLabel,
+      displayName: `${place.label}, ${place.subLabel}`,
+      lat: place.lat,
+      lon: place.lon,
+      icon: tingoIconForLocation(haystack),
+      score
+    };
+  }).filter(item => item.score > 0)).sort((a, b) => b.score - a.score).slice(0, limit);
+}
+
+function tingoCacheKey(term) {
+  return TINGO_LOCATION_CACHE_PREFIX + tingoNormalizeLocationQuery(term).slice(0, 70);
+}
+
+function tingoReadLocationCache(term) {
+  try {
+    const key = tingoCacheKey(term);
+    const raw = sessionStorage.getItem(key) || localStorage.getItem(key);
+    if (!raw) return [];
+    const payload = JSON.parse(raw);
+    if (!payload || !Array.isArray(payload.items)) return [];
+    if (Date.now() - Number(payload.time || 0) > 1000 * 60 * 60 * 24 * 14) return [];
+    return payload.items;
+  } catch (e) {
+    return [];
+  }
+}
+
+function tingoWriteLocationCache(term, items) {
+  try {
+    const payload = JSON.stringify({ time: Date.now(), items: (items || []).slice(0, 12) });
+    sessionStorage.setItem(tingoCacheKey(term), payload);
+    localStorage.setItem(tingoCacheKey(term), payload);
+  } catch (e) {}
+}
+
+function tingoBuildNominatimSuggestion(place) {
+  const address = place.address || {};
+  const named = place.namedetails || {};
+  const firstDisplay = String(place.display_name || "").split(",")[0];
+  const label = named.name || place.name || address.building || address.house_name || address.amenity || address.shop || address.office || address.tourism || address.leisure || address.road || address.neighbourhood || firstDisplay;
+  const roadLine = [address.house_number, address.road].filter(Boolean).join(" ");
+  const areaLine = [address.neighbourhood || address.suburb || address.quarter || address.city_district || address.village || address.town || address.city || "Pune", address.county || address.state].filter(Boolean).join(", ");
+  const subLabel = [roadLine, areaLine].filter(Boolean).join(" · ") || "Pune District, Maharashtra";
+  return {
+    source: "map",
+    label: label || firstDisplay || "Location",
+    subLabel,
+    displayName: place.display_name || `${label}, ${subLabel}`,
+    lat: Number(place.lat),
+    lon: Number(place.lon),
+    icon: tingoIconForLocation(`${label} ${subLabel} ${place.type || ""} ${place.class || ""}`),
+    score: Number(place.importance || 0) * 10
+  };
+}
+
+function tingoBuildPhotonSuggestion(feature) {
+  const props = feature.properties || {};
+  const coords = feature.geometry && feature.geometry.coordinates ? feature.geometry.coordinates : [];
+  const labelParts = [props.name, props.housenumber && props.street ? `${props.housenumber} ${props.street}` : null, props.street].filter(Boolean);
+  const label = labelParts[0] || "Location";
+  const subLabel = [props.district || props.locality || props.city || props.county || "Pune", props.state || "Maharashtra"].filter(Boolean).join(", ");
+  return {
+    source: "map",
+    label,
+    subLabel,
+    displayName: [props.name, props.street, props.locality || props.city || props.county, props.state].filter(Boolean).join(", "),
+    lat: Number(coords[1]),
+    lon: Number(coords[0]),
+    icon: tingoIconForLocation(`${props.name || ""} ${props.street || ""} ${props.osm_value || ""}`),
+    score: 20
+  };
+}
+
+async function tingoFetchJson(url, signal) {
+  const response = await fetch(url, { headers: { "Accept": "application/json" }, signal });
+  if (!response.ok) throw new Error(`Location search failed ${response.status}`);
+  return response.json();
+}
+
+async function tingoFetchPhoton(term, signal) {
+  const normalized = tingoNormalizeLocationQuery(term);
+  const variants = [...new Set([term, normalized, `${normalized} Pune`, `${normalized} Pune Maharashtra`].filter(Boolean))].slice(0, 3);
+  const urls = variants.map(q => `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=${TINGO_PUNE_CENTER.lat}&lon=${TINGO_PUNE_CENTER.lon}&limit=12&lang=en`);
+  const results = await Promise.allSettled(urls.map(url => tingoFetchJson(url, signal)));
+  const items = [];
+  results.forEach(result => {
+    if (result.status !== "fulfilled") return;
+    (result.value.features || []).forEach(feature => items.push(tingoBuildPhotonSuggestion(feature)));
+  });
+  return items;
+}
+
+async function tingoFetchNominatim(term, signal) {
+  const normalized = tingoNormalizeLocationQuery(term);
+  const variants = [...new Set([term, normalized, `${normalized} Pune District Maharashtra India`, `${normalized} Pune Maharashtra India`].filter(Boolean))].slice(0, 3);
+  const common = `format=json&addressdetails=1&namedetails=1&extratags=1&limit=12&countrycodes=in&viewbox=${encodeURIComponent(TINGO_PUNE_VIEWBOX)}&bounded=1`;
+  const urls = variants.map(q => `https://nominatim.openstreetmap.org/search?${common}&q=${encodeURIComponent(q)}`);
+  const results = await Promise.allSettled(urls.map(url => tingoFetchJson(url, signal)));
+  const items = [];
+  results.forEach(result => {
+    if (result.status !== "fulfilled") return;
+    (result.value || []).forEach(place => items.push(tingoBuildNominatimSuggestion(place)));
+  });
+  return items;
+}
+
+async function tingoLiveSuggestions(term, signal) {
+  const cached = tingoReadLocationCache(term);
+  if (cached.length) return cached;
+
+  const [photon, nominatim] = await Promise.allSettled([
+    tingoFetchPhoton(term, signal),
+    tingoFetchNominatim(term, signal)
+  ]);
+
+  const merged = [
+    ...(photon.status === "fulfilled" ? photon.value : []),
+    ...(nominatim.status === "fulfilled" ? nominatim.value : [])
+  ];
+
+  const query = tingoNormalizeLocationQuery(term);
+  const final = tingoDeduplicateSuggestions(merged).map(item => {
+    item.score = (item.score || 0) + tingoTextScore(query, `${item.label} ${item.subLabel} ${item.displayName}`);
+    return item;
+  }).filter(item => item.score > 8 || tingoTextScore(query, item.displayName) > 8)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 14);
+
+  if (final.length) tingoWriteLocationCache(term, final);
+  return final;
+}
+
+function tingoEscapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function tingoRenderSuggestions(box, items, message = "") {
+  if (!box) return;
+  const unique = tingoDeduplicateSuggestions(items).slice(0, 12);
+  const rows = unique.map((item, index) => `
+    <div class="suggestion-item tingo-suggestion-rich" data-index="${index}">
+      <span class="material-symbols-rounded suggestion-icon">${tingoEscapeHtml(item.icon || "location_on")}</span>
+      <div class="suggestion-text">
+        <div class="suggestion-title">${tingoEscapeHtml(item.label)}</div>
+        <div class="suggestion-subtitle">${tingoEscapeHtml(item.subLabel)}</div>
+      </div>
+    </div>
+  `).join("");
+
+  box.innerHTML = rows + (message ? `<div class="suggestion-status">${tingoEscapeHtml(message)}</div>` : "");
+  if (rows || message) box.classList.remove("hidden");
+  else box.classList.add("hidden");
+  box.__tingoItems = unique;
+}
+
+function tingoAttachClickHandler(input, box, mapGetter, setCoordinateValues, markerSetter) {
+  if (!box || box.__tingoClickBound) return;
+  box.__tingoClickBound = true;
+  box.addEventListener("click", (event) => {
+    const row = event.target.closest(".suggestion-item");
+    if (!row) return;
+    const item = (box.__tingoItems || [])[Number(row.dataset.index)];
+    if (!item) return;
+    input.value = item.displayName || `${item.label}, ${item.subLabel}`;
+    setCoordinateValues(Number(item.lat), Number(item.lon));
+    const activeMap = mapGetter();
+    if (activeMap) {
+      markerSetter(Number(item.lat), Number(item.lon));
+      activeMap.setView([Number(item.lat), Number(item.lon)], 17);
+    }
+    box.classList.add("hidden");
+  });
+}
+
+function setupTingoAutocomplete({ input, box, mapGetter, setCoordinateValues, markerSetter }) {
+  if (!input || !box) return;
+  let timer = null;
+  let requestId = 0;
+  let controller = null;
+
+  tingoAttachClickHandler(input, box, mapGetter, setCoordinateValues, markerSetter);
+
+  input.addEventListener("input", () => {
+    const term = input.value.trim();
+    requestId += 1;
+    const thisRequest = requestId;
+    clearTimeout(timer);
+    if (controller) controller.abort();
+
+    if (term.length < 2) {
+      box.classList.add("hidden");
+      box.innerHTML = "";
+      box.__tingoItems = [];
+      return;
+    }
+
+    const local = tingoLocalSuggestions(term, 8);
+    const cached = tingoReadLocationCache(term);
+    const instant = tingoDeduplicateSuggestions([...local, ...cached]);
+    tingoRenderSuggestions(box, instant, instant.length ? "Searching live Pune district locations..." : "Searching Pune district locations...");
+
+    timer = setTimeout(async () => {
+      controller = new AbortController();
+      try {
+        const live = await tingoLiveSuggestions(term, controller.signal);
+        if (thisRequest !== requestId) return;
+        const merged = tingoDeduplicateSuggestions([...local, ...live]);
+        if (merged.length) {
+          tingoRenderSuggestions(box, merged, "");
+        } else {
+          tingoRenderSuggestions(box, [], "No exact place found yet. Try society/building + area, for example ‘ABC Society Bavdhan’.");
+        }
+      } catch (error) {
+        if (error && error.name === "AbortError") return;
+        if (thisRequest !== requestId) return;
+        const fallback = tingoDeduplicateSuggestions([...local, ...cached]);
+        tingoRenderSuggestions(box, fallback, fallback.length ? "Showing saved suggestions. Keep typing for exact place." : "Live location search is slow. Check spelling or add Pune area name.");
+        console.warn("Tingo location search error", error);
+      }
+    }, 160);
+  });
+}
+
+/* ---------------- PROPERTY MAP & GEOCODING ---------------- */
 function initMap() {
-  map = L.map('map').setView([18.52, 73.85], 12); 
+  map = L.map('map').setView([18.52, 73.85], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
   map.on("click", async (e) => {
@@ -1616,69 +2133,41 @@ function detectLocation() {
     navigator.geolocation.getCurrentPosition(async pos => {
       lat = pos.coords.latitude;
       lng = pos.coords.longitude;
-      map.setView([lat,lng], 15);
+      map.setView([lat, lng], 17);
       setMarker(lat, lng);
       await reverseGeocode(lat, lng);
-    });
+    }, () => {
+      alert("Unable to fetch GPS location. Please allow location permission or search manually.");
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
   } else {
     alert("Geolocation is not supported by this browser.");
   }
 }
 
-async function reverseGeocode(lat, lon) {
+async function reverseGeocode(latValue, lonValue) {
   try {
-    locInput.value = "Fetching address...";
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+    locInput.value = "Fetching exact address...";
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&zoom=18&lat=${latValue}&lon=${lonValue}`);
     const data = await res.json();
-    if(data && data.display_name) { locInput.value = data.display_name; } 
-    else { locInput.value = ""; }
+    locInput.value = data && data.display_name ? data.display_name : "";
   } catch (err) {
     console.error(err);
     locInput.value = "";
   }
 }
 
-let locTimeout;
-locInput.addEventListener('input', (e) => {
-  clearTimeout(locTimeout);
-  const val = e.target.value.trim();
-  if(val.length < 3) { suggestionsBox.classList.add("hidden"); return; }
-  locTimeout = setTimeout(() => fetchSuggestions(val), 600);
-});
-
 async function fetchSuggestions(query) {
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=in&limit=5`);
-    const data = await res.json();
-    
-    suggestionsBox.innerHTML = "";
-    if (data.length === 0) { suggestionsBox.classList.add("hidden"); return; }
-
-    data.forEach(place => {
-      const div = document.createElement("div");
-      div.className = "suggestion-item";
-      div.innerText = place.display_name;
-      div.onclick = () => {
-        locInput.value = place.display_name;
-        lat = parseFloat(place.lat);
-        lng = parseFloat(place.lon);
-        setMarker(lat, lng);
-        map.setView([lat, lng], 15);
-        suggestionsBox.classList.add("hidden");
-      };
-      suggestionsBox.appendChild(div);
-    });
-    suggestionsBox.classList.remove("hidden");
-  } catch(e) { console.error(e); }
+  const items = await tingoLiveSuggestions(query, undefined);
+  tingoRenderSuggestions(suggestionsBox, items, items.length ? "" : "No exact place found yet. Add area name like Bavdhan, Kothrud, Wakad.");
 }
 
-document.addEventListener('click', (e) => {
-  if (!locInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-    suggestionsBox.classList.add("hidden");
-  }
+setupTingoAutocomplete({
+  input: locInput,
+  box: suggestionsBox,
+  mapGetter: () => map,
+  setCoordinateValues: (selectedLat, selectedLng) => { lat = selectedLat; lng = selectedLng; },
+  markerSetter: setMarker
 });
-
-
 
 /* ---------------- REQUIREMENT MAP & GEOCODING ---------------- */
 function initRequirementMap() {
@@ -1703,67 +2192,51 @@ function detectRequirementLocation() {
     navigator.geolocation.getCurrentPosition(async pos => {
       reqLat = pos.coords.latitude;
       reqLng = pos.coords.longitude;
-      reqMap.setView([reqLat, reqLng], 15);
+      reqMap.setView([reqLat, reqLng], 17);
       setRequirementMarker(reqLat, reqLng);
       await reverseGeocodeRequirement(reqLat, reqLng);
-    });
+    }, () => {
+      alert("Unable to fetch GPS location. Please allow location permission or search manually.");
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
   } else {
     alert("Geolocation is not supported by this browser.");
   }
 }
 
-async function reverseGeocodeRequirement(lat, lon) {
+async function reverseGeocodeRequirement(latValue, lonValue) {
   try {
-    reqLocInput.value = "Fetching address...";
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+    reqLocInput.value = "Fetching exact address...";
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&zoom=18&lat=${latValue}&lon=${lonValue}`);
     const data = await res.json();
-    if(data && data.display_name) { reqLocInput.value = data.display_name; }
-    else { reqLocInput.value = ""; }
+    reqLocInput.value = data && data.display_name ? data.display_name : "";
   } catch (err) {
     console.error(err);
     reqLocInput.value = "";
   }
 }
 
-let reqLocTimeout;
-reqLocInput.addEventListener('input', (e) => {
-  clearTimeout(reqLocTimeout);
-  const val = e.target.value.trim();
-  if(val.length < 3) { reqSuggestionsBox.classList.add("hidden"); return; }
-  reqLocTimeout = setTimeout(() => fetchRequirementSuggestions(val), 600);
-});
-
 async function fetchRequirementSuggestions(query) {
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=in&limit=5`);
-    const data = await res.json();
-
-    reqSuggestionsBox.innerHTML = "";
-    if (data.length === 0) { reqSuggestionsBox.classList.add("hidden"); return; }
-
-    data.forEach(place => {
-      const div = document.createElement("div");
-      div.className = "suggestion-item";
-      div.innerText = place.display_name;
-      div.onclick = () => {
-        reqLocInput.value = place.display_name;
-        reqLat = parseFloat(place.lat);
-        reqLng = parseFloat(place.lon);
-        setRequirementMarker(reqLat, reqLng);
-        reqMap.setView([reqLat, reqLng], 15);
-        reqSuggestionsBox.classList.add("hidden");
-      };
-      reqSuggestionsBox.appendChild(div);
-    });
-    reqSuggestionsBox.classList.remove("hidden");
-  } catch(e) { console.error(e); }
+  const items = await tingoLiveSuggestions(query, undefined);
+  tingoRenderSuggestions(reqSuggestionsBox, items, items.length ? "" : "No exact place found yet. Add area name like Bavdhan, Kothrud, Wakad.");
 }
 
+setupTingoAutocomplete({
+  input: reqLocInput,
+  box: reqSuggestionsBox,
+  mapGetter: () => reqMap,
+  setCoordinateValues: (selectedLat, selectedLng) => { reqLat = selectedLat; reqLng = selectedLng; },
+  markerSetter: setRequirementMarker
+});
+
 document.addEventListener('click', (e) => {
-  if (!reqLocInput.contains(e.target) && !reqSuggestionsBox.contains(e.target)) {
+  if (locInput && suggestionsBox && !locInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+    suggestionsBox.classList.add("hidden");
+  }
+  if (reqLocInput && reqSuggestionsBox && !reqLocInput.contains(e.target) && !reqSuggestionsBox.contains(e.target)) {
     reqSuggestionsBox.classList.add("hidden");
   }
 });
+
 
 /* ---------------- FORM & SUBMIT LOGIC ---------------- */
 function toggleBrokerage() {
