@@ -218,6 +218,136 @@ body {
 .loading-state { text-align: center; padding: 40px; color: var(--text-muted); }
 .hidden { display: none !important; }
 
+/* ========================================================================= */
+/* DESKTOP UI OVERRIDES */
+/* ========================================================================= */
+@media (min-width: 900px) {
+  body {
+    background-color: #CBD5E1; /* Darker background to highlight the main modal */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .app-container {
+    max-width: 1100px;
+    width: 95%;
+    height: 90vh;
+    margin: auto;
+    border-radius: 32px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "header header"
+      "slider content"
+      "slider action";
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .header {
+    grid-area: header;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    z-index: 10;
+  }
+
+  .header-title {
+    font-size: 20px;
+  }
+
+  #loadingState {
+    grid-column: 1 / -1;
+  }
+
+  /* Magic layout trick: flattens the wrapper so children can participate in parent Grid */
+  #contentState:not(.hidden) {
+    display: contents;
+  }
+
+  .slider-wrapper {
+    grid-area: slider;
+    height: 100%;
+    background: #0F172A;
+    border-right: 1px solid var(--border);
+  }
+
+  .slider {
+    height: 100%;
+  }
+
+  .slide {
+    height: 100%;
+    object-fit: cover; /* Looks better on desktop split view */
+  }
+
+  .slider-counter {
+    bottom: 24px;
+    right: 24px;
+    font-size: 15px;
+    padding: 8px 18px;
+  }
+
+  .main-content {
+    grid-area: content;
+    padding: 32px 32px 16px 32px;
+    overflow-y: auto;
+    /* Smooth scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E1 transparent;
+  }
+
+  .main-content::-webkit-scrollbar { width: 8px; }
+  .main-content::-webkit-scrollbar-track { background: transparent; }
+  .main-content::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 10px; }
+
+  .card {
+    padding: 28px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.03);
+    border-radius: 24px;
+    margin-bottom: 24px;
+  }
+
+  #map {
+    height: 280px; /* Taller map for desktop */
+  }
+
+  .bottom-action-bar {
+    grid-area: action;
+    position: static;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    padding: 20px 32px 28px 32px;
+    background: var(--bg);
+    box-shadow: none;
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    z-index: 10;
+  }
+
+  .bottom-action-bar.hidden { display: none !important; }
+  .bottom-action-bar:not(.hidden) { display: grid; }
+
+  .btn {
+    padding: 16px;
+    font-size: 16px;
+    border-radius: 20px;
+  }
+
+  /* Make chat button span full width nicely if multiple buttons are present */
+  .btn-chat {
+    grid-column: 1 / -1;
+  }
+}
 </style>
 </head>
 
