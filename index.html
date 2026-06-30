@@ -4022,6 +4022,482 @@ function renderRequirementCard(req) {
   `;
 }
 
+
+/* GOOGLE-LIKE DETAILED LOCATION SEARCH OVERRIDE
+   Shows full address/building/road/colony suggestions, supports small lanes/galli words
+   stored in your posts, and uses typo-tolerant matching for spelling mistakes. */
+const PUNE_SEARCH_VIEWBOX = "73.6500,18.7500,74.1000,18.3500";
+const LOCAL_PUNE_PLACES = [
+  { label: "Bhusari Colony, Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5104, lon: 73.7932, aliases: "bhusari colony bhusri colony bhoosari kothrud kothrud depot" },
+  { label: "Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5074, lon: 73.8077, aliases: "kothrud kothrood kothrud pune" },
+  { label: "Ideal Colony, Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5089, lon: 73.8128, aliases: "ideal colony kothrud" },
+  { label: "Mayur Colony, Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5038, lon: 73.8142, aliases: "mayur colony kothrud" },
+  { label: "Rambaug Colony, Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5076, lon: 73.8176, aliases: "rambaug colony kothrud ram baug" },
+  { label: "Mahatma Society, Kothrud", subLabel: "Pune, Maharashtra", lat: 18.4988, lon: 73.7895, aliases: "mahatma society kothrud" },
+  { label: "Paud Road, Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5081, lon: 73.8092, aliases: "paud road poud road kothrud" },
+  { label: "MIT College Road, Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5180, lon: 73.8154, aliases: "mit college road kothrud" },
+  { label: "Karve Putala, Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5018, lon: 73.8147, aliases: "karve putala kothrud" },
+  { label: "Karve Nagar", subLabel: "Pune, Maharashtra", lat: 18.4896, lon: 73.8217, aliases: "karve nagar karvenagar" },
+  { label: "Warje Malwadi", subLabel: "Pune, Maharashtra", lat: 18.4807, lon: 73.8006, aliases: "warje malwadi warje" },
+  { label: "Bavdhan", subLabel: "Pune, Maharashtra", lat: 18.5114, lon: 73.7760, aliases: "bavdhan bawdhan bavdhan pune" },
+  { label: "Bavdhan Budruk", subLabel: "Pune, Maharashtra", lat: 18.5181, lon: 73.7785, aliases: "bavdhan budruk bawdhan budruk" },
+  { label: "Bavdhan Khurd", subLabel: "Pune, Maharashtra", lat: 18.5110, lon: 73.7685, aliases: "bavdhan khurd bawdhan khurd" },
+  { label: "Patil Nagar, Bavdhan", subLabel: "Pune, Maharashtra", lat: 18.5214, lon: 73.7788, aliases: "patil nagar bavdhan" },
+  { label: "Chandani Chowk, Bavdhan", subLabel: "Pune, Maharashtra", lat: 18.5079, lon: 73.7758, aliases: "chandani chowk chandni chowk bavdhan" },
+  { label: "Bhukum", subLabel: "Pune, Maharashtra", lat: 18.4898, lon: 73.7308, aliases: "bhukum bhookum bhukm" },
+  { label: "Pirangut", subLabel: "Pune, Maharashtra", lat: 18.5148, lon: 73.6837, aliases: "pirangut pirangoot" },
+  { label: "Pashan", subLabel: "Pune, Maharashtra", lat: 18.5386, lon: 73.7923, aliases: "pashan pashan sus road" },
+  { label: "Sus Road, Pashan", subLabel: "Pune, Maharashtra", lat: 18.5508, lon: 73.7757, aliases: "sus road pashan sus" },
+  { label: "Baner", subLabel: "Pune, Maharashtra", lat: 18.5590, lon: 73.7868, aliases: "baner baner road" },
+  { label: "Balewadi", subLabel: "Pune, Maharashtra", lat: 18.5760, lon: 73.7798, aliases: "balewadi balevadi" },
+  { label: "Aundh", subLabel: "Pune, Maharashtra", lat: 18.5595, lon: 73.8074, aliases: "aundh" },
+  { label: "Wakad", subLabel: "Pune, Maharashtra", lat: 18.5972, lon: 73.7626, aliases: "wakad waked" },
+  { label: "Hinjewadi Phase 1", subLabel: "Pune, Maharashtra", lat: 18.5913, lon: 73.7389, aliases: "hinjewadi hinjawadi phase 1" },
+  { label: "Hinjewadi Phase 2", subLabel: "Pune, Maharashtra", lat: 18.5948, lon: 73.7144, aliases: "hinjewadi hinjawadi phase 2" },
+  { label: "Hinjewadi Phase 3", subLabel: "Pune, Maharashtra", lat: 18.5798, lon: 73.6886, aliases: "hinjewadi hinjawadi phase 3" },
+  { label: "Katraj", subLabel: "Pune, Maharashtra", lat: 18.4529, lon: 73.8652, aliases: "katraj katraj pune" },
+  { label: "Katraj Kondhwa Road", subLabel: "Pune, Maharashtra", lat: 18.4539, lon: 73.8908, aliases: "katraj kondhwa road kondwa" },
+  { label: "Hadapsar", subLabel: "Pune, Maharashtra", lat: 18.5089, lon: 73.9259, aliases: "hadapsar hadapsur" },
+  { label: "Kharadi", subLabel: "Pune, Maharashtra", lat: 18.5515, lon: 73.9348, aliases: "kharadi kharadi pune" },
+  { label: "Viman Nagar", subLabel: "Pune, Maharashtra", lat: 18.5679, lon: 73.9143, aliases: "viman nagar vimannagar" },
+  { label: "Shivajinagar", subLabel: "Pune, Maharashtra", lat: 18.5308, lon: 73.8475, aliases: "shivajinagar shivaji nagar" },
+  { label: "Deccan Gymkhana", subLabel: "Pune, Maharashtra", lat: 18.5166, lon: 73.8429, aliases: "deccan gymkhana deccan" },
+  { label: "FC Road", subLabel: "Pune, Maharashtra", lat: 18.5235, lon: 73.8413, aliases: "fc road fergusson college road" },
+  { label: "JM Road", subLabel: "Pune, Maharashtra", lat: 18.5204, lon: 73.8462, aliases: "jm road jangli maharaj road" }
+];
+
+function normalizeSearchKey(value) {
+  return cleanSearchTerm(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function uniqueWords(value) {
+  return [...new Set(normalizeSearchKey(value).split(/\s+/).filter(Boolean))];
+}
+
+function editDistanceLimited(a, b, limit = 2) {
+  a = normalizeSearchKey(a);
+  b = normalizeSearchKey(b);
+  if (a === b) return 0;
+  if (!a || !b) return Math.max(a.length, b.length);
+  if (Math.abs(a.length - b.length) > limit) return limit + 1;
+
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const curr = [i];
+    let rowMin = curr[0];
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const val = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+      curr[j] = val;
+      if (val < rowMin) rowMin = val;
+    }
+    if (rowMin > limit) return limit + 1;
+    prev = curr;
+  }
+  return prev[b.length];
+}
+
+function fuzzyWordMatch(text, word) {
+  const cleanWord = normalizeSearchKey(word);
+  if (!cleanWord) return true;
+  const cleanText = normalizeSearchKey(text);
+  if (cleanText.includes(cleanWord)) return true;
+
+  const tokens = cleanText.split(/\s+/).filter(Boolean);
+  return tokens.some(token => {
+    if (!token) return false;
+    if (token.startsWith(cleanWord) || cleanWord.startsWith(token)) return true;
+    if (cleanWord.length < 3 || token.length < 3) return false;
+    const limit = cleanWord.length >= 7 ? 2 : 1;
+    return editDistanceLimited(token, cleanWord, limit) <= limit;
+  });
+}
+
+function fuzzyTextMatch(value, searchText, requireAllWords = true) {
+  const text = normalizeSearchKey(value);
+  const term = normalizeSearchKey(searchText);
+  if (!term) return true;
+  if (text.includes(term)) return true;
+  const words = uniqueWords(term);
+  if (!words.length) return true;
+  const matched = words.filter(word => fuzzyWordMatch(text, word)).length;
+  return requireAllWords ? matched === words.length : matched > 0;
+}
+
+function scoreFuzzyLabel(label, searchText, isFullAddress = false) {
+  const text = normalizeSearchKey(label);
+  const term = normalizeSearchKey(searchText);
+  const words = uniqueWords(term);
+  let score = isFullAddress ? 45 : 12;
+  if (!term) return score;
+  if (text === term) score += 140;
+  if (text.startsWith(term)) score += 95;
+  if (text.includes(term)) score += 70;
+  words.forEach(word => {
+    if (text.split(/\s+/).some(token => token === word)) score += 24;
+    else if (text.split(/\s+/).some(token => token.startsWith(word) || word.startsWith(token))) score += 16;
+    else if (fuzzyWordMatch(text, word)) score += 9;
+  });
+  return score;
+}
+
+function getPlaceLabel(place) {
+  const address = place.address || {};
+  const namedetails = place.namedetails || {};
+  const displayParts = String(place.display_name || "").split(",").map(part => cleanSearchTerm(part)).filter(Boolean);
+  const name = cleanSearchTerm(namedetails.name || namedetails["name:en"] || place.name || displayParts[0]);
+  const detailParts = [
+    name,
+    address.house_name,
+    address.house_number,
+    address.building,
+    address.amenity,
+    address.shop,
+    address.office,
+    address.tourism,
+    address.road || address.pedestrian || address.footway || address.path,
+    address.neighbourhood || address.suburb || address.quarter || address.residential || address.locality,
+    address.village || address.town || address.city_district
+  ].map(cleanSearchTerm).filter(Boolean);
+
+  const seen = new Set();
+  const labelParts = [];
+  detailParts.forEach(part => {
+    const key = normalizeSearchKey(part);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    labelParts.push(part);
+  });
+
+  if (labelParts.length) return labelParts.slice(0, 4).join(", ");
+  return displayParts.slice(0, 3).join(", ") || "Location";
+}
+
+function getPlaceSubLabel(place) {
+  const address = place.address || {};
+  const displayParts = String(place.display_name || "").split(",").map(part => cleanSearchTerm(part)).filter(Boolean);
+  const parts = [
+    address.city || address.town || address.village || address.county || "Pune",
+    address.state || "Maharashtra",
+    address.postcode
+  ].filter(Boolean);
+  const compact = parts.join(", ");
+  const tail = displayParts.slice(3, 7).join(", ");
+  return compact || tail || LOCATION_CONTEXT;
+}
+
+function osmPlaceToSuggestion(place, icon = "travel_explore") {
+  const label = getPlaceLabel(place);
+  return {
+    source: "map",
+    label,
+    subLabel: getPlaceSubLabel(place),
+    icon,
+    lat: Number(place.lat),
+    lon: Number(place.lon),
+    displayName: place.display_name || label,
+    _score: Number(place.importance || 0) * 100 + scoreFuzzyLabel(place.display_name || label, getCurrentSearchText(), true)
+  };
+}
+
+async function fetchJsonSafe(url) {
+  const response = await fetch(url, { headers: { "Accept": "application/json" } });
+  if (!response.ok) throw new Error(`Location service error ${response.status}`);
+  return await response.json();
+}
+
+async function fetchMapSuggestions(searchText) {
+  const term = cleanSearchTerm(searchText);
+  if (term.length < 1) return [];
+
+  const base = "https://nominatim.openstreetmap.org/search";
+  const common = "format=json&addressdetails=1&namedetails=1&extratags=1&dedupe=0&countrycodes=in&limit=12";
+  const queries = [
+    `${base}?${common}&viewbox=${encodeURIComponent(PUNE_SEARCH_VIEWBOX)}&bounded=1&q=${encodeURIComponent(term + " Pune Maharashtra India")}`,
+    `${base}?${common}&viewbox=${encodeURIComponent(PUNE_SEARCH_VIEWBOX)}&bounded=1&q=${encodeURIComponent(term)}`,
+    `${base}?${common}&q=${encodeURIComponent(term + " Pune Maharashtra India")}`
+  ];
+
+  const results = [];
+  for (const url of queries) {
+    try {
+      const data = await fetchJsonSafe(url);
+      (data || []).forEach(place => {
+        if (!Number.isFinite(Number(place.lat)) || !Number.isFinite(Number(place.lon))) return;
+        const suggestion = osmPlaceToSuggestion(place, "travel_explore");
+        const haystack = [suggestion.label, suggestion.subLabel, suggestion.displayName].join(" ");
+        if (fuzzyTextMatch(haystack, term, false) || results.length < 4) results.push(suggestion);
+      });
+      if (results.length >= 10) break;
+      await sleep(90);
+    } catch (err) {
+      console.warn("Map suggestion source failed", err);
+    }
+  }
+
+  return mergeLocationSuggestions(results)
+    .sort((a, b) => (b._score || 0) - (a._score || 0))
+    .slice(0, 10);
+}
+
+function findBestLocalPunePlace(searchText) {
+  const term = normalizeSearchKey(searchText);
+  if (!term) return null;
+  const words = uniqueWords(term);
+  let best = null;
+
+  LOCAL_PUNE_PLACES.forEach(place => {
+    const text = normalizeSearchKey(`${place.label} ${place.subLabel} ${place.aliases || ""}`);
+    if (!fuzzyTextMatch(text, term, words.length > 1)) return;
+    const score = scoreFuzzyLabel(`${place.label} ${place.aliases || ""}`, term, false);
+    if (!best || score > best._score) best = { ...place, _score: score };
+  });
+
+  return best;
+}
+
+function getLocalPuneAreaSuggestions(searchText, existingSuggestions = []) {
+  const term = cleanSearchTerm(searchText);
+  if (!term) return [];
+  const existing = new Set((existingSuggestions || []).map(item => normalizeSearchKey(item.label)));
+
+  return LOCAL_PUNE_PLACES
+    .filter(place => !existing.has(normalizeSearchKey(place.label)))
+    .map(place => ({
+      source: "map",
+      label: place.label,
+      subLabel: place.subLabel,
+      icon: "travel_explore",
+      lat: place.lat,
+      lon: place.lon,
+      displayName: `${place.label}, ${place.subLabel}`,
+      _score: scoreFuzzyLabel(`${place.label} ${place.aliases || ""}`, term, false)
+    }))
+    .filter(place => fuzzyTextMatch(`${place.label} ${place.subLabel} ${place.displayName}`, term, false) || (place._score || 0) >= 30)
+    .sort((a, b) => (b._score || 0) - (a._score || 0))
+    .slice(0, 8);
+}
+
+function mergeLocationSuggestions(list) {
+  const seen = new Set();
+  const merged = [];
+  (list || []).forEach(item => {
+    const key = normalizeSearchKey(item.displayName || item.label);
+    const labelKey = normalizeSearchKey(item.label);
+    if (!key || seen.has(key) || seen.has(labelKey)) return;
+    seen.add(key);
+    seen.add(labelKey);
+    merged.push(item);
+  });
+  return merged;
+}
+
+async function geocodeLocation(text) {
+  const locationText = cleanSearchTerm(text);
+  if (!locationText) return null;
+
+  const cacheKey = "geo_v2_" + normalizeSearchKey(locationText);
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+    if (cached && Number.isFinite(Number(cached.lat)) && Number.isFinite(Number(cached.lon))) return cached;
+  } catch (e) {}
+
+  const local = findBestLocalPunePlace(locationText);
+  if (local) {
+    const result = { label: local.label, displayName: `${local.label}, ${local.subLabel}`, lat: Number(local.lat), lon: Number(local.lon) };
+    try { localStorage.setItem(cacheKey, JSON.stringify(result)); } catch (e) {}
+    return result;
+  }
+
+  try {
+    const suggestions = await fetchMapSuggestions(locationText);
+    const first = suggestions.find(item => Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lon)));
+    if (!first) return null;
+    const result = { label: first.label, displayName: first.displayName || first.label, lat: Number(first.lat), lon: Number(first.lon) };
+    try { localStorage.setItem(cacheKey, JSON.stringify(result)); } catch (e) {}
+    return result;
+  } catch (err) {
+    console.warn("Geocoding error", err);
+    return null;
+  }
+}
+
+function textSearchRows(rows, searchText) {
+  const term = cleanSearchTerm(searchText);
+  if (!term) return rows;
+
+  return (rows || []).filter(item => {
+    const haystack = [
+      item.location,
+      item.title,
+      item.description,
+      item.type,
+      item.brokerage_type,
+      item.name,
+      item.users?.name
+    ].filter(Boolean).join(" ");
+
+    return fuzzyTextMatch(haystack, term, true) || fuzzyTextMatch(haystack, term, false);
+  }).sort((a, b) => {
+    const aScore = scoreFuzzyLabel([a.location, a.title, a.type].filter(Boolean).join(" "), term, true);
+    const bScore = scoreFuzzyLabel([b.location, b.title, b.type].filter(Boolean).join(" "), term, true);
+    return bScore - aScore;
+  });
+}
+
+async function fetchDatabaseSuggestions(searchText) {
+  const tableName = activePostMode === "needed" ? "room_requirements" : "room_posts";
+  const term = cleanSearchTerm(searchText);
+  const safeTerm = term.replace(/[%_,]/g, " ").replace(/\s+/g, " ").trim();
+
+  async function runSuggestionQuery(selectFields, mode = "broad") {
+    let query = db.from(tableName).select(selectFields).limit(mode === "quick" ? 140 : 700);
+    if (activePostMode === "available") query = query.eq("status", "active");
+    query = applyFiltersToQuery(query);
+    if (mode === "quick" && safeTerm) {
+      query = query.or(`location.ilike.%${safeTerm}%,title.ilike.%${safeTerm}%,type.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`);
+    }
+    return await query;
+  }
+
+  async function collectRows(selectFields) {
+    const all = [];
+    const seen = new Set();
+    const addRows = rows => (rows || []).forEach(row => {
+      const key = String(row.id || `${row.title}|${row.location}`);
+      if (seen.has(key)) return;
+      seen.add(key);
+      all.push(row);
+    });
+
+    const quick = safeTerm ? await runSuggestionQuery(selectFields, "quick") : { data: [], error: null };
+    if (!quick.error) addRows(quick.data);
+
+    // Broad local filtering is what makes typo searches work, because SQL ilike cannot fix spelling mistakes.
+    const broad = await runSuggestionQuery(selectFields, "broad");
+    if (!broad.error) addRows(broad.data);
+
+    return quick.error && broad.error ? broad : { data: all, error: null };
+  }
+
+  let { data, error } = await collectRows("id, title, location, type, description, latitude, longitude");
+
+  if (error) {
+    const message = String(error.message || "").toLowerCase();
+    if (message.includes("latitude") || message.includes("longitude") || message.includes("description") || message.includes("column") || message.includes("schema")) {
+      const fallback = await collectRows("id, title, location, type");
+      data = fallback.data;
+      error = fallback.error;
+    }
+  }
+
+  if (error) {
+    console.warn("Database suggestion error", error);
+    return [];
+  }
+
+  const rows = (data || []).filter(row => {
+    const text = [row.location, row.title, row.type, row.description].filter(Boolean).join(" ");
+    return fuzzyTextMatch(text, term, false);
+  });
+
+  return buildDatabaseSuggestions(rows, searchText);
+}
+
+function buildDatabaseSuggestions(rows, searchText) {
+  const suggestions = [];
+  const seen = new Set();
+  const term = cleanSearchTerm(searchText);
+
+  function add(label, subLabel, icon, value, row, isFullAddress = false) {
+    const cleanLabel = cleanSearchTerm(label);
+    if (!cleanLabel) return;
+    const key = normalizeSearchKey(cleanLabel);
+    if (seen.has(key)) return;
+    seen.add(key);
+    const coords = roomHasCoordinates(row || {});
+    suggestions.push({
+      source: "database",
+      label: cleanLabel,
+      subLabel,
+      icon,
+      value: cleanSearchTerm(value || cleanLabel),
+      lat: coords?.lat,
+      lon: coords?.lon,
+      displayName: row?.location || cleanLabel,
+      _score: scoreFuzzyLabel(cleanLabel, term, isFullAddress)
+    });
+  }
+
+  (rows || []).forEach(row => {
+    const location = row.location || "";
+    const cleanLocation = cleanSearchTerm(location);
+    const parts = String(location).split(",").map(part => cleanSearchTerm(part)).filter(Boolean);
+
+    if (cleanLocation && fuzzyTextMatch(cleanLocation, term, false)) {
+      add(cleanLocation, activePostMode === "needed" ? "Requirement preferred full address" : "Listed full address — tap to search nearby", "location_on", cleanLocation, row, true);
+    }
+
+    const chunks = [];
+    for (let i = 0; i < parts.length; i++) {
+      chunks.push(parts[i]);
+      if (parts[i + 1]) chunks.push(`${parts[i]}, ${parts[i + 1]}`);
+      if (parts[i + 2]) chunks.push(`${parts[i]}, ${parts[i + 1]}, ${parts[i + 2]}`);
+    }
+
+    chunks.forEach(chunk => {
+      if (fuzzyTextMatch(chunk, term, false)) {
+        add(chunk, cleanLocation ? `From ${cleanLocation}` : "Saved detailed location", "near_me", chunk, row, false);
+      }
+    });
+
+    if (row.title && fuzzyTextMatch(row.title, term, false)) {
+      add(row.title, cleanLocation || "Listed post", activePostMode === "needed" ? "person_search" : "home_work", row.location || row.title, row, false);
+    }
+  });
+
+  suggestions.sort((a, b) => (b._score || 0) - (a._score || 0));
+  return suggestions.slice(0, 16);
+}
+
+async function fetchLocationSearchSuggestions(value) {
+  const searchText = cleanSearchTerm(value);
+  const box = document.getElementById("searchSuggestions");
+
+  if (!box || searchText.length < 1) {
+    hideSuggestionBox();
+    return;
+  }
+
+  const requestId = ++suggestionRequestId;
+  showSuggestionBox(`<div class="suggestion-empty">Searching detailed addresses, buildings and gallis...</div>`);
+
+  try {
+    const databaseSuggestions = await fetchDatabaseSuggestions(searchText);
+    let mapSuggestions = getLocalPuneAreaSuggestions(searchText, databaseSuggestions);
+
+    try {
+      const liveMapSuggestions = await fetchMapSuggestions(searchText);
+      mapSuggestions = mergeLocationSuggestions([...databaseSuggestions, ...mapSuggestions, ...liveMapSuggestions])
+        .filter(item => item.source !== "database")
+        .slice(0, 10);
+    } catch (mapErr) {
+      console.warn("Map suggestion error", mapErr);
+    }
+
+    if (requestId !== suggestionRequestId) return;
+    showSuggestionBox(renderSuggestionList(databaseSuggestions, mapSuggestions));
+    attachSuggestionEvents(databaseSuggestions, mapSuggestions);
+  } catch (err) {
+    console.warn("Location suggestion error", err);
+    hideSuggestionBox();
+  }
+}
+
+
 /* REUSABLE BUTTON.HTML SCRIPT
    button.html is loaded through an iframe.
    IMPORTANT: iframe width is only 96px on desktop, so button.html cannot detect desktop using its own width.
