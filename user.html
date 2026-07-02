@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -45,11 +45,11 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #E2E8F0; /* Desktop bg */
+  background-color: #E2E8F0; 
   color: var(--text-main);
   -webkit-tap-highlight-color: transparent;
   height: 100vh;
-  overflow: hidden; /* Ensure desktop body does not scroll */
+  overflow: hidden; 
 }
 
 /* MOBILE APP WRAPPER */
@@ -58,7 +58,7 @@ body {
   margin: 0 auto;
   background: var(--bg);
   height: 100vh;
-  overflow-y: auto; /* Internal scrolling for sticky elements to work */
+  overflow-y: auto; 
   overflow-x: hidden;
   position: relative;
   box-shadow: 0 20px 40px rgba(0,0,0,0.1);
@@ -145,7 +145,7 @@ body {
 
 input, select {
   width: 100%;
-  padding: 14px 16px 14px 44px; /* Space for icon */
+  padding: 14px 16px 14px 44px; 
   border-radius: 16px;
   border: 1px solid transparent;
   background: #F1F5F9;
@@ -186,6 +186,32 @@ button:active {
   transform: scale(0.96);
 }
 
+/* --- Loading Spinner for Buttons --- */
+button.is-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+button.is-loading::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
+  margin-top: -12px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: btn-spin 0.8s linear infinite;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
 .link-text {
   color: var(--primary);
   text-align: center;
@@ -197,7 +223,7 @@ button:active {
 
 .timer {
   text-align: center;
-  color: #EF4444; /* Red color */
+  color: #EF4444;
   margin: 16px 0;
   font-weight: 700;
   font-size: 20px;
@@ -215,6 +241,22 @@ button:active {
 /* PROFILE SPECIFIC */
 .profile-card {
   text-align: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  width: 260px;
+  height: 160px;
+  transform: translateX(-50%);
+  border-radius: 0 0 140px 140px;
+  background: radial-gradient(circle at 30% 30%, rgba(99,102,241,0.25), transparent 34%),
+              linear-gradient(135deg, rgba(99,102,241,0.18), rgba(6,182,212,0.16));
+  pointer-events: none;
 }
 
 .avatar-wrapper {
@@ -222,6 +264,10 @@ button:active {
   width: 110px;
   height: 110px;
   margin: 0 auto 20px auto;
+  padding: 5px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366F1, #06B6D4, #22C55E);
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.16);
 }
 
 .avatar {
@@ -230,7 +276,8 @@ button:active {
   border-radius: 50%;
   object-fit: cover;
   border: 4px solid var(--surface);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  background: #F1F5F9;
+  display: block;
 }
 
 .profile-name {
@@ -262,39 +309,6 @@ button:active {
   background: #FEE2E2;
 }
 
-
-
-.profile-card {
-  overflow: hidden;
-  position: relative;
-}
-
-.profile-card::before {
-  content: '';
-  position: absolute;
-  top: -80px;
-  left: 50%;
-  width: 260px;
-  height: 160px;
-  transform: translateX(-50%);
-  border-radius: 0 0 140px 140px;
-  background: radial-gradient(circle at 30% 30%, rgba(99,102,241,0.25), transparent 34%),
-              linear-gradient(135deg, rgba(99,102,241,0.18), rgba(6,182,212,0.16));
-  pointer-events: none;
-}
-
-.avatar-wrapper {
-  padding: 5px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366F1, #06B6D4, #22C55E);
-  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.16);
-}
-
-.avatar {
-  background: #F1F5F9;
-  display: block;
-}
-
 .session-note {
   margin: 18px 0 22px;
   padding: 12px 14px;
@@ -311,48 +325,101 @@ button:active {
   color: var(--text-main);
 }
 
-
-/* REUSABLE BUTTON.HTML IFRAME LOADER
-   button.html stays as the single editable source for the bottom/right navigation. */
-#bottomNavHost {
-  display: none;
+/* CUSTOM ALERT MODAL CSS */
+.custom-alert-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999999;
+  padding: 20px;
+  opacity: 1;
+  transition: opacity 0.2s ease;
 }
 
-.bottom-nav-frame {
-  display: block;
-  position: fixed;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  z-index: 999999;
+.custom-alert-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+  display: flex !important;
+}
+
+.custom-alert-box {
+  background: var(--surface);
   width: 100%;
-  max-width: 480px;
-  height: 112px;
-  border: 0;
-  background: transparent;
-  overflow: hidden;
-  pointer-events: auto;
+  max-width: 320px;
+  border-radius: 24px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  transform: scale(1);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.custom-alert-overlay.hidden .custom-alert-box {
+  transform: scale(0.9);
+}
+
+.custom-alert-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  transition: color 0.3s;
+}
+
+.custom-alert-message {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+.custom-alert-btn {
+  padding: 14px;
+  border-radius: 14px;
+  margin: 0;
+  font-size: 16px;
+  color: white;
+  border: none;
+  width: 100%;
+  font-weight: 600;
+  transition: background 0.3s, transform 0.1s;
+}
+
+.custom-alert-btn:active {
+  transform: scale(0.96);
+}
+
+/* --- Dynamic Themes --- */
+.alert-success .custom-alert-icon { color: #22C55E; }
+.alert-success .custom-alert-btn { background: #22C55E; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
+
+.alert-error .custom-alert-icon { color: #EF4444; }
+.alert-error .custom-alert-btn { background: #EF4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+
+.alert-info .custom-alert-icon { color: var(--primary); }
+.alert-info .custom-alert-btn { background: var(--primary-gradient); box-shadow: 0 4px 12px var(--primary-glow); }
+
+/* REUSABLE BUTTON.HTML IFRAME LOADER */
+#bottomNavHost { display: none; }
+.bottom-nav-frame {
+  display: block; position: fixed; left: 50%; bottom: 0;
+  transform: translateX(-50%); z-index: 99999; width: 100%; max-width: 480px;
+  height: 112px; border: 0; background: transparent; overflow: hidden; pointer-events: auto;
 }
 
 @media (min-width: 900px) {
   .bottom-nav-frame {
-    top: 120px;
-    right: 24px;
-    bottom: 24px;
-    left: auto;
-    width: 96px;
-    max-width: 96px;
-    height: calc(100vh - 144px);
-    min-height: 360px;
-    transform: none;
-    border-radius: 30px;
+    top: 120px; right: 24px; bottom: 24px; left: auto; width: 96px;
+    max-width: 96px; height: calc(100vh - 144px); min-height: 360px;
+    transform: none; border-radius: 30px;
   }
 }
-
 @media (max-width: 374px) {
-  .bottom-nav-frame {
-    height: 108px;
-  }
+  .bottom-nav-frame { height: 108px; }
 }
 </style>
 </head>
@@ -405,10 +472,6 @@ button:active {
         </select>
       </div>
       <div class="input-group">
-        <span class="material-symbols-rounded">image</span>
-        <input id="avatar" placeholder="Avatar URL (Optional)">
-      </div>
-      <div class="input-group">
         <span class="material-symbols-rounded">lock</span>
         <input id="password" type="password" placeholder="Create Password">
       </div>
@@ -452,7 +515,14 @@ button:active {
 
   </div>
 
-  <!-- Reusable bottom navigation loaded from existing button.html -->
+  <div id="customAlertOverlay" class="custom-alert-overlay hidden">
+    <div class="custom-alert-box" id="customAlertBox">
+      <span class="material-symbols-rounded custom-alert-icon" id="customAlertIcon">info</span>
+      <div class="custom-alert-message" id="customAlertMessage">Alert message goes here</div>
+      <button class="custom-alert-btn" id="customAlertBtn" onclick="closeCustomAlert()">OK</button>
+    </div>
+  </div>
+
   <div id="bottomNavHost"></div>
   <iframe
     id="bottomNavFrame"
@@ -471,10 +541,40 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* ---------------- CUSTOM ALERT LOGIC ---------------- */
+let alertCallback = null;
 
-/* ---------------- REUSABLE BUTTON.HTML SCRIPT ----------------
-   button.html is loaded through an iframe.
-   The iframe is narrow on desktop, so this page passes mode=desktop/mobile. */
+function showCustomAlert(message, type = 'error', callback = null) {
+  const box = document.getElementById("customAlertBox");
+  const icon = document.getElementById("customAlertIcon");
+  
+  box.className = "custom-alert-box"; 
+  
+  if (type === 'success') {
+    box.classList.add("alert-success");
+    icon.innerText = "check_circle"; 
+  } else if (type === 'info') {
+    box.classList.add("alert-info");
+    icon.innerText = "info"; 
+  } else {
+    box.classList.add("alert-error");
+    icon.innerText = "error"; 
+  }
+
+  document.getElementById("customAlertMessage").innerText = message;
+  document.getElementById("customAlertOverlay").classList.remove("hidden");
+  alertCallback = callback;
+}
+
+function closeCustomAlert() {
+  document.getElementById("customAlertOverlay").classList.add("hidden");
+  if (alertCallback) {
+    alertCallback();
+    alertCallback = null;
+  }
+}
+
+/* ---------------- REUSABLE BUTTON.HTML SCRIPT ---------------- */
 function updateReusableButtonsFrame() {
   const frame = document.getElementById('bottomNavFrame');
   if (!frame) return;
@@ -586,8 +686,11 @@ function isUserBlocked(user) {
 
 function logoutLocal(message) {
   localStorage.removeItem("user");
-  if (message) alert(message);
-  location.reload();
+  if (message) {
+      showCustomAlert(message, "error", () => location.reload());
+  } else {
+      location.reload();
+  }
 }
 
 async function fetchFreshUser(userId) {
@@ -712,7 +815,7 @@ async function createLatestLoginSession(user) {
 
   if (error) {
     console.error("Session update error:", error);
-    alert("Login session could not be saved. Please try again.");
+    showCustomAlert("Login session could not be saved. Please try again.");
     return null;
   }
 
@@ -787,64 +890,72 @@ async function sendOTP(email, otp) {
 
 /* ---------------- SIGNUP ---------------- */
 async function signup() {
+  const btn = document.querySelector("#signupBox button");
   const name = document.getElementById("name").value.trim();
   const email = document.getElementById("email").value.trim().toLowerCase();
   const mobile = document.getElementById("mobile").value.trim();
   const gender = document.getElementById("gender").value;
-  const avatar = document.getElementById("avatar").value.trim();
   const password = document.getElementById("password").value;
 
   if (!email || !password || !name) {
-    alert("Name, Email, and Password are required.");
+    showCustomAlert("Name, Email, and Password are required.");
     return;
   }
 
-  const { data: existing } = await db
-    .from("users")
-    .select("*")
-    .eq("email", email);
+  btn.classList.add("is-loading"); 
 
-  const otp = Math.floor(100000 + Math.random() * 900000);
-  const expiry = getOtpExpiryTimestamp();
-
-  currentEmail = email;
-  sessionStorage.setItem("pending_otp_email", email);
-
-  if (existing && existing.length > 0) {
-    const user = existing[0];
-
-    if (user.is_verified) {
-      alert("User already exists. Please login.");
-      return;
-    }
-
-    await db.from("users")
-      .update({ otp: otp.toString(), otp_expiry: expiry, name, mobile_no: mobile, gender, avatar_url: avatar, password })
+  try {
+    const { data: existing } = await db
+      .from("users")
+      .select("*")
       .eq("email", email);
 
-    await sendOTP(email, otp);
-    alert("User already registered but not verified. OTP resent.");
-  } else {
-    await db.from("users").insert({
-      name: name,
-      email: email,
-      mobile_no: mobile,
-      gender: gender,
-      avatar_url: avatar,
-      password: password,
-      otp: otp.toString(),
-      otp_expiry: expiry,
-      is_verified: false
-    });
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const expiry = getOtpExpiryTimestamp();
 
-    await sendOTP(email, otp);
-    alert("OTP sent to your email.");
+    currentEmail = email;
+    sessionStorage.setItem("pending_otp_email", email);
+
+    if (existing && existing.length > 0) {
+      const user = existing[0];
+
+      if (user.is_verified) {
+        showCustomAlert("User already exists. Please login.");
+        return;
+      }
+
+      await db.from("users")
+        .update({ otp: otp.toString(), otp_expiry: expiry, name, mobile_no: mobile, gender, password })
+        .eq("email", email);
+
+      await sendOTP(email, otp);
+      showCustomAlert("User already registered but not verified. OTP resent.", "info");
+    } else {
+      await db.from("users").insert({
+        name: name,
+        email: email,
+        mobile_no: mobile,
+        gender: gender,
+        password: password,
+        otp: otp.toString(),
+        otp_expiry: expiry,
+        is_verified: false
+      });
+
+      await sendOTP(email, otp);
+      showCustomAlert("OTP has successfully sent to your mail.", "success");
+    }
+
+    document.getElementById("signupBox").classList.add("hidden");
+    document.getElementById("otpBox").classList.remove("hidden");
+    document.getElementById("pageTitle").innerText = "Verification";
+    startTimer();
+  } catch (error) {
+    console.error("Signup error:", error);
+    showCustomAlert("Something went wrong. Please try again.");
+  } finally {
+    btn.classList.remove("is-loading"); 
   }
-
-  document.getElementById("signupBox").classList.add("hidden");
-  document.getElementById("otpBox").classList.remove("hidden");
-  document.getElementById("pageTitle").innerText = "Verification";
-  startTimer();
 }
 
 /* ---------------- RESEND OTP ---------------- */
@@ -860,7 +971,7 @@ async function resendOTP() {
     .eq("email", currentEmail);
 
   await sendOTP(currentEmail, otp);
-  alert("OTP resent");
+  showCustomAlert("OTP resent successfully.", "success");
   startTimer();
 }
 
@@ -869,9 +980,6 @@ function parseOtpExpiry(value) {
   if (!value) return null;
   const text = String(value).trim();
 
-  // Supabase may return timestamp without timezone as either
-  // "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DDTHH:mm:ss".
-  // This parser keeps it as local time to match the way we save it.
   const normalized = text.replace("T", " ").split(".")[0];
   const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/);
 
@@ -892,121 +1000,136 @@ function normalizeOtpValue(value) {
 }
 
 async function verifyOTP() {
+  const btn = document.querySelector("#otpBox button");
   const enteredOtp = normalizeOtpValue(document.getElementById("otpInput").value);
   const emailForOtp = String(currentEmail || sessionStorage.getItem("pending_otp_email") || "").trim().toLowerCase();
 
   if (!emailForOtp) {
-    alert("Email session missing. Please sign up again.");
+    showCustomAlert("Email session missing. Please sign up again.");
     showSignup();
     return;
   }
 
   if (!enteredOtp) {
-    alert("Please enter OTP.");
+    showCustomAlert("Please enter OTP.");
     return;
   }
 
-  // More reliable flow:
-  // 1. Fetch row by email only
-  // 2. Compare OTP in JavaScript after normalizing
-  // This avoids false Invalid OTP caused by text/number formatting or Supabase .eq() mismatch.
-  const { data, error } = await db
-    .from("users")
-    .select("*")
-    .eq("email", emailForOtp)
-    .limit(1);
+  btn.classList.add("is-loading");
 
-  if (error) {
-    console.error("OTP verification fetch error:", error);
-    alert("OTP verification error. Please try again.");
-    return;
+  try {
+    const { data, error } = await db
+      .from("users")
+      .select("*")
+      .eq("email", emailForOtp)
+      .limit(1);
+
+    if (error) {
+      console.error("OTP verification fetch error:", error);
+      showCustomAlert("OTP verification error. Please try again.");
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      console.warn("No user found for OTP email:", emailForOtp);
+      showCustomAlert("Account not found for this email. Please sign up again.");
+      showSignup();
+      return;
+    }
+
+    const user = data[0];
+    const storedOtp = normalizeOtpValue(user.otp);
+
+    if (!storedOtp) {
+      showCustomAlert("No active OTP found. Please resend OTP.");
+      return;
+    }
+
+    if (storedOtp !== enteredOtp) {
+      showCustomAlert("Invalid OTP. Please enter the latest OTP sent to your email.");
+      return;
+    }
+
+    const expiryDate = parseOtpExpiry(user.otp_expiry);
+
+    if (expiryDate && Date.now() > expiryDate.getTime()) {
+      showCustomAlert("OTP expired. Please resend OTP.");
+      return;
+    }
+
+    const { error: updateError } = await db.from("users")
+      .update({ is_verified: true, otp: null, otp_expiry: null })
+      .eq("id", user.id);
+
+    if (updateError) {
+      console.error("OTP completion update error:", updateError);
+      showCustomAlert("Could not complete verification. Please try again.");
+      return;
+    }
+
+    user.is_verified = true;
+    user.otp = null;
+    user.otp_expiry = null;
+
+    const finalUser = await createLatestLoginSession(user);
+    if (!finalUser) return;
+
+    sessionStorage.removeItem("pending_otp_email");
+    
+    showCustomAlert("Account created & logged in!", "success", () => {
+        handleRedirect();
+    });
+    
+  } catch (error) {
+      console.error("Verification error:", error);
+  } finally {
+      btn.classList.remove("is-loading"); 
   }
-
-  if (!data || data.length === 0) {
-    console.warn("No user found for OTP email:", emailForOtp);
-    alert("Account not found for this email. Please sign up again.");
-    showSignup();
-    return;
-  }
-
-  const user = data[0];
-  const storedOtp = normalizeOtpValue(user.otp);
-
-  console.log("OTP Debug", {
-    email: emailForOtp,
-    enteredOtp,
-    storedOtp,
-    otpExpiry: user.otp_expiry,
-    isVerified: user.is_verified
-  });
-
-  if (!storedOtp) {
-    alert("No active OTP found. Please resend OTP.");
-    return;
-  }
-
-  if (storedOtp !== enteredOtp) {
-    alert("Invalid OTP. Please enter the latest OTP sent to your email.");
-    return;
-  }
-
-  const expiryDate = parseOtpExpiry(user.otp_expiry);
-
-  if (expiryDate && Date.now() > expiryDate.getTime()) {
-    alert("OTP expired. Please resend OTP.");
-    return;
-  }
-
-  const { error: updateError } = await db.from("users")
-    .update({ is_verified: true, otp: null, otp_expiry: null })
-    .eq("id", user.id);
-
-  if (updateError) {
-    console.error("OTP completion update error:", updateError);
-    alert("Could not complete verification. Please try again.");
-    return;
-  }
-
-  user.is_verified = true;
-  user.otp = null;
-  user.otp_expiry = null;
-
-  const finalUser = await createLatestLoginSession(user);
-  if (!finalUser) return;
-
-  sessionStorage.removeItem("pending_otp_email");
-  alert("Account created & logged in!");
-  handleRedirect();
 }
 
 /* ---------------- LOGIN ---------------- */
 async function login() {
+  const btn = document.querySelector("#loginBox button");
   const email = document.getElementById("loginEmail").value.trim().toLowerCase();
   const password = document.getElementById("loginPassword").value;
 
-  const { data } = await db
-    .from("users")
-    .select("*")
-    .eq("email", email)
-    .eq("password", password)
-    .eq("is_verified", true);
-
-  if (!data || data.length === 0) {
-    alert("Invalid credentials or account not verified.");
-    return;
+  if(!email || !password) {
+      showCustomAlert("Please enter both email and password.");
+      return;
   }
 
-  const user = data[0];
-  const blockMessage = isUserBlocked(user);
-  if (blockMessage) {
-    alert(blockMessage);
-    return;
+  btn.classList.add("is-loading"); 
+
+  try {
+    const { data } = await db
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .eq("password", password)
+      .eq("is_verified", true);
+
+    if (!data || data.length === 0) {
+      showCustomAlert("Invalid credentials or account not verified.");
+      return;
+    }
+
+    const user = data[0];
+    const blockMessage = isUserBlocked(user);
+    if (blockMessage) {
+      showCustomAlert(blockMessage);
+      return;
+    }
+
+    const finalUser = await createLatestLoginSession(user);
+    if (!finalUser) return;
+
+    handleRedirect();
+  } catch (error) {
+    console.error("Login error:", error);
+    showCustomAlert("An error occurred during login. Please try again.");
+  } finally {
+    btn.classList.remove("is-loading"); 
   }
-
-  const finalUser = await createLatestLoginSession(user);
-  if (!finalUser) return;
-
-  handleRedirect();
 }
 
 function handleRedirect() {
@@ -1110,7 +1233,7 @@ function go(page) {
 async function checkLoginNav(page) {
   const user = getStoredUser();
   if (!user) {
-    alert("Please login first to access this feature.");
+    showCustomAlert("Please login first to access this feature.");
     return;
   }
 
