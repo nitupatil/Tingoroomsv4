@@ -756,15 +756,10 @@ async function ensureSupabaseAuthSession(user, plainPassword) {
   }
 
   // 2) If Auth user does not exist yet, create it in the background.
+  // Keep signUp payload minimal. Some Supabase Auth projects fail with metadata/options if hooks/triggers are strict.
   const { data: signUpData, error: signUpError } = await db.auth.signUp({
     email,
-    password: plainPassword,
-    options: {
-      data: {
-        app_user_id: user.id,
-        name: user.name || ""
-      }
-    }
+    password: plainPassword
   });
 
   if (signUpError) {
