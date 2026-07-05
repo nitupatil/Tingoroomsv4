@@ -540,6 +540,15 @@ const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0"; 
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const MIN_AUTH_PASSWORD_LENGTH = 6;
+
+function isAuthPasswordValid(password) {
+  return String(password || "").length >= MIN_AUTH_PASSWORD_LENGTH;
+}
+
+function getAuthPasswordMessage() {
+  return `Password must be at least ${MIN_AUTH_PASSWORD_LENGTH} characters because Supabase Authentication does not accept shorter passwords.`;
+}
 
 /* ---------------- CUSTOM ALERT LOGIC ---------------- */
 let alertCallback = null;
@@ -647,6 +656,162 @@ function getCurrentDbTimestamp() {
   return toDbTimestamp(new Date());
 }
 
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+/*
+  Supabase Auth bridge:
+  Your app still uses public.users for profile/login data,
+  but this creates/signs into Supabase Auth in the background.
+  RLS can then use auth.uid() and users.auth_user_id.
+*/
+async function linkAuthUserIfNeeded(user, authUserId) {
+  if (!user || !user.id || !authUserId) return false;
+
+  if (user.auth_user_id && String(user.auth_user_id) === String(authUserId)) {
+    return true;
+  }
+
+  const { error } = await db
+    .from("users")
+    .update({
+      auth_user_id: authUserId,
+      auth_linked_at: getCurrentDbTimestamp(),
+      auth_sync_status: "linked",
+      auth_sync_error: null
+    })
+    .eq("id", user.id);
+
+  if (error) {
+    console.error("Auth link update error:", error);
+    showCustomAlert("Could not link this account with authentication. Please try again.");
+    return false;
+  }
+
+  user.auth_user_id = authUserId;
+  user.auth_sync_status = "linked";
+  user.auth_sync_error = null;
+  return true;
+}
+
+function describeSupabaseAuthError(error) {
+  if (!error) return "Unknown Auth error.";
+
+  const parts = [];
+
+  if (error.message) parts.push(error.message);
+  if (error.error_description) parts.push(error.error_description);
+  if (error.status) parts.push("HTTP status: " + error.status);
+  if (error.name) parts.push("Type: " + error.name);
+
+  // Supabase/Auth retryable errors sometimes print as {}, so collect hidden Error properties too.
+  try {
+    const own = Object.getOwnPropertyNames(error).reduce((acc, key) => {
+      acc[key] = error[key];
+      return acc;
+    }, {});
+    const raw = JSON.stringify(own);
+    if (raw && raw !== "{}") parts.push("Details: " + raw);
+  } catch (e) {}
+
+  const base = parts.filter(Boolean).join(" | ") || "Unknown Auth error. Check Supabase Auth logs.";
+
+  if (window.location.protocol === "file:") {
+    return base + " Also, you are opening the page with file://. Test from your GitHub custom domain or run a local server like http://localhost:5500 because Auth/session storage and OneSignal can fail from direct file open.";
+  }
+
+  return base;
+}
+
+async function ensureSupabaseAuthSession(user, plainPassword) {
+  const email = normalizeEmail(user && user.email);
+
+  if (!user || !user.id || !email || !plainPassword) {
+    showCustomAlert("Authentication details missing. Please login again.");
+    return null;
+  }
+
+  if (!isAuthPasswordValid(plainPassword)) {
+    const msg = getAuthPasswordMessage();
+    await db.from("users")
+      .update({
+        auth_sync_status: "error",
+        auth_sync_error: msg
+      })
+      .eq("id", user.id);
+    showCustomAlert(msg + " Please sign up again or update this user's password to 6+ characters.");
+    return null;
+  }
+
+  // 1) Try normal Auth login first. This works when Auth user already exists.
+  const { data: signInData, error: signInError } = await db.auth.signInWithPassword({
+    email,
+    password: plainPassword
+  });
+
+  if (signInData && signInData.user) {
+    const linked = await linkAuthUserIfNeeded(user, signInData.user.id);
+    return linked ? signInData.user : null;
+  }
+
+  // 2) If Auth user does not exist yet, create it in the background.
+  const { data: signUpData, error: signUpError } = await db.auth.signUp({
+    email,
+    password: plainPassword,
+    options: {
+      data: {
+        app_user_id: user.id,
+        name: user.name || ""
+      }
+    }
+  });
+
+  if (signUpError) {
+    console.error("Supabase Auth sign in error:", signInError);
+    console.error("Supabase Auth sign up error:", signUpError);
+
+    const signInReason = describeSupabaseAuthError(signInError);
+    const signUpReason = describeSupabaseAuthError(signUpError);
+    const finalReason = "Sign in: " + signInReason + " || Sign up: " + signUpReason;
+
+    await db.from("users")
+      .update({
+        auth_sync_status: "error",
+        auth_sync_error: finalReason
+      })
+      .eq("id", user.id);
+
+    showCustomAlert(
+      "Login details are correct in your users table, but Supabase Authentication could not be created/signed in. " + finalReason
+    );
+    return null;
+  }
+
+  if (!signUpData || !signUpData.user) {
+    const msg = window.location.protocol === "file:"
+      ? "Supabase Authentication could not be created. You are opening this as file://. Upload to your GitHub custom domain or test through http://localhost, not direct file open."
+      : "Supabase Authentication could not be created. Please check Supabase Auth logs.";
+    showCustomAlert(msg);
+    return null;
+  }
+
+  const linked = await linkAuthUserIfNeeded(user, signUpData.user.id);
+  if (!linked) return null;
+
+  // If Supabase email confirmation is ON, signUp may create user but not return a session.
+  // For your current OTP flow, keep Supabase email confirmation OFF, or use an Edge Function/admin createUser flow.
+  const { data: sessionData } = await db.auth.getSession();
+  if (!sessionData || !sessionData.session) {
+    showCustomAlert(
+      "Auth account was created but session is not active. Turn OFF Supabase Auth email confirmation, because your app already verifies OTP."
+    );
+    return null;
+  }
+
+  return signUpData.user;
+}
+
 function getDeviceName() {
   const ua = navigator.userAgent || "";
   let browser = "Browser";
@@ -696,7 +861,7 @@ function logoutLocal(message) {
 async function fetchFreshUser(userId) {
   const { data, error } = await db
     .from("users")
-    .select("id,name,email,mobile_no,is_active,created_at,avatar_url,gender,is_verified,onesignal_id,account_health,block_reason,login_enabled,active_session_token,active_device_name,last_login_at")
+    .select("id,name,email,mobile_no,is_active,created_at,avatar_url,gender,is_verified,onesignal_id,account_health,block_reason,login_enabled,active_session_token,active_device_name,last_login_at,auth_user_id,auth_linked_at,auth_sync_status,auth_sync_error")
     .eq("id", userId)
     .single();
 
@@ -810,7 +975,7 @@ async function createLatestLoginSession(user) {
     .from("users")
     .update(payload)
     .eq("id", user.id)
-    .select("id,name,email,mobile_no,is_active,created_at,avatar_url,gender,is_verified,onesignal_id,account_health,block_reason,login_enabled,active_session_token,active_device_name,last_login_at")
+    .select("id,name,email,mobile_no,is_active,created_at,avatar_url,gender,is_verified,onesignal_id,account_health,block_reason,login_enabled,active_session_token,active_device_name,last_login_at,auth_user_id,auth_linked_at,auth_sync_status,auth_sync_error")
     .single();
 
   if (error) {
@@ -899,6 +1064,11 @@ async function signup() {
 
   if (!email || !password || !name) {
     showCustomAlert("Name, Email, and Password are required.");
+    return;
+  }
+
+  if (!isAuthPasswordValid(password)) {
+    showCustomAlert(getAuthPasswordMessage());
     return;
   }
 
@@ -1057,8 +1227,19 @@ async function verifyOTP() {
       return;
     }
 
+    const authUser = await ensureSupabaseAuthSession(user, user.password);
+    if (!authUser) return;
+
     const { error: updateError } = await db.from("users")
-      .update({ is_verified: true, otp: null, otp_expiry: null })
+      .update({
+        is_verified: true,
+        otp: null,
+        otp_expiry: null,
+        auth_user_id: authUser.id,
+        auth_linked_at: getCurrentDbTimestamp(),
+        auth_sync_status: "linked",
+        auth_sync_error: null
+      })
       .eq("id", user.id);
 
     if (updateError) {
@@ -1070,6 +1251,9 @@ async function verifyOTP() {
     user.is_verified = true;
     user.otp = null;
     user.otp_expiry = null;
+    user.auth_user_id = authUser.id;
+    user.auth_sync_status = "linked";
+    user.auth_sync_error = null;
 
     const finalUser = await createLatestLoginSession(user);
     if (!finalUser) return;
@@ -1119,6 +1303,13 @@ async function login() {
       showCustomAlert(blockMessage);
       return;
     }
+
+    const authUser = await ensureSupabaseAuthSession(user, password);
+    if (!authUser) return;
+
+    user.auth_user_id = authUser.id;
+    user.auth_sync_status = "linked";
+    user.auth_sync_error = null;
 
     const finalUser = await createLatestLoginSession(user);
     if (!finalUser) return;
@@ -1194,6 +1385,12 @@ async function logout() {
     } catch (err) {
       console.warn("Logout session cleanup error:", err);
     }
+  }
+
+  try {
+    await db.auth.signOut();
+  } catch (err) {
+    console.warn("Supabase Auth signout error:", err);
   }
 
   localStorage.removeItem("user");
