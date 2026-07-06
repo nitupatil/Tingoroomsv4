@@ -755,7 +755,11 @@ async function loadChats(background = false) {
         chat.user = { id: chat.otherId, name: "TingoRooms Support", avatar_url: "https://cdn-icons-png.flaticon.com/512/6024/6024190.png", is_verified: true };
         chat.room = post || { title: 'Official Support', status: 'active', postKind: chat.postType || "" };
       } else {
-        const { data: user } = await db.from("users").select("*").eq("id", chat.otherId).maybeSingle();
+        const { data: user } = await db
+          .from("public_user_profiles")
+          .select("id,name,avatar_url,gender")
+          .eq("id", chat.otherId)
+          .maybeSingle();
         if (user) { chat.user = user; chat.room = post; } else { delete map[key]; }
       }
     } catch (err) { delete map[key]; }
@@ -898,8 +902,17 @@ async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
     headerTitle.innerHTML = `<span style="color:var(--text-main); font-size:15px; display:flex; align-items:center; gap:4px;">TingoRooms Support <span class="material-symbols-rounded verified-tick">verified</span> <span class="admin-badge">ADMIN</span></span><br><span style="font-size:12px; color:var(--primary); font-weight:500;">${post ? escapeHtml(post.title) : 'Official Support'}</span>`;
     chatUser = { id: userId, name: 'TingoRooms Support', avatar_url: 'https://cdn-icons-png.flaticon.com/512/6024/6024190.png', gender: null };
   } else {
-    const { data: user, error } = await db.from("users").select("*").eq("id", userId).maybeSingle();
-    if (error || !user) { alert("User not found."); goBack(); return; }
+    const { data: user, error } = await db
+      .from("public_user_profiles")
+      .select("id,name,avatar_url,gender")
+      .eq("id", userId)
+      .maybeSingle();
+    if (error || !user) {
+      console.warn("Public profile lookup failed:", error);
+      alert("User profile not found. Please try again after refreshing.");
+      goBack();
+      return;
+    }
 
     let roleBadge = `<span class="role-badge seeker">Seeker</span>`;
     if (post && post.postKind === "needed") {
