@@ -2446,6 +2446,37 @@ async function findNearbyRooms(search, selectedPlace = null) {
   return filtered.slice(0, 12);
 }
 
+
+
+/* SAFE PUBLIC OWNER PROFILE LOOKUP
+   users table stays locked. This reads only the public_user_profiles view. */
+async function attachOwnerProfiles(items) {
+  const rows = Array.isArray(items) ? items : [];
+  const ids = [...new Set(rows.map(item => item && item.user_id).filter(Boolean))];
+  if (!ids.length) return rows;
+
+  const { data, error } = await db
+    .from("public_user_profiles")
+    .select("id,name,avatar_url,gender")
+    .in("id", ids);
+
+  if (error) {
+    console.warn("Owner profile load error", error);
+    return rows;
+  }
+
+  const profileMap = new Map((data || []).map(profile => [String(profile.id), profile]));
+  return rows.map(item => {
+    const profile = profileMap.get(String(item.user_id)) || null;
+    return {
+      ...item,
+      user: profile,
+      users: profile,
+      owner: profile
+    };
+  });
+}
+
 /* LOAD ROOMS */
 async function loadRooms(search = "", selectedPlace = null) {
   const cleanSearch = cleanSearchTerm(search);
@@ -2472,12 +2503,12 @@ async function loadRooms(search = "", selectedPlace = null) {
     const nearbyRooms = (await findNearbyRooms(cleanSearch, selectedPlace)).filter(roomMatchesActiveFilters);
 
     if (nearbyRooms.length > 0) {
-      renderRooms(nearbyRooms, `No exact property found in “${cleanSearch}”. Showing nearby area properties with your selected filters.`);
+      renderRooms(await attachOwnerProfiles(nearbyRooms), `No exact property found in “${cleanSearch}”. Showing nearby area properties with your selected filters.`);
       return;
     }
   }
 
-  renderRooms(data);
+  renderRooms(await attachOwnerProfiles(data));
 }
 
 /* RENDER ROOMS */
@@ -2542,7 +2573,7 @@ function renderRooms(rooms, statusText = "") {
     `;
 
     // owner avatar + name
-    const ownerObj = room.user || {};
+    const ownerObj = room.users || room.user || room.owner || {};
     const ownerName = ownerObj.name || 'Posted by user';
     const ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
 
@@ -3200,7 +3231,7 @@ async function loadRooms(search = "", selectedPlace = null) {
     }
 
     const visible = (data || []).filter(item => !String(item.status || "").toLowerCase().startsWith("inactive"));
-    renderRooms(visible);
+    renderRooms(await attachOwnerProfiles(visible));
     return;
   }
 
@@ -3226,12 +3257,12 @@ async function loadRooms(search = "", selectedPlace = null) {
     const nearbyRooms = (await findNearbyRooms(cleanSearch, selectedPlace)).filter(roomMatchesActiveFilters);
 
     if (nearbyRooms.length > 0) {
-      renderRooms(nearbyRooms, `No exact property found in “${cleanSearch}”. Showing nearby area properties with your selected filters.`);
+      renderRooms(await attachOwnerProfiles(nearbyRooms), `No exact property found in “${cleanSearch}”. Showing nearby area properties with your selected filters.`);
       return;
     }
   }
 
-  renderRooms(data);
+  renderRooms(await attachOwnerProfiles(data));
 }
 
 function renderAvailableCard(room) {
@@ -3280,7 +3311,7 @@ function renderAvailableCard(room) {
     </button>
   `;
 
-  const ownerObj = room.user || {};
+  const ownerObj = room.users || room.user || room.owner || {};
   const ownerName = ownerObj.name || "Posted by user";
   const ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
   const slidesHtml = imagesArr.map(src => `<img class="slide" src="${escapeHtml(src)}" alt="${escapeHtml(room.title || 'Room')}">`).join('');
@@ -3337,7 +3368,7 @@ function renderRequirementCard(req) {
     </button>
   `;
 
-  const ownerObj = req.user || {};
+  const ownerObj = req.users || req.user || req.owner || {};
   const ownerName = req.name || ownerObj.name || "Posted by user";
 
   return `
@@ -3493,7 +3524,7 @@ async function loadAllSearchRowsForMode() {
     query = applyFiltersToQuery(query);
     const { data, error } = await query;
     if (error) throw error;
-    return (data || []).filter(item => !String(item.status || "").toLowerCase().startsWith("inactive"));
+    return await attachOwnerProfiles((data || []).filter(item => !String(item.status || "").toLowerCase().startsWith("inactive")));
   }
 
   let query = db
@@ -3504,7 +3535,7 @@ async function loadAllSearchRowsForMode() {
   query = applyFiltersToQuery(query);
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) throw error;
-  return data || [];
+  return await attachOwnerProfiles(data || []);
 }
 
 function textSearchRows(rows, searchText) {
@@ -3638,7 +3669,7 @@ async function loadRooms(search = "", selectedPlace = null) {
         : `No exact match found for “${cleanSearch}”. Try selecting one of the location suggestions.`;
     }
 
-    renderRooms(finalRows.slice(0, 36), statusText);
+    renderRooms(await attachOwnerProfiles(finalRows.slice(0, 36)), statusText);
   } catch (error) {
     console.error(error);
     showAppPopup(error.message || "Something went wrong while loading posts.", "Search error");
@@ -3941,7 +3972,7 @@ function renderAvailableCard(room) {
   }
   actions += `<button class="btn-action btn-chat" onclick="startChat(event, '${escapeHtml(room.id)}', '${escapeHtml(room.user_id)}')"><span class="material-symbols-rounded">forum</span>Chat</button>`;
 
-  const ownerObj = room.user || {};
+  const ownerObj = room.users || room.user || room.owner || {};
   const ownerName = ownerObj.name || "Posted by user";
   const ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
   const slidesHtml = imagesArr.map(src => `<img class="slide" src="${escapeHtml(src)}" alt="${escapeHtml(room.title || 'Room')}">`).join('');
@@ -3980,7 +4011,7 @@ function renderRequirementCard(req) {
   }
   actions += `<button class="btn-action btn-chat" onclick="startChat(event, '${escapeHtml(req.id)}', '${escapeHtml(req.user_id)}')"><span class="material-symbols-rounded">forum</span>Chat</button>`;
 
-  const ownerObj = req.user || {};
+  const ownerObj = req.users || req.user || req.owner || {};
   const ownerName = req.name || ownerObj.name || "Posted by user";
   const distanceTag = Number.isFinite(Number(req._distanceKm)) ? `<div class="detail-tag distance-meta"><span class="material-symbols-rounded">near_me</span>${Number(req._distanceKm).toFixed(Number(req._distanceKm) < 10 ? 1 : 0)} km away</div>` : "";
 
