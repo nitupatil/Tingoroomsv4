@@ -882,9 +882,10 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function getLatestOneSignalSubscriptionId(user) {
+async function getLatestOneSignalPushData(user) {
   return new Promise((resolve) => {
     let resolved = false;
+
     const finish = (value) => {
       if (resolved) return;
       resolved = true;
@@ -896,28 +897,46 @@ async function getLatestOneSignalSubscriptionId(user) {
       return;
     }
 
-    if (window.location.protocol === "file:") {
-      console.warn("OneSignal cannot be tested properly from file://. Use HTTPS domain.");
+    if (location.protocol !== "https:" && location.hostname !== "localhost") {
+      console.warn("OneSignal needs HTTPS or localhost. Current origin:", location.origin);
       finish(null);
       return;
     }
 
-    const OneSignalQueue = window.OneSignalDeferred || window.OneSignal || [];
-
     try {
-      OneSignalQueue.push(async function(OneSignal) {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+      OneSignalDeferred.push(async function(OneSignal) {
         try {
           if (OneSignal.Debug && typeof OneSignal.Debug.setLogLevel === "function") {
             OneSignal.Debug.setLogLevel("warn");
           }
 
-          if (OneSignal.User && typeof OneSignal.User.login === "function") {
-            await OneSignal.User.login(String(user.id));
+          if (
+            OneSignal.Notifications &&
+            typeof OneSignal.Notifications.isPushSupported === "function" &&
+            !OneSignal.Notifications.isPushSupported()
+          ) {
+            console.warn("Push notifications are not supported in this browser.");
+            finish(null);
+            return;
           }
 
-          if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === "function") {
+          // Correct OneSignal Web SDK v16 login method.
+          // Do NOT use OneSignal.login(); it creates the "Unrecognized operation: login-user" error.
+          if (typeof OneSignal.login === "function") {
+            await OneSignal.login(String(user.id));
+          } else {
+            console.warn("OneSignal.login is not available yet.");
+          }
+
+          if (
+            OneSignal.Notifications &&
+            typeof OneSignal.Notifications.requestPermission === "function"
+          ) {
             const permission = await OneSignal.Notifications.requestPermission();
-            if (permission === false) {
+
+            if (permission === false || Notification.permission === "denied") {
               console.warn("Notification permission denied by user/browser.");
               finish(null);
               return;
@@ -936,47 +955,71 @@ async function getLatestOneSignalSubscriptionId(user) {
             }
           }
 
-          for (let i = 0; i < 20; i++) {
-            const subId = OneSignal.User && OneSignal.User.PushSubscription
-              ? OneSignal.User.PushSubscription.id
-              : null;
+          for (let i = 0; i < 30; i++) {
+            const subscriptionId = OneSignal.User?.PushSubscription?.id || null;
+            const token = OneSignal.User?.PushSubscription?.token || null;
+            const onesignalId = OneSignal.User?.onesignalId || null;
 
-            if (subId) {
-              finish(subId);
+            // local-* means OneSignal has created a local temporary ID but has not synced to OneSignal server yet.
+            if (
+              subscriptionId &&
+              token &&
+              !String(subscriptionId).startsWith("local-")
+            ) {
+              finish({
+                subscription_id: subscriptionId,
+                onesignal_id: onesignalId || subscriptionId,
+                token
+              });
               return;
             }
-            await delay(300);
+
+            await delay(500);
           }
+
+          const fallbackSubscriptionId = OneSignal.User?.PushSubscription?.id || null;
+          const fallbackToken = OneSignal.User?.PushSubscription?.token || null;
+          const fallbackOneSignalId = OneSignal.User?.onesignalId || null;
+
+          console.warn("OneSignal subscription not ready yet.", {
+            subscriptionId: fallbackSubscriptionId,
+            token: fallbackToken,
+            onesignalId: fallbackOneSignalId
+          });
+
+          finish(null);
         } catch (err) {
           console.error("OneSignal registration error:", err);
+          finish(null);
         }
-        finish(null);
       });
     } catch (err) {
       console.error("OneSignal queue error:", err);
       finish(null);
     }
 
-    setTimeout(() => finish(null), 8000);
+    setTimeout(() => finish(null), 18000);
   });
 }
+
 
 async function registerOneSignalForUser(user) {
   try {
     if (!user || !user.id) return null;
 
-    const subscriptionId = await getLatestOneSignalSubscriptionId(user);
-    if (!subscriptionId) return null;
+    const pushData = await getLatestOneSignalPushData(user);
+    if (!pushData || !pushData.subscription_id) return null;
 
     const result = await callTingoAuth("save_push_subscription", {
-      subscription_id: subscriptionId,
-      onesignal_id: subscriptionId,
+      subscription_id: pushData.subscription_id,
+      onesignal_id: pushData.onesignal_id || pushData.subscription_id,
       external_id: String(user.id),
       browser_info: {
         device_name: getDeviceName(),
         user_agent: navigator.userAgent || "",
         platform: navigator.platform || "",
         language: navigator.language || "",
+        token_available: Boolean(pushData.token),
         saved_at: new Date().toISOString()
       }
     }, true);
@@ -994,6 +1037,7 @@ async function registerOneSignalForUser(user) {
     return null;
   }
 }
+
 
 async function createLatestLoginSession(user) {
   // Session creation is now done inside the tingo-auth Edge Function.
@@ -1347,10 +1391,11 @@ async function logout() {
   }
 
   try {
-    const OneSignalQueue = window.OneSignalDeferred || window.OneSignal || [];
-    OneSignalQueue.push(async function(OneSignal) {
-      if (OneSignal.User && typeof OneSignal.User.logout === "function") {
-        await OneSignal.User.logout();
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      // Correct OneSignal Web SDK v16 logout method.
+      if (typeof OneSignal.logout === "function") {
+        await OneSignal.logout();
       }
     });
   } catch (err) {
@@ -1366,6 +1411,7 @@ async function logout() {
   localStorage.removeItem("user");
   location.reload();
 }
+
 
 /* ---------------- NAVIGATION ---------------- */
 function go(page) {
