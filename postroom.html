@@ -1059,7 +1059,70 @@ const IMGBB_API_KEY = "5319b763af6273a0680f66766badf96a";
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const currentUser = JSON.parse(localStorage.getItem("user"));
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch (e) {
+    return null;
+  }
+}
+
+let currentUser = getStoredUser();
+
+async function ensureSupabaseAuthForPosting(kind) {
+  currentUser = getStoredUser();
+
+  if (!currentUser || !currentUser.id) {
+    promptLoginToPost(kind);
+    return null;
+  }
+
+  const { data: sessionData, error: sessionError } = await db.auth.getSession();
+
+  if (sessionError || !sessionData || !sessionData.session || !sessionData.session.user) {
+    console.warn("Supabase Auth session missing for post submit:", sessionError);
+    savePendingPostDraft(kind);
+    alert("Your app profile is saved, but your secure login session is missing. Please login again, then your filled details will be restored.");
+    window.location.href = "user.html?redirect=postroom.html&resume_post=1";
+    return null;
+  }
+
+  const authUser = sessionData.session.user;
+
+  if (currentUser.auth_user_id && String(currentUser.auth_user_id) !== String(authUser.id)) {
+    console.warn("Local user and Supabase Auth user mismatch.", {
+      local_auth_user_id: currentUser.auth_user_id,
+      auth_user_id: authUser.id
+    });
+
+    await db.auth.signOut();
+    localStorage.removeItem("user");
+    savePendingPostDraft(kind);
+    alert("Login session mismatch found. Please login again for security.");
+    window.location.href = "user.html?redirect=postroom.html&resume_post=1";
+    return null;
+  }
+
+  // Refresh profile/session from the secure Edge Function when available.
+  // This keeps active_session_token/latest-device checks aligned with backend.
+  try {
+    const { data: profileData } = await db.functions.invoke("tingo-auth", {
+      body: {
+        action: "get_profile",
+        active_session_token: currentUser.active_session_token || ""
+      }
+    });
+
+    if (profileData && profileData.ok && profileData.user) {
+      currentUser = profileData.user;
+      localStorage.setItem("user", JSON.stringify(profileData.user));
+    }
+  } catch (profileError) {
+    console.warn("Profile refresh skipped:", profileError);
+  }
+
+  return currentUser;
+}
 
 // Elements
 const dashView = document.getElementById("dashboardView");
@@ -1251,10 +1314,20 @@ let currentEditingPostId = null;
 let currentEditingImages = ""; 
 
 /* ---------------- INITIALIZATION ---------------- */
-window.onload = () => {
+window.onload = async () => {
   updateReusableButtonsFrame();
 
+  currentUser = getStoredUser();
+
   if (currentUser) {
+    const { data: sessionData } = await db.auth.getSession();
+
+    if (!sessionData || !sessionData.session || !sessionData.session.user) {
+      console.warn("Local user exists but Supabase Auth session is missing.");
+      showGuestChoice();
+      return;
+    }
+
     if (restorePendingPostDraft()) return;
     showDashboard();
   } else {
@@ -2320,10 +2393,8 @@ async function submitPost() {
     return;
   }
 
-  if (!currentUser) {
-    promptLoginToPost("property");
-    return;
-  }
+  const loggedInUser = await ensureSupabaseAuthForPosting("property");
+  if (!loggedInUser) return;
 
   const isUpdating = currentEditingPostId !== null;
   submitBtn.innerHTML = `<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">sync</span> ${isUpdating ? 'Updating...' : 'Uploading...'}`;
@@ -2362,7 +2433,7 @@ async function submitPost() {
       if (error) throw error;
       alert(payload.status.startsWith("inactive-") ? "Property marked inactive." : "Property submitted again for review.");
     } else {
-      payload.user_id = currentUser.id;
+      payload.user_id = loggedInUser.id;
       const { error } = await db.from("room_posts").insert(payload);
       if (error) throw error;
       alert("Property submitted successfully! It is currently under review.");
@@ -2374,7 +2445,11 @@ async function submitPost() {
 
   } catch (err) {
     console.error("Supabase Error:", err);
-    alert("Something went wrong. Please try again.");
+    if (err && err.code === "42501") {
+      alert("Permission denied while saving the property. Please run the updated room_posts/room_requirements grants SQL once in Supabase, then try again.");
+    } else {
+      alert(err?.message || "Something went wrong. Please try again.");
+    }
   } finally {
     submitBtn.innerHTML = currentEditingPostId ? "Update Property" : "Submit Property";
     submitBtn.disabled = false;
@@ -2397,10 +2472,8 @@ async function submitRequirement() {
     return;
   }
 
-  if (!currentUser) {
-    promptLoginToPost("requirement");
-    return;
-  }
+  const loggedInUser = await ensureSupabaseAuthForPosting("requirement");
+  if (!loggedInUser) return;
 
   const isUpdating = currentEditingRequirementId !== null;
   reqSubmitBtn.innerHTML = `<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">sync</span> ${isUpdating ? 'Updating...' : 'Submitting...'}`;
@@ -2427,7 +2500,7 @@ async function submitRequirement() {
       if (error) throw error;
       alert(payload.status.startsWith("inactive-") ? "Requirement marked inactive." : "Requirement submitted again for review.");
     } else {
-      payload.user_id = currentUser.id;
+      payload.user_id = loggedInUser.id;
       const { error } = await db.from("room_requirements").insert(payload);
       if (error) throw error;
       alert("Requirement submitted successfully! It is currently under review.");
@@ -2439,7 +2512,11 @@ async function submitRequirement() {
 
   } catch (err) {
     console.error("Supabase Requirement Error:", err);
-    alert("Something went wrong while submitting your requirement. Please try again.");
+    if (err && err.code === "42501") {
+      alert("Permission denied while saving the requirement. Please run the updated room_posts/room_requirements grants SQL once in Supabase, then try again.");
+    } else {
+      alert(err?.message || "Something went wrong while submitting your requirement. Please try again.");
+    }
   } finally {
     reqSubmitBtn.innerHTML = currentEditingRequirementId ? "Update Requirement" : "Submit Requirement";
     reqSubmitBtn.disabled = false;
