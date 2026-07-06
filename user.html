@@ -10,11 +10,15 @@
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "86e4ee86-6134-42b0-ad76-4997d7ce02de",
+  if (location.protocol !== "file:") {
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "86e4ee86-6134-42b0-ad76-4997d7ce02de",
+      });
     });
-  });
+  } else {
+    console.warn("OneSignal disabled on file:// preview. Test push on HTTPS domain.");
+  }
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -542,6 +546,64 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const MIN_AUTH_PASSWORD_LENGTH = 6;
 
+const AUTH_FUNCTION_NAME = "tingo-auth";
+
+async function callTingoAuth(action, payload = {}, requireSession = false) {
+  const options = {
+    body: { action, ...payload }
+  };
+
+  if (requireSession) {
+    try {
+      const { data: sessionData } = await db.auth.getSession();
+      const token = sessionData && sessionData.session ? sessionData.session.access_token : null;
+      if (token) {
+        options.headers = { Authorization: `Bearer ${token}` };
+      }
+    } catch (err) {
+      console.warn("Could not attach auth session to Edge Function call:", err);
+    }
+  }
+
+  const { data, error } = await db.functions.invoke(AUTH_FUNCTION_NAME, options);
+
+  if (error) {
+    console.error(`Edge Function ${action} error:`, error);
+    return {
+      ok: false,
+      message: error.message || "Server request failed. Please try again.",
+      raw_error: error
+    };
+  }
+
+  if (!data) {
+    return { ok: false, message: "No response from server. Please try again." };
+  }
+
+  return data;
+}
+
+function getPendingSignup() {
+  try {
+    return JSON.parse(sessionStorage.getItem("pending_signup") || "{}");
+  } catch (e) {
+    return {};
+  }
+}
+
+function setPendingSignup(data) {
+  sessionStorage.setItem("pending_signup", JSON.stringify(data || {}));
+  if (data && data.email) sessionStorage.setItem("pending_otp_email", data.email);
+  if (data && data.password) sessionStorage.setItem("pending_auth_password", data.password);
+}
+
+function clearPendingSignup() {
+  sessionStorage.removeItem("pending_signup");
+  sessionStorage.removeItem("pending_otp_email");
+  sessionStorage.removeItem("pending_auth_password");
+}
+
+
 function isAuthPasswordValid(password) {
   return String(password || "").length >= MIN_AUTH_PASSWORD_LENGTH;
 }
@@ -667,32 +729,9 @@ function normalizeEmail(value) {
   RLS can then use auth.uid() and users.auth_user_id.
 */
 async function linkAuthUserIfNeeded(user, authUserId) {
-  if (!user || !user.id || !authUserId) return false;
-
-  if (user.auth_user_id && String(user.auth_user_id) === String(authUserId)) {
-    return true;
-  }
-
-  const { error } = await db
-    .from("users")
-    .update({
-      auth_user_id: authUserId,
-      auth_linked_at: getCurrentDbTimestamp(),
-      auth_sync_status: "linked",
-      auth_sync_error: null
-    })
-    .eq("id", user.id);
-
-  if (error) {
-    console.error("Auth link update error:", error);
-    showCustomAlert("Could not link this account with authentication. Please try again.");
-    return false;
-  }
-
-  user.auth_user_id = authUserId;
-  user.auth_sync_status = "linked";
-  user.auth_sync_error = null;
-  return true;
+  // Account linking is now handled only by the tingo-auth Edge Function.
+  // This function is kept for backward compatibility with older code paths.
+  return Boolean(user && authUserId);
 }
 
 function describeSupabaseAuthError(error) {
@@ -725,86 +764,23 @@ function describeSupabaseAuthError(error) {
 }
 
 async function ensureSupabaseAuthSession(user, plainPassword) {
+  // This page no longer creates/updates users directly.
+  // The Edge Function creates/links the Auth user, then the browser signs in normally.
   const email = normalizeEmail(user && user.email);
+  if (!email || !plainPassword) return null;
 
-  if (!user || !user.id || !email || !plainPassword) {
-    showCustomAlert("Authentication details missing. Please login again.");
-    return null;
-  }
-
-  if (!isAuthPasswordValid(plainPassword)) {
-    const msg = getAuthPasswordMessage();
-    await db.from("users")
-      .update({
-        auth_sync_status: "error",
-        auth_sync_error: msg
-      })
-      .eq("id", user.id);
-    showCustomAlert(msg + " Please sign up again or update this user's password to 6+ characters.");
-    return null;
-  }
-
-  // 1) Try normal Auth login first. This works when Auth user already exists.
-  const { data: signInData, error: signInError } = await db.auth.signInWithPassword({
+  const { data, error } = await db.auth.signInWithPassword({
     email,
     password: plainPassword
   });
 
-  if (signInData && signInData.user) {
-    const linked = await linkAuthUserIfNeeded(user, signInData.user.id);
-    return linked ? signInData.user : null;
-  }
-
-  // 2) If Auth user does not exist yet, create it in the background.
-  // Keep signUp payload minimal. Some Supabase Auth projects fail with metadata/options if hooks/triggers are strict.
-  const { data: signUpData, error: signUpError } = await db.auth.signUp({
-    email,
-    password: plainPassword
-  });
-
-  if (signUpError) {
-    console.error("Supabase Auth sign in error:", signInError);
-    console.error("Supabase Auth sign up error:", signUpError);
-
-    const signInReason = describeSupabaseAuthError(signInError);
-    const signUpReason = describeSupabaseAuthError(signUpError);
-    const finalReason = "Sign in: " + signInReason + " || Sign up: " + signUpReason;
-
-    await db.from("users")
-      .update({
-        auth_sync_status: "error",
-        auth_sync_error: finalReason
-      })
-      .eq("id", user.id);
-
-    showCustomAlert(
-      "Login details are correct in your users table, but Supabase Authentication could not be created/signed in. " + finalReason
-    );
+  if (error) {
+    console.error("Supabase Auth sign-in error:", error);
+    showCustomAlert("Supabase Auth sign-in failed: " + error.message);
     return null;
   }
 
-  if (!signUpData || !signUpData.user) {
-    const msg = window.location.protocol === "file:"
-      ? "Supabase Authentication could not be created. You are opening this as file://. Upload to your GitHub custom domain or test through http://localhost, not direct file open."
-      : "Supabase Authentication could not be created. Please check Supabase Auth logs.";
-    showCustomAlert(msg);
-    return null;
-  }
-
-  const linked = await linkAuthUserIfNeeded(user, signUpData.user.id);
-  if (!linked) return null;
-
-  // If Supabase email confirmation is ON, signUp may create user but not return a session.
-  // For your current OTP flow, keep Supabase email confirmation OFF, or use an Edge Function/admin createUser flow.
-  const { data: sessionData } = await db.auth.getSession();
-  if (!sessionData || !sessionData.session) {
-    showCustomAlert(
-      "Auth account was created but session is not active. Turn OFF Supabase Auth email confirmation, because your app already verifies OTP."
-    );
-    return null;
-  }
-
-  return signUpData.user;
+  return data && data.user ? data.user : null;
 }
 
 function getDeviceName() {
@@ -854,17 +830,12 @@ function logoutLocal(message) {
 }
 
 async function fetchFreshUser(userId) {
-  const { data, error } = await db
-    .from("users")
-    .select("id,name,email,mobile_no,is_active,created_at,avatar_url,gender,is_verified,onesignal_id,account_health,block_reason,login_enabled,active_session_token,active_device_name,last_login_at,auth_user_id,auth_linked_at,auth_sync_status,auth_sync_error")
-    .eq("id", userId)
-    .single();
-
-  if (error) {
-    console.warn("Session user fetch error:", error);
+  const result = await callTingoAuth("get_profile", {}, true);
+  if (!result || !result.ok) {
+    console.warn("Session user fetch error:", result && result.message ? result.message : result);
     return null;
   }
-  return data;
+  return result.user || null;
 }
 
 async function validateCurrentSession(options = {}) {
@@ -900,6 +871,9 @@ async function validateCurrentSession(options = {}) {
   const merged = { ...localUser, ...freshUser };
   storeUser(merged);
   showProfile(merged);
+  if (!merged.onesignal_id) {
+    registerOneSignalForUser(merged).catch(err => console.warn("Push registration during session check failed:", err));
+  }
   return true;
 }
 
@@ -917,16 +891,52 @@ async function getLatestOneSignalSubscriptionId(user) {
       resolve(value || null);
     };
 
+    if (!user || !user.id) {
+      finish(null);
+      return;
+    }
+
+    if (window.location.protocol === "file:") {
+      console.warn("OneSignal cannot be tested properly from file://. Use HTTPS domain.");
+      finish(null);
+      return;
+    }
+
     const OneSignalQueue = window.OneSignalDeferred || window.OneSignal || [];
 
     try {
       OneSignalQueue.push(async function(OneSignal) {
         try {
+          if (OneSignal.Debug && typeof OneSignal.Debug.setLogLevel === "function") {
+            OneSignal.Debug.setLogLevel("warn");
+          }
+
           if (OneSignal.User && typeof OneSignal.User.login === "function") {
             await OneSignal.User.login(String(user.id));
           }
 
-          for (let i = 0; i < 14; i++) {
+          if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === "function") {
+            const permission = await OneSignal.Notifications.requestPermission();
+            if (permission === false) {
+              console.warn("Notification permission denied by user/browser.");
+              finish(null);
+              return;
+            }
+          }
+
+          if (
+            OneSignal.User &&
+            OneSignal.User.PushSubscription &&
+            typeof OneSignal.User.PushSubscription.optIn === "function"
+          ) {
+            try {
+              await OneSignal.User.PushSubscription.optIn();
+            } catch (optErr) {
+              console.warn("OneSignal optIn warning:", optErr);
+            }
+          }
+
+          for (let i = 0; i < 20; i++) {
             const subId = OneSignal.User && OneSignal.User.PushSubscription
               ? OneSignal.User.PushSubscription.id
               : null;
@@ -935,7 +945,7 @@ async function getLatestOneSignalSubscriptionId(user) {
               finish(subId);
               return;
             }
-            await delay(250);
+            await delay(300);
           }
         } catch (err) {
           console.error("OneSignal registration error:", err);
@@ -947,41 +957,49 @@ async function getLatestOneSignalSubscriptionId(user) {
       finish(null);
     }
 
-    setTimeout(() => finish(null), 4500);
+    setTimeout(() => finish(null), 8000);
   });
 }
 
-async function createLatestLoginSession(user) {
-  const sessionToken = generateSessionToken();
-  const deviceName = getDeviceName();
-  const oneSignalId = await getLatestOneSignalSubscriptionId(user);
+async function registerOneSignalForUser(user) {
+  try {
+    if (!user || !user.id) return null;
 
-  const payload = {
-    active_session_token: sessionToken,
-    active_device_name: deviceName,
-    last_login_at: getCurrentDbTimestamp()
-  };
+    const subscriptionId = await getLatestOneSignalSubscriptionId(user);
+    if (!subscriptionId) return null;
 
-  if (oneSignalId) {
-    payload.onesignal_id = oneSignalId;
-  }
+    const result = await callTingoAuth("save_push_subscription", {
+      subscription_id: subscriptionId,
+      onesignal_id: subscriptionId,
+      external_id: String(user.id),
+      browser_info: {
+        device_name: getDeviceName(),
+        user_agent: navigator.userAgent || "",
+        platform: navigator.platform || "",
+        language: navigator.language || "",
+        saved_at: new Date().toISOString()
+      }
+    }, true);
 
-  const { data, error } = await db
-    .from("users")
-    .update(payload)
-    .eq("id", user.id)
-    .select("id,name,email,mobile_no,is_active,created_at,avatar_url,gender,is_verified,onesignal_id,account_health,block_reason,login_enabled,active_session_token,active_device_name,last_login_at,auth_user_id,auth_linked_at,auth_sync_status,auth_sync_error")
-    .single();
+    if (result && result.ok && result.user) {
+      const merged = { ...user, ...result.user };
+      storeUser(merged);
+      return merged;
+    }
 
-  if (error) {
-    console.error("Session update error:", error);
-    showCustomAlert("Login session could not be saved. Please try again.");
+    console.warn("Push subscription was not saved:", result);
+    return null;
+  } catch (err) {
+    console.warn("Push registration failed:", err);
     return null;
   }
+}
 
-  const updatedUser = data || { ...user, ...payload };
-  storeUser(updatedUser);
-  return updatedUser;
+async function createLatestLoginSession(user) {
+  // Session creation is now done inside the tingo-auth Edge Function.
+  if (!user) return null;
+  storeUser(user);
+  return user;
 }
 
 /* ---------------- INIT ---------------- */
@@ -1034,25 +1052,15 @@ function startTimer() {
 
 /* ---------------- SEND OTP ---------------- */
 async function sendOTP(email, otp) {
-  const { data } = await db.from("app_config").select("email_api_url").single();
-
-  await fetch(data.email_api_url, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      type: "otp",
-      email: email,
-      otp: otp
-    })
-  });
+  // OTP sending is now handled by the tingo-auth Edge Function.
+  return true;
 }
 
 /* ---------------- SIGNUP ---------------- */
 async function signup() {
   const btn = document.querySelector("#signupBox button");
   const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim().toLowerCase();
+  const email = normalizeEmail(document.getElementById("email").value);
   const mobile = document.getElementById("mobile").value.trim();
   const gender = document.getElementById("gender").value;
   const password = document.getElementById("password").value;
@@ -1067,76 +1075,65 @@ async function signup() {
     return;
   }
 
-  btn.classList.add("is-loading"); 
+  btn.classList.add("is-loading");
 
   try {
-    const { data: existing } = await db
-      .from("users")
-      .select("*")
-      .eq("email", email);
+    const result = await callTingoAuth("signup_start", {
+      name,
+      email,
+      mobile_no: mobile,
+      gender,
+      password
+    });
 
-    const otp = Math.floor(100000 + Math.random() * 900000);
-    const expiry = getOtpExpiryTimestamp();
+    if (!result || !result.ok) {
+      showCustomAlert(result?.message || "Signup failed. Please try again.");
+      return;
+    }
 
     currentEmail = email;
-    sessionStorage.setItem("pending_otp_email", email);
-
-    if (existing && existing.length > 0) {
-      const user = existing[0];
-
-      if (user.is_verified) {
-        showCustomAlert("User already exists. Please login.");
-        return;
-      }
-
-      await db.from("users")
-        .update({ otp: otp.toString(), otp_expiry: expiry, name, mobile_no: mobile, gender, password })
-        .eq("email", email);
-
-      await sendOTP(email, otp);
-      showCustomAlert("User already registered but not verified. OTP resent.", "info");
-    } else {
-      await db.from("users").insert({
-        name: name,
-        email: email,
-        mobile_no: mobile,
-        gender: gender,
-        password: password,
-        otp: otp.toString(),
-        otp_expiry: expiry,
-        is_verified: false
-      });
-
-      await sendOTP(email, otp);
-      showCustomAlert("OTP has successfully sent to your mail.", "success");
-    }
+    setPendingSignup({ name, email, mobile_no: mobile, gender, password });
 
     document.getElementById("signupBox").classList.add("hidden");
     document.getElementById("otpBox").classList.remove("hidden");
     document.getElementById("pageTitle").innerText = "Verification";
+    showCustomAlert(result.message || "OTP has successfully sent to your mail.", "success");
     startTimer();
   } catch (error) {
     console.error("Signup error:", error);
     showCustomAlert("Something went wrong. Please try again.");
   } finally {
-    btn.classList.remove("is-loading"); 
+    btn.classList.remove("is-loading");
   }
 }
 
 /* ---------------- RESEND OTP ---------------- */
 async function resendOTP() {
-  if (!currentEmail) currentEmail = sessionStorage.getItem("pending_otp_email") || "";
-  if (!currentEmail) return;
+  const pending = getPendingSignup();
+  const email = normalizeEmail(currentEmail || pending.email || sessionStorage.getItem("pending_otp_email") || "");
+  const password = pending.password || sessionStorage.getItem("pending_auth_password") || "";
 
-  const otp = Math.floor(100000 + Math.random() * 900000);
-  const expiry = getOtpExpiryTimestamp();
+  if (!email || !password) {
+    showCustomAlert("Signup session missing. Please sign up again.");
+    showSignup();
+    return;
+  }
 
-  await db.from("users")
-    .update({ otp: otp.toString(), otp_expiry: expiry })
-    .eq("email", currentEmail);
+  const result = await callTingoAuth("signup_start", {
+    name: pending.name || document.getElementById("name")?.value?.trim() || "User",
+    email,
+    mobile_no: pending.mobile_no || document.getElementById("mobile")?.value?.trim() || "",
+    gender: pending.gender || document.getElementById("gender")?.value || "",
+    password
+  });
 
-  await sendOTP(currentEmail, otp);
-  showCustomAlert("OTP resent successfully.", "success");
+  if (!result || !result.ok) {
+    showCustomAlert(result?.message || "Could not resend OTP. Please try again.");
+    return;
+  }
+
+  currentEmail = email;
+  showCustomAlert(result.message || "OTP resent successfully.", "success");
   startTimer();
 }
 
@@ -1167,7 +1164,9 @@ function normalizeOtpValue(value) {
 async function verifyOTP() {
   const btn = document.querySelector("#otpBox button");
   const enteredOtp = normalizeOtpValue(document.getElementById("otpInput").value);
-  const emailForOtp = String(currentEmail || sessionStorage.getItem("pending_otp_email") || "").trim().toLowerCase();
+  const pending = getPendingSignup();
+  const emailForOtp = normalizeEmail(currentEmail || pending.email || sessionStorage.getItem("pending_otp_email") || "");
+  const password = pending.password || sessionStorage.getItem("pending_auth_password") || "";
 
   if (!emailForOtp) {
     showCustomAlert("Email session missing. Please sign up again.");
@@ -1180,141 +1179,108 @@ async function verifyOTP() {
     return;
   }
 
+  if (!password) {
+    showCustomAlert("Password session missing. Please sign up again.");
+    showSignup();
+    return;
+  }
+
   btn.classList.add("is-loading");
 
   try {
-    const { data, error } = await db
-      .from("users")
-      .select("*")
-      .eq("email", emailForOtp)
-      .limit(1);
-
-    if (error) {
-      console.error("OTP verification fetch error:", error);
-      showCustomAlert("OTP verification error. Please try again.");
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      console.warn("No user found for OTP email:", emailForOtp);
-      showCustomAlert("Account not found for this email. Please sign up again.");
-      showSignup();
-      return;
-    }
-
-    const user = data[0];
-    const storedOtp = normalizeOtpValue(user.otp);
-
-    if (!storedOtp) {
-      showCustomAlert("No active OTP found. Please resend OTP.");
-      return;
-    }
-
-    if (storedOtp !== enteredOtp) {
-      showCustomAlert("Invalid OTP. Please enter the latest OTP sent to your email.");
-      return;
-    }
-
-    const expiryDate = parseOtpExpiry(user.otp_expiry);
-
-    if (expiryDate && Date.now() > expiryDate.getTime()) {
-      showCustomAlert("OTP expired. Please resend OTP.");
-      return;
-    }
-
-    const authUser = await ensureSupabaseAuthSession(user, user.password);
-    if (!authUser) return;
-
-    const { error: updateError } = await db.from("users")
-      .update({
-        is_verified: true,
-        otp: null,
-        otp_expiry: null,
-        auth_user_id: authUser.id,
-        auth_linked_at: getCurrentDbTimestamp(),
-        auth_sync_status: "linked",
-        auth_sync_error: null
-      })
-      .eq("id", user.id);
-
-    if (updateError) {
-      console.error("OTP completion update error:", updateError);
-      showCustomAlert("Could not complete verification. Please try again.");
-      return;
-    }
-
-    user.is_verified = true;
-    user.otp = null;
-    user.otp_expiry = null;
-    user.auth_user_id = authUser.id;
-    user.auth_sync_status = "linked";
-    user.auth_sync_error = null;
-
-    const finalUser = await createLatestLoginSession(user);
-    if (!finalUser) return;
-
-    sessionStorage.removeItem("pending_otp_email");
-    
-    showCustomAlert("Account created & logged in!", "success", () => {
-        handleRedirect();
+    const result = await callTingoAuth("verify_otp", {
+      email: emailForOtp,
+      otp: enteredOtp,
+      password,
+      device_name: getDeviceName()
     });
-    
+
+    if (!result || !result.ok) {
+      showCustomAlert(result?.message || "OTP verification failed. Please try again.");
+      return;
+    }
+
+    const { error: signInError } = await db.auth.signInWithPassword({
+      email: emailForOtp,
+      password
+    });
+
+    if (signInError) {
+      console.error("Auth sign-in after OTP error:", signInError);
+      showCustomAlert("Account verified, but login session could not start: " + signInError.message);
+      return;
+    }
+
+    const finalUser = result.user;
+    if (!finalUser) {
+      showCustomAlert("Account verified, but profile was not returned. Please login again.");
+      return;
+    }
+
+    storeUser(finalUser);
+    registerOneSignalForUser(finalUser).catch(err => console.warn("Push registration after signup failed:", err));
+    clearPendingSignup();
+
+    showCustomAlert("Account created & logged in!", "success", () => {
+      handleRedirect();
+    });
   } catch (error) {
-      console.error("Verification error:", error);
+    console.error("Verification error:", error);
+    showCustomAlert("Verification failed. Please try again.");
   } finally {
-      btn.classList.remove("is-loading"); 
+    btn.classList.remove("is-loading");
   }
 }
 
 /* ---------------- LOGIN ---------------- */
 async function login() {
   const btn = document.querySelector("#loginBox button");
-  const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+  const email = normalizeEmail(document.getElementById("loginEmail").value);
   const password = document.getElementById("loginPassword").value;
 
-  if(!email || !password) {
-      showCustomAlert("Please enter both email and password.");
-      return;
+  if (!email || !password) {
+    showCustomAlert("Please enter both email and password.");
+    return;
   }
 
-  btn.classList.add("is-loading"); 
+  if (!isAuthPasswordValid(password)) {
+    showCustomAlert(getAuthPasswordMessage());
+    return;
+  }
+
+  btn.classList.add("is-loading");
 
   try {
-    const { data } = await db
-      .from("users")
-      .select("*")
-      .eq("email", email)
-      .eq("password", password)
-      .eq("is_verified", true);
+    const result = await callTingoAuth("login", {
+      email,
+      password,
+      device_name: getDeviceName()
+    });
 
-    if (!data || data.length === 0) {
-      showCustomAlert("Invalid credentials or account not verified.");
+    if (!result || !result.ok) {
+      showCustomAlert(result?.message || "Login failed. Please try again.");
       return;
     }
 
-    const user = data[0];
-    const blockMessage = isUserBlocked(user);
-    if (blockMessage) {
-      showCustomAlert(blockMessage);
+    const { error: signInError } = await db.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (signInError) {
+      console.error("Supabase Auth sign-in error:", signInError);
+      showCustomAlert("Login details are correct, but Auth session could not start: " + signInError.message);
       return;
     }
 
-    const authUser = await ensureSupabaseAuthSession(user, password);
-    if (!authUser) return;
-
-    user.auth_user_id = authUser.id;
-    user.auth_sync_status = "linked";
-    user.auth_sync_error = null;
-
-    const finalUser = await createLatestLoginSession(user);
-    if (!finalUser) return;
-
+    storeUser(result.user);
+    registerOneSignalForUser(result.user).catch(err => console.warn("Push registration after login failed:", err));
     handleRedirect();
   } catch (error) {
     console.error("Login error:", error);
     showCustomAlert("An error occurred during login. Please try again.");
   } finally {
-    btn.classList.remove("is-loading"); 
+    btn.classList.remove("is-loading");
   }
 }
 
@@ -1371,15 +1337,24 @@ function showProfile(user) {
 async function logout() {
   const user = getStoredUser();
 
-  if (user && user.id && user.active_session_token) {
-    try {
-      await db.from("users")
-        .update({ active_session_token: null, active_device_name: null })
-        .eq("id", user.id)
-        .eq("active_session_token", user.active_session_token);
-    } catch (err) {
-      console.warn("Logout session cleanup error:", err);
-    }
+  try {
+    await callTingoAuth("logout", {
+      user_id: user && user.id ? user.id : "",
+      active_session_token: user && user.active_session_token ? user.active_session_token : ""
+    });
+  } catch (err) {
+    console.warn("Logout session cleanup error:", err);
+  }
+
+  try {
+    const OneSignalQueue = window.OneSignalDeferred || window.OneSignal || [];
+    OneSignalQueue.push(async function(OneSignal) {
+      if (OneSignal.User && typeof OneSignal.User.logout === "function") {
+        await OneSignal.User.logout();
+      }
+    });
+  } catch (err) {
+    console.warn("OneSignal logout warning:", err);
   }
 
   try {
