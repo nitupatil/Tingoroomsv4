@@ -539,6 +539,91 @@ body {
   }
 }
 
+
+/* FINAL MOBILE KEYBOARD FIX: keep chat header fixed; only composer moves above keyboard */
+@media (max-width: 899px), (pointer: coarse) {
+  .app-container.chat-active {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: var(--app-vh, 100dvh) !important;
+    max-height: var(--app-vh, 100dvh) !important;
+    overflow: hidden !important;
+    transform: none !important;
+  }
+
+  .app-container.chat-active .main-chat {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: var(--app-vh, 100dvh) !important;
+    max-height: var(--app-vh, 100dvh) !important;
+    display: flex !important;
+    overflow: hidden !important;
+    background: var(--surface) !important;
+  }
+
+  .app-container.chat-active #chatHeader {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    min-height: 62px !important;
+    padding: max(9px, env(safe-area-inset-top)) 12px 8px !important;
+    z-index: 5000 !important;
+    transform: none !important;
+  }
+
+  .app-container.chat-active #activeChatView {
+    position: fixed !important;
+    top: var(--chat-header-height, 66px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: calc(var(--composer-height, 66px) + var(--keyboard-offset, 0px)) !important;
+    width: 100vw !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 10px 9px 12px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    transform: none !important;
+  }
+
+  .app-container.chat-active #inputArea,
+  .app-container.chat-active #inactiveBanner {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: var(--keyboard-offset, 0px) !important;
+    width: 100vw !important;
+    z-index: 5100 !important;
+    transform: none !important;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .app-container.chat-active #inputArea {
+    padding: 8px 10px max(8px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-container.chat-active #inactiveBanner {
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-container.chat-active .chat-heading-name,
+  .app-container.chat-active .chat-heading-room {
+    max-width: calc(100vw - 76px) !important;
+  }
+
+  .app-container.chat-active .chat-heading-room {
+    display: inline-flex !important;
+    color: #B91C1C !important;
+    background: #FEF2F2 !important;
+    border-color: rgba(248, 113, 113, 0.55) !important;
+  }
+}
+
 .hidden { display: none !important; }
 </style>
 </head>
@@ -607,18 +692,7 @@ body {
 
 <script>
 // --- VIEWPORT / KEYBOARD FIX ---
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
-    const container = document.getElementById('appContainer');
-    if (container && window.innerWidth < 900) {
-      container.style.height = window.visualViewport.height + 'px';
-    }
-    if (!document.getElementById("activeChatView").classList.contains("hidden")) {
-      const chatView = document.getElementById("activeChatView");
-      chatView.scrollTop = chatView.scrollHeight;
-    }
-  });
-}
+// Handled after element references are ready. Only the typing box moves above the keyboard.
 
 const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0";
@@ -640,12 +714,59 @@ const msgInput = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
 const threadContextBar = document.getElementById("threadContextBar");
 
+
+function getKeyboardOffsetPx() {
+  if (!window.visualViewport) return 0;
+  const vv = window.visualViewport;
+  const offset = window.innerHeight - vv.height - vv.offsetTop;
+  return Math.max(0, Math.round(offset));
+}
+
+function updateChatViewportLayout(scrollToBottom = false) {
+  const root = document.documentElement;
+  root.style.setProperty("--app-vh", `${window.innerHeight}px`);
+
+  const isMobileChat = appContainer && appContainer.classList.contains("chat-active") && (window.innerWidth < 900 || matchMedia("(pointer: coarse)").matches);
+  const keyboardOffset = isMobileChat ? getKeyboardOffsetPx() : 0;
+  root.style.setProperty("--keyboard-offset", `${keyboardOffset}px`);
+
+  if (!isMobileChat) return;
+
+  requestAnimationFrame(() => {
+    const headerHeight = chatHeader && !chatHeader.classList.contains("hidden")
+      ? Math.ceil(chatHeader.getBoundingClientRect().height)
+      : 64;
+
+    const composerEl = inputArea && !inputArea.classList.contains("hidden")
+      ? inputArea
+      : (inactiveBanner && !inactiveBanner.classList.contains("hidden") ? inactiveBanner : null);
+    const composerHeight = composerEl ? Math.ceil(composerEl.getBoundingClientRect().height) : 0;
+
+    root.style.setProperty("--chat-header-height", `${Math.max(headerHeight, 58)}px`);
+    root.style.setProperty("--composer-height", `${Math.max(composerHeight, 0)}px`);
+
+    if (scrollToBottom && activeChatView && !activeChatView.classList.contains("hidden")) {
+      activeChatView.scrollTop = activeChatView.scrollHeight;
+    }
+  });
+}
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", () => updateChatViewportLayout(true));
+  window.visualViewport.addEventListener("scroll", () => updateChatViewportLayout(false));
+}
+window.addEventListener("resize", () => updateChatViewportLayout(true));
+window.addEventListener("orientationchange", () => setTimeout(() => updateChatViewportLayout(true), 250));
+msgInput.addEventListener("focus", () => setTimeout(() => updateChatViewportLayout(true), 80));
+msgInput.addEventListener("blur", () => setTimeout(() => updateChatViewportLayout(false), 120));
+
 let allChats = [];
 let chatUser = null;
 let currentPostMeta = null;
 let currentChatUserId = null;
 let currentPostId = null;
 let currentPostType = null;
+let currentIsSupportThread = false;
 
 // Realtime Typing & Messaging State
 let chatChannel = null;
@@ -1079,6 +1200,25 @@ function isPostChatAllowed(post) {
   return status === "active";
 }
 
+
+function canSendInCurrentPostThread(post, isSupportThread = false) {
+  if (isSupportThread) return true;
+  // Direct messages without a post stay available. Any post-based thread must have an active post.
+  if (!isValidId(currentPostId)) return true;
+  return Boolean(post && isPostChatAllowed(post));
+}
+
+function setComposerAvailability(canSend) {
+  if (canSend) {
+    inputArea.classList.remove("hidden");
+    inactiveBanner.classList.add("hidden");
+  } else {
+    inputArea.classList.add("hidden");
+    inactiveBanner.classList.remove("hidden");
+  }
+  updateChatViewportLayout(true);
+}
+
 function getMessagePostId(msg) { return firstValue(msg, ["post_id", "room_id", "listing_id", "requirement_id"], null); }
 function getMessagePostType(msg) {
   const type = normalizePostType(firstValue(msg, ["post_type", "listing_type", "category"], ""));
@@ -1299,6 +1439,7 @@ async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
   emptyChatState.classList.add("hidden");
   chatHeader.classList.remove("hidden");
   activeChatView.classList.remove("hidden");
+  updateChatViewportLayout(true);
   
   // Re-render sidebar to highlight selected chat
   renderChats(allChats);
@@ -1327,6 +1468,7 @@ async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
     .order("created_at", { ascending: false });
 
   const isSupport = (adminCandidates || []).some(m => messageMatchesPost(m, currentPostId, currentPostType));
+  currentIsSupportThread = isSupport;
 
   if (isSupport) {
     headerTitle.innerHTML = buildChatHeaderTitle(
@@ -1363,13 +1505,7 @@ async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
     chatUser = user;
   }
 
-  if (isSupport || !post || isPostChatAllowed(post)) {
-    inputArea.classList.remove("hidden");
-    inactiveBanner.classList.add("hidden");
-  } else {
-    inputArea.classList.add("hidden");
-    inactiveBanner.classList.remove("hidden");
-  }
+  setComposerAvailability(canSendInCurrentPostThread(post, isSupport));
 
   // --- SUPABASE REALTIME SUBSCRIPTION ---
   if (chatChannel) db.removeChannel(chatChannel);
@@ -1537,7 +1673,8 @@ async function sendMessage() {
   if (!text || !isValidId(currentChatUserId)) return;
   if (currentChatUserId === currentUser.id) { alert("This is your own post."); return; }
 
-  if (currentPostMeta && !isPostChatAllowed(currentPostMeta)) {
+  if (!canSendInCurrentPostThread(currentPostMeta, currentIsSupportThread)) {
+    setComposerAvailability(false);
     alert("This property is not active. Chat is read-only for both users.");
     return;
   }
@@ -1553,21 +1690,29 @@ async function sendMessage() {
   const payloadPostType = normalizePostType(currentPostType || (currentPostMeta && currentPostMeta.postKind) || requestedType || "") || null;
   const originalText = text;
 
-  if (isValidId(payloadPostId)) {
+  if (isValidId(payloadPostId) && !currentIsSupportThread) {
     const latestPost = await fetchPostMeta(payloadPostId, payloadPostType);
-    if (latestPost) {
-      currentPostMeta = latestPost;
-      currentPostId = latestPost.id || currentPostId;
-      currentPostType = latestPost.postKind || currentPostType;
-      if (!isPostChatAllowed(latestPost)) {
-        inputArea.classList.add("hidden");
-        inactiveBanner.classList.remove("hidden");
-        isSendingMessage = false;
-        if (sendBtn) sendBtn.disabled = false;
-        alert("This property is not active. Chat is read-only for both users.");
-        return;
-      }
+    if (!latestPost) {
+      setComposerAvailability(false);
+      isSendingMessage = false;
+      if (sendBtn) sendBtn.disabled = false;
+      alert("This property is not active or no longer available. Chat is read-only for both users.");
+      return;
     }
+
+    currentPostMeta = latestPost;
+    currentPostId = latestPost.id || currentPostId;
+    currentPostType = latestPost.postKind || currentPostType;
+
+    if (!isPostChatAllowed(latestPost)) {
+      setComposerAvailability(false);
+      isSendingMessage = false;
+      if (sendBtn) sendBtn.disabled = false;
+      alert("This property is not active. Chat is read-only for both users.");
+      return;
+    }
+
+    setComposerAvailability(true);
   }
 
   msgInput.value = "";
@@ -1605,6 +1750,7 @@ async function sendMessage() {
     await loadMessages(currentChatUserId, payloadPostId, payloadPostType, true);
     loadChats(true);
     msgInput.focus();
+    updateChatViewportLayout(true);
   } finally {
     isSendingMessage = false;
     if (sendBtn) sendBtn.disabled = false;
@@ -1693,6 +1839,7 @@ function closeActiveChatToList(updateUrl = true) {
   currentPostId = null;
   currentPostType = null;
   currentPostMeta = null;
+  currentIsSupportThread = false;
   chatUser = null;
   cachedMessagesHTML = "";
   isOtherUserTyping = false;
