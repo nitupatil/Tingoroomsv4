@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Chats - TingoRooms</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,31 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
 
-<script>
-(function () {
-  /*
-    Lock phones/WebViews to mobile layout even if the browser reports a wide
-    desktop-like viewport. This prevents mobile chat from opening as split desktop UI.
-  */
-  var ua = navigator.userAgent || "";
-  var isTouchPhone = /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua);
-  var isCoarsePointer = false;
-  try {
-    isCoarsePointer = window.matchMedia('(hover: none), (pointer: coarse)').matches;
-  } catch (e) {}
-  if (isTouchPhone || isCoarsePointer) {
-    document.documentElement.classList.add('force-mobile-layout');
-  }
-  if ('scrollRestoration' in history) {
-    history.scrollRestoration = 'manual';
-  }
-})();
-</script>
-
 <style>
 :root {
-  --app-height: 100dvh;
-  --vv-offset-top: 0px;
   --primary: #4F46E5;
   --primary-gradient: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
   --primary-light: #EEF2FF;
@@ -59,39 +36,23 @@
 
 html, body {
   height: 100%;
-  min-height: 100%;
   width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-html {
-  background: #E2E8F0;
+  overflow: hidden; 
 }
 
 body {
-  min-height: var(--app-height, 100dvh);
   font-family: 'Inter', sans-serif;
   background-color: #E2E8F0;
   color: var(--text-main);
   -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-html.force-mobile-layout,
-html.force-mobile-layout body {
-  background: var(--surface);
 }
 
 /* RESPONSIVE DESKTOP & MOBILE WRAPPER */
 .app-container {
-  width: 100%;
   max-width: 480px;
   margin: 0 auto;
   background: var(--bg);
-  height: var(--app-height, 100dvh);
-  max-height: var(--app-height, 100dvh);
+  height: 100%;
   position: relative;
   box-shadow: 0 20px 40px rgba(0,0,0,0.1);
   display: flex;
@@ -121,7 +82,7 @@ html.force-mobile-layout body {
 .app-container.chat-active .main-chat { display: flex; }
 
 /* DESKTOP SPLIT VIEW */
-@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+@media (min-width: 900px) {
   .app-container {
     max-width: none;
     width: 100%;
@@ -276,8 +237,6 @@ html.force-mobile-layout body {
 .chat-box-container {
   flex: 1;
   overflow-y: auto;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
@@ -348,24 +307,45 @@ html.force-mobile-layout body {
 .skeleton-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 
 /* INPUT AREA */
-.input-area { background: var(--surface); padding: 12px 20px; display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border); position: relative; width: 100%; flex-shrink: 0; transform: translateZ(0); will-change: transform; transition: padding-bottom 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
+.input-area { background: var(--surface); padding: 12px 20px; display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border); position: relative; width: 100%; flex-shrink: 0; }
 .input-area input { flex: 1; padding: 12px 16px; border-radius: 24px; border: 1px solid var(--border); background: #F8FAFC; font-family: 'Inter', sans-serif; font-size: 15px; outline: none; transition: all 0.2s; }
 .input-area input:focus { border-color: #A5B4FC; background: var(--surface); }
 .send-btn { background: var(--primary-gradient); color: white; border: none; border-radius: 50%; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px var(--primary-glow); transition: transform 0.2s; flex-shrink: 0; }
 .send-btn:active { transform: scale(0.9); }
 .inactive-banner { background: #FEE2E2; color: #DC2626; text-align: center; padding: 12px; font-size: 13px; font-weight: 600; border-top: 1px solid #FCA5A5; width: 100%; flex-shrink: 0;}
 
+/* THREAD CONTEXT BAR: always show the room/requirement for the open conversation */
+.thread-context {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 16px;
+  background: #EEF2FF;
+  color: #3730A3;
+  border-bottom: 1px solid rgba(165, 180, 252, 0.55);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.thread-context .material-symbols-rounded { font-size: 18px; flex: 0 0 auto; }
+.thread-context-title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thread-context-sub { color: #64748B; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+.send-btn:disabled { opacity: 0.62; cursor: not-allowed; transform: none !important; }
+
+
 /* NAVIGATION FRAME */
 #bottomNavHost { display: none; }
 .bottom-nav-frame { display: block; position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 999999; width: 100%; max-width: 480px; height: 112px; border: 0; background: transparent; overflow: hidden; pointer-events: auto; }
-@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+@media (min-width: 900px) {
   .bottom-nav-frame { top: 120px; right: 24px; bottom: 24px; left: auto; width: 96px; max-width: 96px; height: calc(100vh - 144px); min-height: 360px; transform: none; border-radius: 30px; }
 }
 @media (max-width: 374px) { .bottom-nav-frame { height: 108px; } }
 
 /* When a mobile conversation is open, show only the chat UI.
    This prevents the reusable button.html iframe from overlaying the message input. */
-@media (max-width: 899px), (hover: none), (pointer: coarse) {
+@media (max-width: 899px) {
   .app-container.chat-active .bottom-nav-frame,
   .app-container.chat-active #bottomNavHost {
     display: none !important;
@@ -381,102 +361,6 @@ html.force-mobile-layout body {
     z-index: 1002;
   }
 }
-
-
-/* Smooth mobile keyboard handling */
-@media (max-width: 899px), (hover: none), (pointer: coarse) {
-  .app-container {
-    width: 100%;
-    max-width: 100%;
-    height: var(--app-height, 100dvh);
-    max-height: var(--app-height, 100dvh);
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
-    transform: translate3d(0, var(--vv-offset-top, 0px), 0);
-  }
-
-  .app-container.chat-active {
-    position: fixed;
-    inset: 0;
-    margin: 0;
-  }
-
-  .app-container.chat-active.keyboard-open .input-area {
-    box-shadow: 0 -14px 28px rgba(15, 23, 42, 0.12);
-  }
-
-  .app-container.chat-active .input-area input {
-    font-size: 16px;
-  }
-}
-
-/* Hard mobile override for Android/iOS and mobile WebViews in "desktop site" mode. */
-html.force-mobile-layout .app-container {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  height: var(--app-height, 100dvh) !important;
-  max-height: var(--app-height, 100dvh) !important;
-  margin: 0 !important;
-  padding-right: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  flex-direction: column !important;
-  transform: translate3d(0, var(--vv-offset-top, 0px), 0);
-}
-
-html.force-mobile-layout .sidebar {
-  display: flex !important;
-  width: 100% !important;
-  height: 100% !important;
-  border-right: 0 !important;
-}
-
-html.force-mobile-layout .main-chat {
-  display: none !important;
-  width: 100% !important;
-  height: 100% !important;
-  flex: none !important;
-}
-
-html.force-mobile-layout .app-container.chat-active {
-  position: fixed !important;
-  inset: 0 !important;
-}
-
-html.force-mobile-layout .app-container.chat-active .sidebar {
-  display: none !important;
-}
-
-html.force-mobile-layout .app-container.chat-active .main-chat {
-  display: flex !important;
-}
-
-html.force-mobile-layout .back-btn {
-  display: flex !important;
-}
-
-html.force-mobile-layout .bottom-nav-frame {
-  position: fixed !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  top: auto !important;
-  transform: none !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  height: 112px !important;
-  min-height: 0 !important;
-  border-radius: 0 !important;
-}
-
-html.force-mobile-layout .app-container.chat-active .bottom-nav-frame,
-html.force-mobile-layout .app-container.chat-active #bottomNavHost {
-  display: none !important;
-  pointer-events: none !important;
-}
-
 
 .hidden { display: none !important; }
 </style>
@@ -514,11 +398,13 @@ html.force-mobile-layout .app-container.chat-active #bottomNavHost {
       <div class="header-title" id="headerTitle"></div>
     </div>
 
+    <div id="threadContextBar" class="thread-context hidden" onclick="openCurrentRoomFromContext()"></div>
+
     <div id="activeChatView" class="chat-box-container hidden"></div>
 
     <div class="input-area hidden" id="inputArea">
       <input id="msgInput" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
-      <button class="send-btn" onclick="sendMessage()">
+      <button type="button" class="send-btn" id="sendBtn" onclick="sendMessage()">
         <span class="material-symbols-rounded" style="font-size: 20px; margin-left: 4px;">send</span>
       </button>
     </div>
@@ -543,25 +429,28 @@ html.force-mobile-layout .app-container.chat-active #bottomNavHost {
 </div>
 
 <script>
-/*
-  TingoRooms Chat - cache-first + realtime update version
-  - Shows saved chats/messages instantly from localStorage.
-  - Syncs only new messages after the latest cached message.
-  - Uses cached profiles/posts to avoid slow page switching.
-  - Keeps the message input visible above the mobile keyboard.
-*/
+// --- VIEWPORT / KEYBOARD FIX ---
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const container = document.getElementById('appContainer');
+    if (container && window.innerWidth < 900) {
+      container.style.height = window.visualViewport.height + 'px';
+    }
+    if (!document.getElementById("activeChatView").classList.contains("hidden")) {
+      const chatView = document.getElementById("activeChatView");
+      chatView.scrollTop = chatView.scrollHeight;
+    }
+  });
+}
 
 const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0";
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  realtime: { params: { eventsPerSecond: 8 } },
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
-});
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const currentUser = JSON.parse(localStorage.getItem("user") || "null");
-if (!currentUser || !currentUser.id) window.location.href = "user.html";
+const currentUser = JSON.parse(localStorage.getItem("user"));
+if (!currentUser) window.location.href = "user.html";
 
-/* ---------------- ELEMENTS ---------------- */
+// Elements
 const appContainer = document.getElementById("appContainer");
 const chatListView = document.getElementById("chatListView");
 const activeChatView = document.getElementById("activeChatView");
@@ -571,288 +460,48 @@ const chatHeader = document.getElementById("chatHeader");
 const emptyChatState = document.getElementById("emptyChatState");
 const headerTitle = document.getElementById("headerTitle");
 const msgInput = document.getElementById("msgInput");
-const searchInput = document.getElementById("searchInput");
-
-/* ---------------- STATE ---------------- */
-const CACHE_VERSION = "v10_inactive_chatlock";
-const MAX_RAW_MESSAGES = 1200;
-const MAX_THREAD_MESSAGES = 350;
-const CACHE_PREFIX = `tingo_${CACHE_VERSION}_${currentUser.id}`;
-const CHAT_LIST_CACHE_KEY = `${CACHE_PREFIX}_chat_list`;
-const RAW_MESSAGES_CACHE_KEY = `${CACHE_PREFIX}_raw_messages`;
-
-const DEFAULT_MALE = 'https://i.ibb.co/wZVNcCDt/maleavt.png';
-const DEFAULT_FEMALE = 'https://i.ibb.co/SXCj3b1q/femaleavt.png';
-const SUPPORT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/6024/6024190.png';
+const sendBtn = document.getElementById("sendBtn");
+const threadContextBar = document.getElementById("threadContextBar");
 
 let allChats = [];
-let rawMessagesCache = [];
 let chatUser = null;
 let currentPostMeta = null;
 let currentChatUserId = null;
 let currentPostId = null;
 let currentPostType = null;
-let currentThreadMessages = [];
 
-let globalMessagesChannel = null;
+// Realtime Typing & Messaging State
 let chatChannel = null;
 let isTyping = false;
 let typingTimeout = null;
 let isOtherUserTyping = false;
-let activeHistoryGuardReady = false;
-let lastViewportHeight = 0;
-let lastSyncStartedAt = 0;
+let cachedMessagesHTML = "";
+let globalChatChannel = null;
+let isSendingMessage = false;
+let latestMessagesLoadToken = 0;
 
 /* GET PARAMS */
 const params = new URLSearchParams(window.location.search);
-const chatUserId = params.get("user");
-const requestedPostId = params.get("post_id") || params.get("post") || params.get("room");
+const chatUserId = params.get("user") || params.get("receiver") || params.get("receiver_id") || params.get("to") || params.get("user_id");
+const requestedPostId = params.get("post_id") || params.get("room_id") || params.get("room") || params.get("post") || params.get("id") || params.get("requirement_id") || params.get("listing_id");
+const requestedTitle = params.get("title") || params.get("room_title") || params.get("post_title") || params.get("listing_title") || "";
 const requestedType = normalizePostType(
-  params.get("post_type") || params.get("type") || params.get("listing_type") || ""
+  params.get("post_type") || params.get("type") || params.get("listing_type") || params.get("category") || ""
 );
 const requestedSource = String(params.get("source") || "").toLowerCase().trim();
 const initialDirectChatOpen = isValidId(chatUserId) || isValidId(requestedPostId);
 let currentChatOpenOrigin = initialDirectChatOpen ? (requestedSource || "direct_post") : "chatlist";
+let activeHistoryGuardReady = false;
 
-/* ---------------- CACHE HELPERS ---------------- */
-function readJSON(key, fallback = null) {
-  try {
-    const value = localStorage.getItem(key);
-    if (!value) return fallback;
-    return JSON.parse(value);
-  } catch (err) {
-    return fallback;
-  }
-}
-
-function writeJSON(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-    return true;
-  } catch (err) {
-    try {
-      pruneOldChatCaches();
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch (e) {
-      console.warn("Local cache write skipped:", e);
-      return false;
-    }
-  }
-}
-
-function pruneOldChatCaches() {
-  const keep = CACHE_VERSION;
-  const remove = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key) continue;
-    if (key.startsWith("tingo_") && key.includes(String(currentUser.id)) && !key.includes(keep)) remove.push(key);
-  }
-  remove.slice(0, 80).forEach(k => localStorage.removeItem(k));
-}
-
-function profileCacheKey(userId) { return `${CACHE_PREFIX}_profile_${userId}`; }
-function postCacheKey(postId) { return `${CACHE_PREFIX}_post_${postId}`; }
-function threadCacheKey(userId, postId, postType) {
-  return `${CACHE_PREFIX}_thread_${normalizePostType(postType) || 'direct'}_${postId || 'null'}_${userId}`;
-}
-
-function getCachedProfile(userId) {
-  return readJSON(profileCacheKey(userId), null);
-}
-
-function setCachedProfile(profile) {
-  if (!profile || !profile.id) return;
-  writeJSON(profileCacheKey(profile.id), { ...profile, __cachedAt: Date.now() });
-}
-
-function getCachedPost(postId) {
-  return isValidId(postId) ? readJSON(postCacheKey(postId), null) : null;
-}
-
-function setCachedPost(post) {
-  if (!post || !post.id) return;
-  writeJSON(postCacheKey(post.id), { ...post, __cachedAt: Date.now() });
-}
-
-function getCachedThread(userId, postId, postType) {
-  const arr = readJSON(threadCacheKey(userId, postId, postType), []);
-  return Array.isArray(arr) ? arr : [];
-}
-
-function setCachedThread(userId, postId, postType, messages) {
-  const sorted = uniqueMessages(messages)
-    .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
-    .slice(-MAX_THREAD_MESSAGES);
-  writeJSON(threadCacheKey(userId, postId, postType), sorted);
-}
-
-function loadRawMessagesCache() {
-  const arr = readJSON(RAW_MESSAGES_CACHE_KEY, []);
-  rawMessagesCache = Array.isArray(arr) ? uniqueMessages(arr).slice(-MAX_RAW_MESSAGES) : [];
-  return rawMessagesCache;
-}
-
-function saveRawMessagesCache() {
-  const sorted = uniqueMessages(rawMessagesCache)
-    .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
-    .slice(-MAX_RAW_MESSAGES);
-  rawMessagesCache = sorted;
-  writeJSON(RAW_MESSAGES_CACHE_KEY, sorted);
-}
-
-function getLatestCreatedAt(messages) {
-  if (!messages || messages.length === 0) return null;
-  let latest = null;
-  messages.forEach(m => {
-    if (!m || !m.created_at || String(m.id || '').startsWith('local_')) return;
-    if (!latest || new Date(m.created_at) > new Date(latest)) latest = m.created_at;
-  });
-  return latest;
-}
-
-function sameLocalMessage(localMsg, serverMsg) {
-  if (!localMsg || !serverMsg) return false;
-  if (!String(localMsg.id || '').startsWith('local_')) return false;
-  if (serverMsg.sender_id !== localMsg.sender_id) return false;
-  if (serverMsg.receiver_id !== localMsg.receiver_id) return false;
-  if (String(serverMsg.message || '') !== String(localMsg.message || '')) return false;
-  if (String(getMessagePostId(serverMsg) || '') !== String(getMessagePostId(localMsg) || '')) return false;
-  const localTime = new Date(localMsg.created_at || 0).getTime();
-  const serverTime = new Date(serverMsg.created_at || 0).getTime();
-  return Math.abs(serverTime - localTime) < 45000;
-}
-
-function uniqueMessages(messages) {
-  const clean = Array.isArray(messages) ? messages.filter(Boolean) : [];
-  const serverMessages = clean.filter(m => !String(m.id || '').startsWith('local_'));
-  const localMessages = clean.filter(m => String(m.id || '').startsWith('local_'))
-    .filter(local => !serverMessages.some(server => sameLocalMessage(local, server)));
-  const map = new Map();
-  [...serverMessages, ...localMessages].forEach(m => {
-    const id = String(m.id || `${m.sender_id}_${m.receiver_id}_${m.created_at}_${m.message}`).trim();
-    if (!id) return;
-    const old = map.get(id);
-    if (!old || new Date(m.created_at || 0) >= new Date(old.created_at || 0)) map.set(id, m);
-  });
-  return Array.from(map.values());
-}
-
-function mergeMessages(existing, incoming) {
-  return uniqueMessages([...(existing || []), ...(incoming || [])])
-    .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
-}
-
-function mergeRawMessages(messages) {
-  if (!messages || messages.length === 0) return;
-  rawMessagesCache = mergeMessages(rawMessagesCache, messages);
-  saveRawMessagesCache();
-}
-
-function setLocalMessageDeliveryState(localId, deliveryState, payloadPostId, payloadPostType) {
-  if (!localId) return;
-
-  currentThreadMessages = currentThreadMessages.map(m =>
-    m && m.id === localId ? { ...m, delivery_status: deliveryState } : m
-  );
-  setCachedThread(currentChatUserId, payloadPostId, payloadPostType, currentThreadMessages);
-
-  rawMessagesCache = rawMessagesCache.map(m =>
-    m && m.id === localId ? { ...m, delivery_status: deliveryState } : m
-  );
-  saveRawMessagesCache();
-}
-
-function replaceLocalMessageWithServer(localId, serverMsg, payloadPostId, payloadPostType) {
-  if (!localId || !serverMsg) return false;
-
-  const withoutLocalThread = currentThreadMessages.filter(m => !(m && m.id === localId));
-  currentThreadMessages = mergeMessages(withoutLocalThread, [serverMsg]);
-  setCachedThread(currentChatUserId, payloadPostId, payloadPostType, currentThreadMessages);
-
-  rawMessagesCache = mergeMessages(rawMessagesCache.filter(m => !(m && m.id === localId)), [serverMsg]);
-  saveRawMessagesCache();
-  return true;
-}
-
-function withTimeout(promise, ms, timeoutMessage) {
-  let timer;
-  const timeoutPromise = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(timeoutMessage || "Request timed out")), ms);
-  });
-  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
-}
-
-/* ---------------- VIEWPORT / KEYBOARD FIX ---------------- */
-function isRealDesktopLayout() {
-  const ua = navigator.userAgent || "";
-  const isMobileUA = /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua);
-  let desktopQuery = false;
-  try {
-    desktopQuery = window.matchMedia('(min-width: 900px) and (hover: hover) and (pointer: fine)').matches;
-  } catch (e) {
-    desktopQuery = window.innerWidth >= 900;
-  }
-  return desktopQuery && !isMobileUA;
-}
-
-function isMobileLayout() {
-  return !isRealDesktopLayout();
-}
-
-function applyViewportFix() {
-  const mobile = isMobileLayout();
-  const vv = window.visualViewport;
-  const height = mobile && vv ? vv.height : window.innerHeight;
-  if (!height) return;
-
-  document.documentElement.classList.toggle('force-mobile-layout', mobile);
-  document.documentElement.style.setProperty('--app-height', `${Math.round(height)}px`);
-  document.documentElement.style.setProperty('--vv-offset-top', mobile && vv ? `${Math.round(vv.offsetTop || 0)}px` : '0px');
-
-  if (mobile) {
-    const hiddenByKeyboard = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0;
-    const keyboardOpen = hiddenByKeyboard > 120;
-    appContainer.classList.toggle('keyboard-open', keyboardOpen);
-    lastViewportHeight = height;
-    if (appContainer.classList.contains('chat-active')) keepInputVisible(false);
-  } else {
-    appContainer.classList.remove('keyboard-open');
-    document.documentElement.classList.remove('force-mobile-layout');
-    document.documentElement.style.removeProperty('--app-height');
-    document.documentElement.style.removeProperty('--vv-offset-top');
-  }
-
-  try { window.scrollTo(0, 0); } catch (e) {}
-}
-
-function keepInputVisible(smooth = true) {
-  if (isRealDesktopLayout()) return;
-  if (!appContainer.classList.contains('chat-active')) return;
-  requestAnimationFrame(() => {
-    activeChatView.scrollTop = activeChatView.scrollHeight;
-  });
-  setTimeout(() => { activeChatView.scrollTop = activeChatView.scrollHeight; }, 120);
-  setTimeout(() => { activeChatView.scrollTop = activeChatView.scrollHeight; }, 280);
-}
-
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', applyViewportFix, { passive: true });
-  window.visualViewport.addEventListener('scroll', applyViewportFix, { passive: true });
-}
-window.addEventListener('resize', applyViewportFix, { passive: true });
-window.addEventListener('orientationchange', () => setTimeout(applyViewportFix, 250), { passive: true });
-msgInput.addEventListener('focus', () => keepInputVisible(true));
-msgInput.addEventListener('input', () => keepInputVisible(false));
-
-/* ---------------- REUSABLE BUTTON.HTML SCRIPT ---------------- */
+/* REUSABLE BUTTON.HTML SCRIPT */
 function updateReusableButtonsFrame() {
   const frame = document.getElementById('bottomNavFrame');
   if (!frame) return;
-  const mode = isRealDesktopLayout() ? 'desktop' : 'mobile';
+  const mode = window.innerWidth >= 900 ? 'desktop' : 'mobile';
   const desiredSrc = `button.html?mode=${mode}&active=chat.html`;
-  if (frame.getAttribute('src') !== desiredSrc) frame.setAttribute('src', desiredSrc);
+  if (frame.getAttribute('src') !== desiredSrc) {
+    frame.setAttribute('src', desiredSrc);
+  }
 }
 
 window.addEventListener('load', updateReusableButtonsFrame);
@@ -861,71 +510,47 @@ window.addEventListener('resize', () => {
   window.__tingoNavResizeTimer = setTimeout(updateReusableButtonsFrame, 120);
 });
 
-/* ---------------- INIT ---------------- */
+/* INIT */
 initChatPage();
 
 async function initChatPage() {
-  applyViewportFix();
-  loadRawMessagesCache();
-
-  const cachedChats = readJSON(CHAT_LIST_CACHE_KEY, null);
-  if (Array.isArray(cachedChats) && cachedChats.length > 0) {
-    allChats = cachedChats;
-    renderChats(allChats);
-  } else if (rawMessagesCache.length > 0) {
-    renderChatListFromMessages(rawMessagesCache, true);
-  } else {
-    showChatListSkeleton();
-  }
-
+  // Listen for realtime chat list updates globally
   setupGlobalChatListener();
 
   if (isValidId(chatUserId)) {
     openChat(chatUserId, requestedPostId, requestedType);
-    syncAllMessages({ background: true });
+    loadChats(); // Load sidebar in background
     return;
   }
 
   if (isValidId(requestedPostId)) {
-    const cachedPost = getCachedPost(requestedPostId);
-    if (cachedPost && isValidId(cachedPost.user_id)) {
-      openChat(cachedPost.user_id, requestedPostId, cachedPost.postKind || requestedType);
-      syncAllMessages({ background: true });
-      return;
-    }
-
-    const post = await fetchPostMetaCached(requestedPostId, requestedType, true);
+    const post = await fetchPostMeta(requestedPostId, requestedType);
     if (post && isValidId(post.user_id)) {
       openChat(post.user_id, requestedPostId, post.postKind);
-      syncAllMessages({ background: true });
+      loadChats(); 
       return;
     }
   }
 
-  syncAllMessages({ background: false });
+  loadChats();
 }
 
-window.addEventListener('pageshow', (event) => {
-  applyViewportFix();
-  updateReusableButtonsFrame();
-  if (event.persisted) {
-    renderChats(allChats);
-    if (currentChatUserId) renderThreadFromCache(currentChatUserId, currentPostId, currentPostType, true);
-  }
-});
-
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
-    applyViewportFix();
-    syncAllMessages({ background: true });
-    if (currentChatUserId) loadMessages(currentChatUserId, currentPostId, currentPostType, true, true);
-  }
-});
+function setupGlobalChatListener() {
+  if (globalChatChannel) return;
+  globalChatChannel = db.channel(`global_messages_${currentUser.id}`)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+      const msg = payload.new || {};
+      if (msg.receiver_id === currentUser.id || msg.sender_id === currentUser.id) {
+        loadChats(true);
+      }
+    })
+    .subscribe();
+}
 
 /* ---------------- SKELETON LOADERS ---------------- */
 function showChatListSkeleton() {
   let skeletons = '';
-  for (let i = 0; i < 6; i++) {
+  for(let i = 0; i < 6; i++) {
     skeletons += `
       <div class="skeleton-item">
         <div class="skeleton skeleton-avatar"></div>
@@ -947,7 +572,8 @@ function showActiveChatSkeleton() {
     <div class="message-row sent-row">
       <div class="skeleton skeleton-text" style="width: 200px; height: 40px; border-radius: 16px;"></div>
       <div class="skeleton skeleton-avatar" style="width: 36px; height: 36px;"></div>
-    </div>`;
+    </div>
+  `;
 }
 
 /* ---------------- BASIC HELPERS ---------------- */
@@ -972,12 +598,7 @@ function firstValue(obj, keys, fallback = "") {
 }
 
 function escapeHtml(str) {
-  return String(str || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 function formatTime(dateStr) {
@@ -991,14 +612,18 @@ function formatTime(dateStr) {
 
 function formatTimeShort(dateStr) {
   if (!dateStr) return "";
-  return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function getDateKey(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "";
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function formatDateSeparator(dateStr) {
@@ -1017,53 +642,150 @@ function formatDateSeparator(dateStr) {
   return d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const DEFAULT_MALE = 'https://i.ibb.co/wZVNcCDt/maleavt.png';
+const DEFAULT_FEMALE = 'https://i.ibb.co/SXCj3b1q/femaleavt.png';
+
 function getDefaultAvatar(gender) {
   if (!gender) return DEFAULT_MALE;
-  return String(gender).toLowerCase().includes('f') ? DEFAULT_FEMALE : DEFAULT_MALE;
+  const g = String(gender).toLowerCase();
+  return g.includes('f') ? DEFAULT_FEMALE : DEFAULT_MALE;
 }
 
 function resolveAvatar(url, gender) {
-  return url && String(url).trim() ? url : getDefaultAvatar(gender);
+  if (url && String(url).trim()) return url;
+  return getDefaultAvatar(gender);
 }
 
-function getMessagePostId(msg) { return firstValue(msg, ["post_id", "room_id"], null); }
-function getMessagePostType(msg) {
-  const type = normalizePostType(firstValue(msg, ["post_type", "listing_type"], ""));
-  if (type) return type;
-  if (isValidId(msg && msg.room_id)) return "available";
-  return "";
+
+function normalizeUuidLike(value) {
+  return String(value || "").trim();
 }
 
-function messageMatchesPost(msg, postId, postType = "") {
-  if (isValidId(postId)) return String(getMessagePostId(msg) || "") === String(postId);
-  return !isValidId(msg && msg.post_id) && !isValidId(msg && msg.room_id);
+function sameId(a, b) {
+  return isValidId(a) && isValidId(b) && normalizeUuidLike(a) === normalizeUuidLike(b);
 }
 
-function isMessageForPair(msg, otherUserId) {
-  return (msg.sender_id === currentUser.id && msg.receiver_id === otherUserId) ||
-         (msg.sender_id === otherUserId && msg.receiver_id === currentUser.id);
+function isPairMessage(msg, otherUserId) {
+  if (!msg || !isValidId(otherUserId)) return false;
+  return (
+    (sameId(msg.sender_id, currentUser.id) && sameId(msg.receiver_id, otherUserId)) ||
+    (sameId(msg.sender_id, otherUserId) && sameId(msg.receiver_id, currentUser.id))
+  );
 }
 
-function isMessageForActiveThread(msg) {
-  return currentChatUserId && isMessageForPair(msg, currentChatUserId) && messageMatchesPost(msg, currentPostId, currentPostType);
+function getMessageTimeMs(msg) {
+  const t = new Date(msg && msg.created_at ? msg.created_at : 0).getTime();
+  return Number.isFinite(t) ? t : 0;
 }
 
-function getPairFilter(userId) {
-  return `and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`;
+function dedupeMessages(messages) {
+  const byId = new Set();
+  const fuzzySeen = new Map();
+  const clean = [];
+
+  (messages || []).forEach(msg => {
+    if (!msg) return;
+
+    if (isValidId(msg.id)) {
+      const idKey = String(msg.id);
+      if (byId.has(idKey)) return;
+      byId.add(idKey);
+    }
+
+    // Safety net for accidental double insert / double realtime render.
+    // Same sender + receiver + post + text inside 2.5 seconds is treated as one message.
+    const fuzzyKey = [
+      msg.sender_id || "",
+      msg.receiver_id || "",
+      getMessagePostId(msg) || "direct",
+      getMessagePostType(msg) || "",
+      String(msg.message || "").trim()
+    ].join("|");
+    const msgTime = getMessageTimeMs(msg);
+    const previousTime = fuzzySeen.get(fuzzyKey);
+    if (previousTime !== undefined && Math.abs(msgTime - previousTime) <= 2500) return;
+    fuzzySeen.set(fuzzyKey, msgTime);
+
+    clean.push(msg);
+  });
+
+  return clean.sort((a, b) => getMessageTimeMs(a) - getMessageTimeMs(b));
 }
 
-function getOtherUserId(msg) {
-  return msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+function isCurrentThreadMessage(msg) {
+  return isPairMessage(msg, currentChatUserId) && messageMatchesPost(msg, currentPostId, currentPostType);
 }
 
-/* ---------------- POST / USER FETCH HELPERS ---------------- */
+function buildFallbackPost(postId, postType = "", title = "") {
+  if (!isValidId(postId) && !title) return null;
+  const kind = normalizePostType(postType || requestedType || "") || "available";
+  return {
+    id: postId || "",
+    postKind: kind,
+    user_id: "",
+    title: title || (kind === "needed" ? "Room Requirement" : "Room Details"),
+    status: "active",
+    sourceTable: "fallback"
+  };
+}
+
+function findCachedChatForThread(userId, postId, postType = "") {
+  const type = normalizePostType(postType || "");
+  return (allChats || []).find(c => {
+    if (!c || !c.user || !sameId(c.user.id, userId)) return false;
+    const cPostId = c.postId || c.roomId || (c.room && c.room.id) || "";
+    if (isValidId(postId) && !sameId(cPostId, postId)) return false;
+    if (type) {
+      const cType = normalizePostType(c.postType || (c.room && c.room.postKind) || "");
+      if (cType && cType !== type) return false;
+    }
+    return true;
+  }) || null;
+}
+
+function getPostTitleText(post) {
+  if (!post) return "Direct Message";
+  const prefix = post.postKind === "needed" ? "Need: " : "";
+  return `${prefix}${post.title || (post.postKind === "needed" ? "Room Requirement" : "Room Details")}`;
+}
+
+function updateThreadContext(post) {
+  if (!threadContextBar) return;
+  if (!post) {
+    threadContextBar.classList.add("hidden");
+    threadContextBar.innerHTML = "";
+    return;
+  }
+  const label = post.postKind === "needed" ? "Room requirement" : "Room listing";
+  threadContextBar.innerHTML = `
+    <span class="material-symbols-rounded">home_work</span>
+    <div style="min-width:0;">
+      <div class="thread-context-sub">${escapeHtml(label)}</div>
+      <div class="thread-context-title">${escapeHtml(getPostTitleText(post))}</div>
+    </div>`;
+  threadContextBar.classList.remove("hidden");
+}
+
+function openCurrentRoomFromContext() {
+  if (currentPostMeta && isValidId(currentPostMeta.id)) {
+    openRoom(currentPostMeta.id, currentPostMeta.postKind);
+  }
+}
+
+/* ---------------- POST TABLE HELPERS ---------------- */
 function getPostTableCandidates(forceType = "") {
   const type = normalizePostType(forceType || requestedType || "");
   const available = [{ table: "room_posts", kind: "available" }];
-  const needed = [{ table: "room_requirements", kind: "needed" }];
-
-  // Only query the real tables. The earlier version checked many old table names,
-  // creating repeated 404 console noise and slowing chat opening on mobile.
+  const needed = [
+    { table: "room_requirements", kind: "needed" },
+    { table: "room_requirement", kind: "needed" },
+    { table: "rooms_needed", kind: "needed" },
+    { table: "room_needed", kind: "needed" },
+    { table: "room_needs", kind: "needed" },
+    { table: "needed_rooms", kind: "needed" },
+    { table: "requirement_posts", kind: "needed" },
+    { table: "requirements", kind: "needed" }
+  ];
   if (type === "needed") return [...needed, ...available];
   if (type === "available") return [...available, ...needed];
   return [...available, ...needed];
@@ -1084,43 +806,16 @@ function normalizePost(raw, kind, sourceTable) {
   };
 }
 
-async function fetchPostMetaCached(postId, forceType = "", forceNetwork = false) {
+async function fetchPostMeta(postId, forceType = "") {
   if (!isValidId(postId)) return null;
-  const cached = getCachedPost(postId);
-  if (cached && !forceNetwork) return cached;
-
   for (const item of getPostTableCandidates(forceType)) {
     try {
       const { data, error } = await db.from(item.table).select("*").eq("id", postId).maybeSingle();
       if (error) continue;
-      if (data) {
-        const post = normalizePost(data, item.kind, item.table);
-        setCachedPost(post);
-        return post;
-      }
+      if (data) return normalizePost(data, item.kind, item.table);
     } catch (err) { console.warn(err); }
   }
-  return cached;
-}
-
-async function fetchUserProfileCached(userId, forceNetwork = false) {
-  if (!isValidId(userId)) return null;
-  const cached = getCachedProfile(userId);
-  if (cached && !forceNetwork) return cached;
-
-  try {
-    const { data, error } = await db
-      .from("public_user_profiles")
-      .select("id,name,avatar_url,gender")
-      .eq("id", userId)
-      .maybeSingle();
-    if (!error && data) {
-      setCachedProfile(data);
-      return data;
-    }
-  } catch (err) { console.warn(err); }
-
-  return cached || { id: userId, name: "User", avatar_url: "", gender: "" };
+  return null;
 }
 
 function isPostChatAllowed(post) {
@@ -1129,159 +824,113 @@ function isPostChatAllowed(post) {
   return ["active", "approved", "new", "published"].includes(status);
 }
 
+function getMessagePostId(msg) { return firstValue(msg, ["post_id", "room_id", "listing_id", "requirement_id"], null); }
+function getMessagePostType(msg) {
+  const type = normalizePostType(firstValue(msg, ["post_type", "listing_type", "category"], ""));
+  if (type) return type;
+  if (isValidId(msg && msg.room_id)) return "available";
+  if (isValidId(msg && msg.requirement_id)) return "needed";
+  return "";
+}
+function messageMatchesPost(msg, postId, postType = "") {
+  const normalizedType = normalizePostType(postType || "");
+  const msgType = getMessagePostType(msg);
+
+  if (isValidId(postId)) {
+    const idMatches = [msg && msg.post_id, msg && msg.room_id, msg && msg.listing_id, msg && msg.requirement_id]
+      .some(value => sameId(value, postId));
+    if (!idMatches) return false;
+    if (!normalizedType || !msgType) return true;
+    return msgType === normalizedType || (normalizedType === "available" && isValidId(msg && msg.room_id));
+  }
+
+  // Direct message only. This prevents property chats from mixing into direct chats.
+  return !isValidId(msg && msg.post_id) && !isValidId(msg && msg.room_id) && !isValidId(msg && msg.listing_id) && !isValidId(msg && msg.requirement_id);
+}
+function getPairFilter(userId) { return `and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`; }
+function buildCacheKey(prefix, postId, postType, userId) { return `${prefix}_${postType || 'direct'}_${postId || 'null'}_${userId}_${currentUser.id}`; }
+
 /* ---------------- CHAT LIST ---------------- */
-async function syncAllMessages({ background = false } = {}) {
-  const now = Date.now();
-  if (now - lastSyncStartedAt < 1200) return;
-  lastSyncStartedAt = now;
+async function loadChats(background = false) {
+  const cacheKey = `tingo_chats_${currentUser.id}`;
+  const cachedChats = localStorage.getItem(cacheKey);
 
-  if (!background && allChats.length === 0 && rawMessagesCache.length === 0) showChatListSkeleton();
+  if (cachedChats) {
+    try {
+      allChats = JSON.parse(cachedChats);
+      if(!background) renderChats(allChats);
+    } catch (e) {
+      if(!background) showChatListSkeleton();
+    }
+  } else {
+    if(!background) showChatListSkeleton();
+  }
 
-  const latestCached = getLatestCreatedAt(rawMessagesCache);
-  let query = db
+  const { data, error } = await db
     .from("messages")
     .select("*")
     .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
-    .order("created_at", { ascending: false })
-    .limit(latestCached ? 250 : MAX_RAW_MESSAGES);
+    .order("created_at", { ascending: false });
 
-  if (latestCached) query = query.gt("created_at", latestCached);
-
-  const { data, error } = await query;
-  if (error) {
-    if (allChats.length === 0 && rawMessagesCache.length === 0) {
-      chatListView.innerHTML = `<div class="empty-chat-state" style="padding: 40px 20px;"><p style="font-size: 14px;">Unable to load messages right now.</p></div>`;
+  if (error || !data || data.length === 0) {
+    if (!cachedChats) {
+      chatListView.innerHTML = `
+        <div class="empty-chat-state" style="padding: 40px 20px;">
+          <span class="material-symbols-rounded" style="font-size: 48px; color: #D1D5DB; margin-bottom: 10px;">forum</span>
+          <p style="font-size: 14px; margin:0;">No messages yet.</p>
+        </div>`;
     }
-    console.warn("Chat sync error:", error);
     return;
   }
-
-  if (Array.isArray(data) && data.length > 0) mergeRawMessages(data);
-
-  if (rawMessagesCache.length === 0) {
-    allChats = [];
-    writeJSON(CHAT_LIST_CACHE_KEY, allChats);
-    chatListView.innerHTML = `
-      <div class="empty-chat-state" style="padding: 40px 20px;">
-        <span class="material-symbols-rounded" style="font-size: 48px; color: #D1D5DB; margin-bottom: 10px;">forum</span>
-        <p style="font-size: 14px; margin:0;">No messages yet.</p>
-      </div>`;
-    return;
-  }
-
-  renderChatListFromMessages(rawMessagesCache, true);
-  hydrateChatsInBackground();
-}
-
-function loadChats(background = false) {
-  const cachedChats = readJSON(CHAT_LIST_CACHE_KEY, []);
-  if (Array.isArray(cachedChats) && cachedChats.length > 0) {
-    allChats = cachedChats;
-    if (!background) renderChats(allChats);
-  } else {
-    loadRawMessagesCache();
-    if (rawMessagesCache.length > 0) renderChatListFromMessages(rawMessagesCache, true);
-    else if (!background) showChatListSkeleton();
-  }
-  syncAllMessages({ background });
-}
-
-function buildChatSummaries(messages) {
-  const sorted = uniqueMessages(messages)
-    .filter(m => m.sender_id === currentUser.id || m.receiver_id === currentUser.id)
-    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
   const map = {};
-  sorted.forEach(msg => {
-    const otherId = getOtherUserId(msg);
+  const cleanData = dedupeMessages(data);
+  for (let msg of cleanData) {
+    const otherId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
     const msgPostId = getMessagePostId(msg);
     const msgPostType = getMessagePostType(msg);
     const key = `${otherId}_${msgPostType || 'direct'}_${msgPostId || 'null'}`;
 
     if (!map[key]) {
-      const cachedUser = getCachedProfile(otherId);
-      const cachedPost = isValidId(msgPostId) ? getCachedPost(msgPostId) : null;
       map[key] = {
-        key,
-        otherId,
-        postId: msgPostId,
-        postType: msgPostType,
-        roomId: msg.room_id,
-        last: msg.message || "",
-        is_read: msg.is_read,
-        last_sender_id: msg.sender_id,
-        created_at: msg.created_at,
-        unread_count: 0,
-        isAdminConvo: !!(msg.is_admin_message || msg.sender_role === 'admin'),
-        user: cachedUser || { id: otherId, name: "User", avatar_url: "", gender: "" },
-        room: cachedPost || null
+        otherId, postId: msgPostId, postType: msgPostType, roomId: msg.room_id,
+        fallbackTitle: firstValue(msg, ["room_title", "post_title", "listing_title", "title"], ""),
+        last: msg.message || "", is_read: msg.is_read, last_sender_id: msg.sender_id,
+        created_at: msg.created_at, unread_count: 0, isAdminConvo: msg.is_admin_message || msg.sender_role === 'admin'
       };
     } else if (msg.is_admin_message || msg.sender_role === 'admin') {
       map[key].isAdminConvo = true;
     }
-
     if (!msg.is_read && msg.receiver_id === currentUser.id) map[key].unread_count++;
-  });
+  }
 
-  return Object.values(map).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-}
+  const keys = Object.keys(map);
+  for (let key of keys) {
+    let chat = map[key];
+    try {
+      let post = null;
+      if (isValidId(chat.postId)) post = await fetchPostMeta(chat.postId, chat.postType);
+      if (!post && (isValidId(chat.postId) || chat.fallbackTitle)) post = buildFallbackPost(chat.postId, chat.postType, chat.fallbackTitle);
 
-function renderChatListFromMessages(messages, useCacheOnly = false) {
-  allChats = buildChatSummaries(messages);
+      if (chat.isAdminConvo) {
+        chat.user = { id: chat.otherId, name: "TingoRooms Support", avatar_url: "https://cdn-icons-png.flaticon.com/512/6024/6024190.png", is_verified: true };
+        chat.room = post || { title: 'Official Support', status: 'active', postKind: chat.postType || "" };
+      } else {
+        const { data: user } = await db
+          .from("public_user_profiles")
+          .select("id,name,avatar_url,gender")
+          .eq("id", chat.otherId)
+          .maybeSingle();
+        if (user) { chat.user = user; chat.room = post; } else { delete map[key]; }
+      }
+    } catch (err) { delete map[key]; }
+  }
+
+  allChats = Object.values(map);
+  allChats.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  localStorage.setItem(cacheKey, JSON.stringify(allChats));
   renderChats(allChats);
-  writeJSON(CHAT_LIST_CACHE_KEY, allChats);
-  if (!useCacheOnly) hydrateChatsInBackground();
-}
-
-async function hydrateChatsInBackground() {
-  const chatsSnapshot = [...allChats];
-  if (!chatsSnapshot.length) return;
-
-  const userIds = [...new Set(chatsSnapshot.filter(c => !c.isAdminConvo).map(c => c.otherId).filter(isValidId))];
-  const postIds = [...new Set(chatsSnapshot.map(c => c.postId || c.roomId).filter(isValidId))];
-
-  await Promise.all([
-    hydrateUsers(userIds),
-    hydratePosts(postIds)
-  ]);
-
-  allChats = allChats.map(c => {
-    if (c.isAdminConvo) {
-      return {
-        ...c,
-        user: { id: c.otherId, name: "TingoRooms Support", avatar_url: SUPPORT_AVATAR, is_verified: true },
-        room: c.room || (isValidId(c.postId) ? getCachedPost(c.postId) : null)
-      };
-    }
-    return {
-      ...c,
-      user: getCachedProfile(c.otherId) || c.user,
-      room: isValidId(c.postId || c.roomId) ? (getCachedPost(c.postId || c.roomId) || c.room) : c.room
-    };
-  });
-
-  writeJSON(CHAT_LIST_CACHE_KEY, allChats);
-  const q = searchInput ? searchInput.value.trim().toLowerCase() : "";
-  if (q) filterChats();
-  else renderChats(allChats);
-}
-
-async function hydrateUsers(userIds) {
-  const missing = userIds.filter(id => !getCachedProfile(id));
-  if (!missing.length) return;
-  try {
-    const { data, error } = await db
-      .from("public_user_profiles")
-      .select("id,name,avatar_url,gender")
-      .in("id", missing);
-    if (!error && Array.isArray(data)) data.forEach(setCachedProfile);
-  } catch (err) { console.warn("User hydrate failed:", err); }
-}
-
-async function hydratePosts(postIds) {
-  const missing = postIds.filter(id => !getCachedPost(id));
-  if (!missing.length) return;
-  await Promise.all(missing.slice(0, 40).map(id => fetchPostMetaCached(id, "", true)));
 }
 
 function renderChats(list) {
@@ -1292,7 +941,7 @@ function renderChats(list) {
     return;
   }
 
-  const html = list.map(c => {
+  list.forEach(c => {
     let isActive = true;
     let inactiveBadge = "";
 
@@ -1300,10 +949,9 @@ function renderChats(list) {
       isActive = isPostChatAllowed(c.room);
       inactiveBadge = isActive ? "" : `<span class="status-badge">Inactive</span>`;
     }
-
-    const activePostId = String(currentPostId || "");
-    const chatPostId = String(c.postId || c.roomId || "");
-    const isCurrentChat = currentChatUserId === (c.user && c.user.id) && activePostId === chatPostId;
+    
+    // Check if this chat is the currently open one (for desktop highlighting)
+    const isCurrentChat = (currentChatUserId === c.user.id) && (String(currentPostId || "") === String(c.postId || c.roomId || ""));
     const selectedClass = isCurrentChat ? "active-chat" : "";
     const inactiveClass = isActive ? "" : "inactive";
 
@@ -1317,9 +965,9 @@ function renderChats(list) {
       prefix = "[Official] ";
     } else if (c.room) {
       if (c.room.postKind === "needed") {
-        roleBadge = (c.user && c.user.id === c.room.user_id) ? `<span class="role-badge seeker">Seeker</span>` : `<span class="role-badge owner">Owner</span>`;
+        roleBadge = (c.user.id === c.room.user_id) ? `<span class="role-badge seeker">Seeker</span>` : `<span class="role-badge owner">Owner</span>`;
       } else {
-        roleBadge = (c.user && c.user.id === c.room.user_id) ? `<span class="role-badge owner">Owner</span>` : `<span class="role-badge seeker">Seeker</span>`;
+        roleBadge = (c.user.id === c.room.user_id) ? `<span class="role-badge owner">Owner</span>` : `<span class="role-badge seeker">Seeker</span>`;
       }
     }
 
@@ -1331,12 +979,14 @@ function renderChats(list) {
     const timeStr = formatTime(c.created_at);
 
     const avatarUrl = resolveAvatar(c.user && c.user.avatar_url, c.user && c.user.gender);
-    const fallback = getDefaultAvatar(c.user && c.user.gender);
+    const fallback = (c.user && String(c.user.gender || '').toLowerCase().includes('f')) ? DEFAULT_FEMALE : DEFAULT_MALE;
     const safeName = escapeHtml(c.user && c.user.name ? c.user.name : "User");
     const safeLast = escapeHtml(String(c.last || "").replace(/\n/g, ' '));
-    const clickHandler = `onclick="handleChatClick('${c.user && c.user.id ? c.user.id : c.otherId}','${c.postId || c.roomId || ''}','${c.room ? c.room.postKind : c.postType || ""}')"`;
 
-    return `
+    // Modify onClick to NOT redirect on desktop, just open inline.
+    const clickHandler = `onclick="handleChatClick('${c.user.id}','${c.postId || c.roomId || ''}','${c.room ? c.room.postKind : c.postType || ""}')"`;
+
+    chatListView.innerHTML += `
       <div class="chat-item ${inactiveClass} ${highlightClass} ${selectedClass}" ${clickHandler}>
         <img class="avatar" src="${avatarUrl}" onerror="this.onerror=null;this.src='${fallback}'" alt="${safeName}">
         <div class="chat-info-wrapper">
@@ -1351,17 +1001,14 @@ function renderChats(list) {
           </div>
         </div>
       </div>`;
-  }).join("");
-
-  chatListView.innerHTML = html;
+  });
 }
 
 function filterChats() {
-  const q = (searchInput && searchInput.value ? searchInput.value : "").toLowerCase();
+  const q = document.getElementById("searchInput").value.toLowerCase();
   const filtered = allChats.filter(c =>
     (c.user && String(c.user.name || "").toLowerCase().includes(q)) ||
-    (c.room && c.room.title && String(c.room.title).toLowerCase().includes(q)) ||
-    String(c.last || "").toLowerCase().includes(q)
+    (c.room && c.room.title && String(c.room.title).toLowerCase().includes(q))
   );
   renderChats(filtered);
 }
@@ -1369,49 +1016,13 @@ function filterChats() {
 function handleChatClick(userId, postId, postKind) {
   currentChatOpenOrigin = "chatlist";
   activeHistoryGuardReady = false;
-
-  const safePostId = isValidId(postId) ? encodeURIComponent(postId) : "";
+  // Update URL silently so refresh maintains state
+  const postPart = isValidId(postId) ? `&post_id=${encodeURIComponent(postId)}` : "";
   const typePart = postKind ? `&type=${encodeURIComponent(normalizePostType(postKind))}` : "";
-  const newUrl = window.location.pathname + `?user=${encodeURIComponent(userId)}&post_id=${safePostId}${typePart}`;
-  window.history.pushState({ path: newUrl }, '', newUrl);
+  const newUrl = window.location.pathname + `?user=${encodeURIComponent(userId)}${postPart}${typePart}`;
+  window.history.pushState({path: newUrl}, '', newUrl);
 
   openChat(userId, postId, postKind);
-}
-
-/* ---------------- REALTIME ---------------- */
-function setupGlobalChatListener() {
-  if (globalMessagesChannel) db.removeChannel(globalMessagesChannel);
-  globalMessagesChannel = db.channel(`messages_for_${currentUser.id}`)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-      const msg = payload.new;
-      if (!msg || (msg.sender_id !== currentUser.id && msg.receiver_id !== currentUser.id)) return;
-      handleIncomingMessage(msg);
-    })
-    .subscribe();
-}
-
-function handleIncomingMessage(msg) {
-  mergeRawMessages([msg]);
-
-  const otherId = getOtherUserId(msg);
-  const postId = getMessagePostId(msg);
-  const postType = getMessagePostType(msg);
-  const oldThread = getCachedThread(otherId, postId, postType);
-  const updatedThread = mergeMessages(oldThread, [msg]);
-  setCachedThread(otherId, postId, postType, updatedThread);
-
-  renderChatListFromMessages(rawMessagesCache, true);
-  hydrateChatsInBackground();
-
-  if (isMessageForActiveThread(msg)) {
-    currentThreadMessages = mergeMessages(currentThreadMessages, [msg]);
-    setCachedThread(currentChatUserId, currentPostId, currentPostType, currentThreadMessages);
-    renderActiveChatUI(true);
-
-    if (msg.receiver_id === currentUser.id && msg.is_read === false && !String(msg.id || '').startsWith('local_')) {
-      markMessagesRead([msg.id]);
-    }
-  }
 }
 
 /* ---------------- OPEN CHAT ---------------- */
@@ -1419,133 +1030,118 @@ async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
   currentChatUserId = userId;
   currentPostId = isValidId(postIdToLoad) ? postIdToLoad : null;
   currentPostType = normalizePostType(postTypeToLoad || requestedType || "");
-  currentPostMeta = getCachedPost(currentPostId);
-  if (currentPostMeta && currentPostMeta.postKind && !currentPostType) currentPostType = currentPostMeta.postKind;
-  chatUser = getCachedProfile(userId) || { id: userId, name: "User", avatar_url: "", gender: "" };
+  cachedMessagesHTML = "";
   isOtherUserTyping = false;
+  isSendingMessage = false;
+  if (sendBtn) sendBtn.disabled = false;
+  latestMessagesLoadToken++;
 
+  // Toggle UI Layout state for mobile logic
   appContainer.classList.add("chat-active");
   setMobileActiveHistoryGuard();
-  applyViewportFix();
-
+  
+  // Hide empty state, show main chat components
   emptyChatState.classList.add("hidden");
   chatHeader.classList.remove("hidden");
   activeChatView.classList.remove("hidden");
-  renderHeaderForActive();
-  updateInputState();
+  
+  // Re-render sidebar to highlight selected chat
   renderChats(allChats);
-  setupActiveChatChannel(userId);
 
-  if (!renderThreadFromCache(userId, currentPostId, currentPostType, true)) showActiveChatSkeleton();
-  keepInputVisible(false);
-
-  const [post, profile] = await Promise.all([
-    isValidId(currentPostId) ? fetchPostMetaCached(currentPostId, currentPostType, !!currentPostMeta === false) : Promise.resolve(null),
-    fetchUserProfileCached(userId, !!(chatUser && chatUser.name && chatUser.name !== "User") === false)
-  ]);
-
-  if (post) {
-    currentPostMeta = post;
-    currentPostType = post.postKind || currentPostType;
+  let post = null;
+  if (isValidId(currentPostId)) {
+    post = await fetchPostMeta(currentPostId, currentPostType);
+    if (!post) {
+      const cachedChat = findCachedChatForThread(userId, currentPostId, currentPostType);
+      if (cachedChat && cachedChat.room) post = cachedChat.room;
+    }
+    if (!post && requestedTitle) post = buildFallbackPost(currentPostId, currentPostType, requestedTitle);
+    if (post) {
+      currentPostType = post.postKind;
+      currentPostId = post.id || currentPostId;
+    }
   }
-  if (profile) chatUser = profile;
+  currentPostMeta = post;
+  updateThreadContext(post);
 
-  renderHeaderForActive();
-  updateInputState();
-  renderActiveChatUI(false);
+  const { data: adminCandidates } = await db
+    .from("messages")
+    .select("*")
+    .eq("is_admin_message", true)
+    .or(getPairFilter(userId))
+    .order("created_at", { ascending: false });
 
-  loadMessages(userId, currentPostId, currentPostType, true, true);
-}
+  const isSupport = (adminCandidates || []).some(m => messageMatchesPost(m, currentPostId, currentPostType));
 
-function setupActiveChatChannel(userId) {
+  if (isSupport) {
+    headerTitle.innerHTML = `<span style="color:var(--text-main); font-size:15px; display:flex; align-items:center; gap:4px;">TingoRooms Support <span class="material-symbols-rounded verified-tick">verified</span> <span class="admin-badge">ADMIN</span></span><br><span style="font-size:12px; color:var(--primary); font-weight:500;">${post ? escapeHtml(post.title) : 'Official Support'}</span>`;
+    chatUser = { id: userId, name: 'TingoRooms Support', avatar_url: 'https://cdn-icons-png.flaticon.com/512/6024/6024190.png', gender: null };
+  } else {
+    const { data: user, error } = await db
+      .from("public_user_profiles")
+      .select("id,name,avatar_url,gender")
+      .eq("id", userId)
+      .maybeSingle();
+    if (error || !user) {
+      console.warn("Public profile lookup failed:", error);
+      alert("User profile not found. Please try again after refreshing.");
+      goBack();
+      return;
+    }
+
+    let roleBadge = `<span class="role-badge seeker">Seeker</span>`;
+    if (post && post.postKind === "needed") {
+      roleBadge = (user.id === post.user_id) ? `<span class="role-badge seeker">Seeker</span>` : `<span class="role-badge owner">Owner</span>`;
+    } else if (post && user.id === post.user_id) {
+      roleBadge = `<span class="role-badge owner">Owner</span>`;
+    }
+
+    const titlePrefix = post && post.postKind === "needed" ? "Need: " : "";
+    headerTitle.innerHTML = `<span onclick="openRoom('${post ? post.id : ''}', '${post ? post.postKind : ''}')" style="cursor:pointer; color:var(--text-main); font-size:15px;">${escapeHtml(user.name)} ${roleBadge} <br> <span style="font-size:12px; color:var(--primary); font-weight:500;">${post ? titlePrefix + escapeHtml(post.title) : 'Direct Message'}</span></span>`;
+    chatUser = user;
+  }
+
+  if (isSupport || !post || isPostChatAllowed(post)) {
+    inputArea.classList.remove("hidden");
+    inactiveBanner.classList.add("hidden");
+  } else {
+    inputArea.classList.add("hidden");
+    inactiveBanner.classList.remove("hidden");
+  }
+
+  // --- SUPABASE REALTIME SUBSCRIPTION ---
   if (chatChannel) db.removeChannel(chatChannel);
-
   const channelPostId = isValidId(currentPostId) ? currentPostId : 'general';
   const channelPostType = currentPostType || 'direct';
-  const channelStr = `typing_${channelPostType}_${channelPostId}_${[currentUser.id, userId].sort().join('_')}`;
-
+  const channelStr = `room_${channelPostType}_${channelPostId}_${[currentUser.id, userId].sort().join('_')}`;
+  
   chatChannel = db.channel(channelStr)
     .on('broadcast', { event: 'typing' }, (payload) => {
       if (payload.payload.user_id === userId) {
         isOtherUserTyping = payload.payload.is_typing;
-        renderActiveChatUI(false);
+        renderActiveChatUI();
+      }
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+      const msg = payload.new || {};
+      if (isCurrentThreadMessage(msg)) {
+        loadMessages(userId, currentPostId, currentPostType, true);
       }
     })
     .subscribe();
-}
 
-function isSupportConversation() {
-  const fromList = allChats.some(c => c.otherId === currentChatUserId &&
-    String(c.postId || c.roomId || '') === String(currentPostId || '') && c.isAdminConvo);
-  const fromThread = currentThreadMessages.some(m => m.is_admin_message || m.sender_role === 'admin');
-  return fromList || fromThread;
-}
-
-function renderHeaderForActive() {
-  const post = currentPostMeta;
-  const user = chatUser || { id: currentChatUserId, name: "User" };
-  const support = isSupportConversation();
-
-  if (support) {
-    headerTitle.innerHTML = `<span style="color:var(--text-main); font-size:15px; display:flex; align-items:center; gap:4px;">TingoRooms Support <span class="material-symbols-rounded verified-tick">verified</span> <span class="admin-badge">ADMIN</span></span><br><span style="font-size:12px; color:var(--primary); font-weight:500;">${post ? escapeHtml(post.title) : 'Official Support'}</span>`;
-    chatUser = { id: currentChatUserId, name: 'TingoRooms Support', avatar_url: SUPPORT_AVATAR, gender: null };
-    return;
+  // Instant Cache Load / Skeleton Fallback
+  const cacheKey = buildCacheKey("tingo_msgs", currentPostId, currentPostType, userId);
+  if (!localStorage.getItem(cacheKey)) {
+    showActiveChatSkeleton();
   }
 
-  let roleBadge = `<span class="role-badge seeker">Seeker</span>`;
-  if (post && post.postKind === "needed") {
-    roleBadge = (user.id === post.user_id) ? `<span class="role-badge seeker">Seeker</span>` : `<span class="role-badge owner">Owner</span>`;
-  } else if (post && user.id === post.user_id) {
-    roleBadge = `<span class="role-badge owner">Owner</span>`;
-  }
-
-  const titlePrefix = post && post.postKind === "needed" ? "Need: " : "";
-  headerTitle.innerHTML = `<span onclick="openRoom('${post ? post.id : ''}', '${post ? post.postKind : ''}')" style="cursor:pointer; color:var(--text-main); font-size:15px;">${escapeHtml(user.name || "User")} ${roleBadge} <br> <span style="font-size:12px; color:var(--primary); font-weight:500;">${post ? titlePrefix + escapeHtml(post.title) : 'Direct Message'}</span></span>`;
-}
-
-function isActiveThreadLockedByInactivePost() {
-  // Direct/support conversations can stay open. Post-linked user chats become read-only
-  // for both sides when the listing/requirement is inactive.
-  if (isSupportConversation()) return false;
-  return !!(currentPostMeta && !isPostChatAllowed(currentPostMeta));
-}
-
-function updateInputState() {
-  if (isActiveThreadLockedByInactivePost()) {
-    inputArea.classList.add("hidden");
-    inactiveBanner.classList.remove("hidden");
-    inactiveBanner.innerHTML = `<span class="material-symbols-rounded" style="font-size: 16px; vertical-align: text-bottom;">info</span> This post is inactive. Chat is read-only.`;
-  } else {
-    inputArea.classList.remove("hidden");
-    inactiveBanner.classList.add("hidden");
-  }
-}
-
-async function refreshPostStatusBeforeSend() {
-  if (!isValidId(currentPostId) || isSupportConversation()) return true;
-
-  try {
-    const freshPost = await fetchPostMetaCached(currentPostId, currentPostType || requestedType || "", true);
-    if (freshPost) {
-      currentPostMeta = freshPost;
-      currentPostType = freshPost.postKind || currentPostType;
-      renderHeaderForActive();
-      updateInputState();
-      renderChats(allChats);
-      return isPostChatAllowed(freshPost);
-    }
-  } catch (err) {
-    console.warn("Unable to refresh post status before sending:", err);
-  }
-
-  // If network/status fetch fails, still respect any known inactive status from cache.
-  updateInputState();
-  return !isActiveThreadLockedByInactivePost();
+  loadMessages(userId, currentPostId, currentPostType);
 }
 
 /* TYPING EVENTS */
 msgInput.addEventListener('input', () => {
-  if (!chatChannel || !currentChatUserId) return;
+  if (!chatChannel) return;
   if (!isTyping) {
     isTyping = true;
     chatChannel.send({ type: 'broadcast', event: 'typing', payload: { user_id: currentUser.id, is_typing: true } });
@@ -1553,71 +1149,47 @@ msgInput.addEventListener('input', () => {
   clearTimeout(typingTimeout);
   typingTimeout = setTimeout(() => {
     isTyping = false;
-    if (chatChannel) chatChannel.send({ type: 'broadcast', event: 'typing', payload: { user_id: currentUser.id, is_typing: false } });
+    chatChannel.send({ type: 'broadcast', event: 'typing', payload: { user_id: currentUser.id, is_typing: false } });
   }, 1500);
 });
 
-/* ---------------- LOAD / RENDER MESSAGES ---------------- */
-function renderThreadFromCache(userId, postIdToLoad, postTypeToLoad = "", forceScroll = false) {
+/* ---------------- LOAD MESSAGES ---------------- */
+async function loadMessages(userId, postIdToLoad, postTypeToLoad = "", forceScroll = true) {
+  const loadToken = ++latestMessagesLoadToken;
   const normalizedPostType = normalizePostType(postTypeToLoad || currentPostType || "");
-  const cachedThread = getCachedThread(userId, postIdToLoad, normalizedPostType);
-  if (!cachedThread.length) return false;
-  currentThreadMessages = cachedThread;
-  renderActiveChatUI(forceScroll);
-  return true;
-}
+  const cacheKey = buildCacheKey("tingo_msgs", postIdToLoad, normalizedPostType, userId);
 
-async function loadMessages(userId, postIdToLoad, postTypeToLoad = "", forceScroll = true, syncNewOnly = true) {
-  const normalizedPostType = normalizePostType(postTypeToLoad || currentPostType || "");
-  let cachedThread = getCachedThread(userId, postIdToLoad, normalizedPostType);
-
-  if (cachedThread.length > 0) {
-    currentThreadMessages = cachedThread;
-    renderActiveChatUI(forceScroll);
+  if (forceScroll) {
+    const cachedHTML = localStorage.getItem(cacheKey);
+    if (cachedHTML) {
+      cachedMessagesHTML = cachedHTML;
+      renderActiveChatUI(true);
+    }
   }
 
-  let query = db
+  const { data, error } = await db
     .from("messages")
     .select("*")
     .or(getPairFilter(userId))
     .order("created_at", { ascending: true });
 
-  const latestCached = syncNewOnly ? getLatestCreatedAt(cachedThread) : null;
-  if (latestCached) query = query.gt("created_at", latestCached);
+  if (error || !data) return;
+  if (loadToken !== latestMessagesLoadToken) return;
 
-  const { data, error } = await query;
-  if (error || !data) {
-    console.warn("Message load error:", error);
-    return;
+  const threadMessages = dedupeMessages(data.filter(m => messageMatchesPost(m, postIdToLoad, normalizedPostType)));
+
+  const unreadMessages = threadMessages.filter(m => m.receiver_id === currentUser.id && m.is_read === false);
+  if (unreadMessages.length > 0) {
+    const ids = unreadMessages.map(m => m.id).filter(Boolean);
+    if (ids.length > 0) {
+      await db.from("messages").update({ is_read: true }).in("id", ids);
+      loadChats(true); // update sidebar badge
+    }
   }
-
-  const threadMessages = data.filter(m => messageMatchesPost(m, postIdToLoad, normalizedPostType));
-  const mergedThread = mergeMessages(cachedThread, threadMessages);
-
-  currentThreadMessages = mergedThread;
-  setCachedThread(userId, postIdToLoad, normalizedPostType, mergedThread);
-  mergeRawMessages(data);
-
-  renderActiveChatUI(forceScroll);
-  renderChatListFromMessages(rawMessagesCache, true);
-  hydrateChatsInBackground();
-
-  const unreadIds = mergedThread
-    .filter(m => m.receiver_id === currentUser.id && m.is_read === false && !String(m.id || '').startsWith('local_'))
-    .map(m => m.id)
-    .filter(Boolean);
-
-  if (unreadIds.length > 0) markMessagesRead(unreadIds);
-}
-
-function renderActiveChatUI(forceScroll = false) {
-  const messages = uniqueMessages(currentThreadMessages)
-    .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
 
   let htmlString = "";
   let lastDateKey = "";
-
-  messages.forEach(msg => {
+  threadMessages.forEach(msg => {
     const msgDateKey = getDateKey(msg.created_at);
     if (msgDateKey && msgDateKey !== lastDateKey) {
       const dateLabel = formatDateSeparator(msg.created_at);
@@ -1628,7 +1200,6 @@ function renderActiveChatUI(forceScroll = false) {
     const isSent = msg.sender_id === currentUser.id;
     const timeStr = formatTimeShort(msg.created_at);
     const safeMsg = escapeHtml(msg.message || "").replace(/\n/g, '<br>');
-    const pending = String(msg.id || '').startsWith('local_') && msg.delivery_status !== 'sent';
 
     if (msg.is_admin_message && !isSent) {
       htmlString += `
@@ -1637,75 +1208,73 @@ function renderActiveChatUI(forceScroll = false) {
           <span>${safeMsg}</span>
           <span style="font-size: 10px; color: rgba(255,255,255,0.7); align-self: flex-end; margin-top: 2px; margin-bottom: -4px;">${timeStr}</span>
         </div>`;
-      return;
-    }
-
-    const timeColor = isSent ? "rgba(255, 255, 255, 0.75)" : "#94A3B8";
-    const senderAvatar = isSent ? resolveAvatar(currentUser.avatar_url, currentUser.gender) : resolveAvatar(chatUser && chatUser.avatar_url, chatUser && chatUser.gender);
-    const senderFallback = isSent ? getDefaultAvatar(currentUser && currentUser.gender) : getDefaultAvatar(chatUser && chatUser.gender);
-    const pendingMark = pending ? " • sending" : "";
-
-    if (isSent) {
-      htmlString += `
-        <div class="message-row sent-row">
-          <div class="message sent"><span>${safeMsg}</span><span style="font-size: 10px; color: ${timeColor}; align-self: flex-end; margin-top: 2px; margin-bottom: -4px;">${timeStr}${pendingMark}</span></div>
-          <img class="msg-avatar" src="${senderAvatar}" onerror="this.onerror=null;this.src='${senderFallback}'" alt="">
-        </div>`;
     } else {
-      htmlString += `
-        <div class="message-row received-row">
-          <img class="msg-avatar" src="${senderAvatar}" onerror="this.onerror=null;this.src='${senderFallback}'" alt="">
-          <div class="message received"><span>${safeMsg}</span><span style="font-size: 10px; color: ${timeColor}; align-self: flex-end; margin-top: 2px; margin-bottom: -4px;">${timeStr}</span></div>
-        </div>`;
+      const timeColor = isSent ? "rgba(255, 255, 255, 0.75)" : "#94A3B8";
+      const senderAvatar = isSent ? resolveAvatar(currentUser.avatar_url, currentUser.gender) : resolveAvatar(chatUser && chatUser.avatar_url, chatUser && chatUser.gender);
+      const senderFallback = isSent ? (currentUser && String(currentUser.gender || '').toLowerCase().includes('f') ? DEFAULT_FEMALE : DEFAULT_MALE) : (chatUser && String(chatUser.gender || '').toLowerCase().includes('f') ? DEFAULT_FEMALE : DEFAULT_MALE);
+
+      if (isSent) {
+        htmlString += `
+          <div class="message-row sent-row">
+            <div class="message sent"><span>${safeMsg}</span><span style="font-size: 10px; color: ${timeColor}; align-self: flex-end; margin-top: 2px; margin-bottom: -4px;">${timeStr}</span></div>
+            <img class="msg-avatar" src="${senderAvatar}" onerror="this.onerror=null;this.src='${senderFallback}'" alt="">
+          </div>`;
+      } else {
+        htmlString += `
+          <div class="message-row received-row">
+            <img class="msg-avatar" src="${senderAvatar}" onerror="this.onerror=null;this.src='${senderFallback}'" alt="">
+            <div class="message received"><span>${safeMsg}</span><span style="font-size: 10px; color: ${timeColor}; align-self: flex-end; margin-top: 2px; margin-bottom: -4px;">${timeStr}</span></div>
+          </div>`;
+      }
     }
   });
 
-  const typingHTML = isOtherUserTyping ? `
-    <div class="message received typing-indicator-wrapper" style="width: fit-content; padding: 14px 18px;">
-      <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
-    </div>` : '';
-
-  const fullHTML = htmlString + typingHTML;
-  if (activeChatView.innerHTML === fullHTML) return;
-
-  const wasAtBottom = activeChatView.scrollHeight - activeChatView.scrollTop <= activeChatView.clientHeight + 70;
-  activeChatView.innerHTML = fullHTML || `<div class="empty-chat-state" style="padding: 40px 20px;"><p style="font-size: 14px;">No messages yet. Say hello 👋</p></div>`;
-
-  if (forceScroll || wasAtBottom) activeChatView.scrollTop = activeChatView.scrollHeight;
+  cachedMessagesHTML = htmlString;
+  localStorage.setItem(cacheKey, htmlString);
+  renderActiveChatUI(forceScroll);
 }
 
-async function markMessagesRead(ids) {
-  if (!ids || ids.length === 0) return;
+function renderActiveChatUI(forceScroll = false) {
+  const baseHTML = cachedMessagesHTML || "";
+  const typingHTML = isOtherUserTyping ? `
+      <div class="message received typing-indicator-wrapper" style="width: fit-content; padding: 14px 18px;">
+        <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+      </div>` : '';
 
-  currentThreadMessages = currentThreadMessages.map(m => ids.includes(m.id) ? { ...m, is_read: true } : m);
-  setCachedThread(currentChatUserId, currentPostId, currentPostType, currentThreadMessages);
+  if (activeChatView.innerHTML === baseHTML + typingHTML) return;
 
-  rawMessagesCache = rawMessagesCache.map(m => ids.includes(m.id) ? { ...m, is_read: true } : m);
-  saveRawMessagesCache();
-  renderChatListFromMessages(rawMessagesCache, true);
+  const wasAtBottom = activeChatView.scrollHeight - activeChatView.scrollTop <= activeChatView.clientHeight + 50;
+  if (activeChatView.innerHTML !== baseHTML) activeChatView.innerHTML = baseHTML;
 
-  db.from("messages").update({ is_read: true }).in("id", ids).then(({ error }) => {
-    if (error) console.warn("Read receipt update failed:", error);
-  });
+  const existingTyping = activeChatView.querySelector('.typing-indicator-wrapper');
+  if (isOtherUserTyping && !existingTyping) {
+    const temp = document.createElement('div');
+    temp.innerHTML = typingHTML;
+    activeChatView.appendChild(temp.firstElementChild);
+  } else if (!isOtherUserTyping && existingTyping) {
+    existingTyping.remove();
+  }
+
+  if (forceScroll || wasAtBottom) {
+    activeChatView.scrollTop = activeChatView.scrollHeight;
+  }
 }
 
 /* ---------------- SEND MESSAGE ---------------- */
 async function sendMessage() {
+  if (isSendingMessage) return;
+
   const text = msgInput.value.trim();
   if (!text || !isValidId(currentChatUserId)) return;
-  if (currentChatUserId === currentUser.id) {
-    alert("This is your own post.");
+  if (currentChatUserId === currentUser.id) { alert("This is your own post."); return; }
+
+  if (currentPostMeta && !isPostChatAllowed(currentPostMeta)) {
+    alert("This property is inactive. Chat is read-only.");
     return;
   }
 
-  // Important: check the latest post status before sending.
-  // This blocks both the other user and the post owner when the post is inactive.
-  const canSendForPost = await refreshPostStatusBeforeSend();
-  if (!canSendForPost) {
-    try { msgInput.blur(); } catch (e) {}
-    alert("This post is inactive. Chat is read-only.");
-    return;
-  }
+  isSendingMessage = true;
+  if (sendBtn) sendBtn.disabled = true;
 
   isTyping = false;
   clearTimeout(typingTimeout);
@@ -1713,88 +1282,49 @@ async function sendMessage() {
 
   const payloadPostId = isValidId(currentPostId) ? currentPostId : null;
   const payloadPostType = normalizePostType(currentPostType || (currentPostMeta && currentPostMeta.postKind) || requestedType || "") || null;
-  const oldText = text;
+  const originalText = text;
+
   msgInput.value = "";
 
-  const optimisticMsg = {
-    id: `local_${Date.now()}_${Math.random().toString(16).slice(2)}`,
-    sender_id: currentUser.id,
-    receiver_id: currentChatUserId,
-    post_id: payloadPostId,
-    post_type: payloadPostType,
-    room_id: payloadPostType === "available" ? payloadPostId : null,
-    message: oldText,
-    is_read: false,
-    is_first_message: currentThreadMessages.filter(m => !String(m.id || '').startsWith('local_')).length === 0,
-    is_admin_message: false,
-    sender_role: 'user',
-    delivery_status: 'sending',
-    created_at: new Date().toISOString()
-  };
-
-  currentThreadMessages = mergeMessages(currentThreadMessages, [optimisticMsg]);
-  setCachedThread(currentChatUserId, payloadPostId, payloadPostType, currentThreadMessages);
-  mergeRawMessages([optimisticMsg]);
-  renderActiveChatUI(true);
-  renderChatListFromMessages(rawMessagesCache, true);
-  keepInputVisible(false);
-
-  const insertPayload = {
-    sender_id: currentUser.id,
-    receiver_id: currentChatUserId,
-    post_id: payloadPostId,
-    post_type: payloadPostType,
-    room_id: payloadPostType === "available" ? payloadPostId : null,
-    message: oldText,
-    is_read: false,
-    is_first_message: optimisticMsg.is_first_message,
-    is_admin_message: false,
-    sender_role: 'user'
-  };
-
   try {
-    // First insert normally. This does not depend on realtime and does not require SELECT permission.
-    const { error } = await withTimeout(
-      db.from("messages").insert(insertPayload),
-      15000,
-      "Network timeout while sending message"
-    );
+    const { data: existingCandidates } = await db
+      .from("messages")
+      .select("id,sender_id,receiver_id,post_id,room_id,post_type,listing_type,created_at,message")
+      .or(getPairFilter(currentChatUserId))
+      .order("created_at", { ascending: true });
 
-    if (error) throw error;
+    const existing = dedupeMessages(existingCandidates || []).filter(m => messageMatchesPost(m, payloadPostId, payloadPostType));
 
-    // Insert succeeded. Remove the visible "sending" label immediately.
-    // A follow-up sync/realtime will replace this local item with the real server row.
-    setLocalMessageDeliveryState(optimisticMsg.id, 'sent', payloadPostId, payloadPostType);
-    renderActiveChatUI(true);
-    renderChatListFromMessages(rawMessagesCache, true);
-
-    const syncAfterSend = () => {
-      if (!currentChatUserId) return;
-      loadMessages(currentChatUserId, payloadPostId, payloadPostType, false, false);
+    const insertPayload = {
+      sender_id: currentUser.id,
+      receiver_id: currentChatUserId,
+      post_id: payloadPostId,
+      post_type: payloadPostType,
+      room_id: payloadPostType === "available" ? payloadPostId : null,
+      message: originalText,
+      is_read: false,
+      is_first_message: existing.length === 0,
+      is_admin_message: false,
+      sender_role: 'user'
     };
 
-    // Run two syncs because some mobile WebViews delay network/realtime events.
-    setTimeout(syncAfterSend, 350);
-    setTimeout(syncAfterSend, 1600);
+    const { error } = await db.from("messages").insert(insertPayload);
+    if (error) {
+      msgInput.value = originalText;
+      alert("Message not sent: " + error.message);
+      return;
+    }
 
-    try { msgInput.focus({ preventScroll: true }); } catch (e) {}
-    keepInputVisible(false);
-  } catch (error) {
-    currentThreadMessages = currentThreadMessages.filter(m => m.id !== optimisticMsg.id);
-    setCachedThread(currentChatUserId, payloadPostId, payloadPostType, currentThreadMessages);
-    rawMessagesCache = rawMessagesCache.filter(m => m.id !== optimisticMsg.id);
-    saveRawMessagesCache();
-    renderActiveChatUI(true);
-    renderChatListFromMessages(rawMessagesCache, true);
-    msgInput.value = oldText;
-    console.error("Message send failed:", error);
-    alert("Message not sent: " + (error && error.message ? error.message : "Please try again."));
+    await loadMessages(currentChatUserId, payloadPostId, payloadPostType, true);
+    loadChats(true);
+    msgInput.focus();
+  } finally {
+    isSendingMessage = false;
+    if (sendBtn) sendBtn.disabled = false;
   }
 }
 
-function handleKeyPress(e) {
-  if (e.key === "Enter") sendMessage();
-}
+function handleKeyPress(e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendMessage(); } }
 
 /* ---------------- NAVIGATION ---------------- */
 function buildRoomDetailsBackUrl() {
@@ -1836,8 +1366,17 @@ function cameFromRoomDetailsPage() {
 }
 
 function needsRoomDetailsHistoryBridge() {
-  if (isRealDesktopLayout()) return false;
+  if (window.innerWidth >= 900) return false;
   if (!shouldReturnToRoomDetails()) return false;
+
+  /*
+    If chat was opened from roomdetails.html, do NOT add an extra history entry.
+    Browser/custom back should naturally return to that same details page, then the next back goes to index.
+
+    If chat was opened directly from index/dashboard, add one temporary chat state.
+    Pressing back first lands on that temporary state, then this page replaces it with roomdetails.html.
+    Result: index -> roomdetails, with no chat/details loop.
+  */
   return !cameFromRoomDetailsPage();
 }
 
@@ -1855,20 +1394,23 @@ function setMobileActiveHistoryGuard() {
 }
 
 function closeActiveChatToList(updateUrl = true) {
-  appContainer.classList.remove("chat-active", "keyboard-open");
+  appContainer.classList.remove("chat-active");
   chatHeader.classList.add("hidden");
   activeChatView.classList.add("hidden");
   inputArea.classList.add("hidden");
   inactiveBanner.classList.add("hidden");
+  updateThreadContext(null);
   emptyChatState.classList.remove("hidden");
 
   currentChatUserId = null;
   currentPostId = null;
   currentPostType = null;
   currentPostMeta = null;
-  currentThreadMessages = [];
   chatUser = null;
+  cachedMessagesHTML = "";
   isOtherUserTyping = false;
+  isSendingMessage = false;
+  if (sendBtn) sendBtn.disabled = false;
   currentChatOpenOrigin = "chatlist";
   activeHistoryGuardReady = false;
 
@@ -1883,7 +1425,6 @@ function closeActiveChatToList(updateUrl = true) {
   }
 
   renderChats(allChats);
-  applyViewportFix();
 }
 
 function openRoom(id, postKind = "") {
