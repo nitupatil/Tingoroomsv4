@@ -6240,5 +6240,719 @@ setInterval(() => {
 
 </script>
 
+
+
+<style id="tingo-final-fit-card-style">
+/* =====================================================
+   FINAL MOBILE FIT CARD
+   Desktop is intentionally untouched. Mobile is a strict
+   image-left / info-right layout with no cropping or overflow.
+   ===================================================== */
+@media (max-width: 899px) {
+  html,
+  body,
+  .app-container {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .main-content {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 8px 7px calc(var(--safe-bottom) + 12px) !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Keep Rooms Available / Rooms Required visible like earlier. */
+  .mode-switch-wrap,
+  .mode-switch-wrap.compact {
+    position: sticky !important;
+    top: 118px !important;
+    z-index: 955 !important;
+    width: 100% !important;
+    padding: 0 12px 9px !important;
+    background: rgba(248, 250, 252, 0.86) !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+
+  .mode-switch-wrap.compact .mode-switch {
+    display: grid !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn,
+  .mode-switch-wrap.compact #modeAvailableBtn,
+  .mode-switch-wrap.compact #modeNeededBtn {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 38px !important;
+    padding: 0 10px !important;
+    border-radius: 999px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn.active {
+    box-shadow: 0 8px 16px var(--primary-glow) !important;
+  }
+
+  .mode-switch-wrap.compact .mode-label,
+  .mode-switch-wrap.compact .mode-btn .material-symbols-rounded {
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  .mode-btn {
+    font-size: 11.5px !important;
+  }
+
+  .filter-bar {
+    overflow-x: auto !important;
+    max-width: 100% !important;
+  }
+
+  .filter-select {
+    max-width: 46vw !important;
+    min-width: 118px !important;
+  }
+
+  .filter-select.hidden-for-mode {
+    display: none !important;
+  }
+
+  .card.mobile-full-listing-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+    border-radius: 6px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #D5DFEC !important;
+    box-shadow: 0 5px 14px rgba(15, 23, 42, 0.075) !important;
+    contain-intrinsic-size: 236px 390px !important;
+  }
+
+  .mobile-card-top {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(118px, 36%) minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    min-height: 232px !important;
+    overflow: hidden !important;
+  }
+
+  .mobile-card-thumb,
+  .mobile-requirement-thumb {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 232px !important;
+    overflow: hidden !important;
+    border-radius: 0 !important;
+    background: #F8FAFC !important;
+    border-right: 1px solid #E2E8F0 !important;
+  }
+
+  .mobile-card-thumb::after,
+  .mobile-requirement-thumb::after {
+    display: none !important;
+  }
+
+  .mobile-card-thumb .slides-track {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .mobile-card-thumb img,
+  .mobile-card-thumb img.slide {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    background: #F8FAFC !important;
+    display: block !important;
+  }
+
+  /* Left side should remain only image; no badges over photo. */
+  .mobile-owner-icon,
+  .mobile-image-badge {
+    display: none !important;
+  }
+
+  .mobile-card-info {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 7px 8px 7px 9px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    overflow: hidden !important;
+  }
+
+  .mobile-title-row {
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 5px !important;
+  }
+
+  .mobile-card-title {
+    min-width: 0 !important;
+    color: #0F172A !important;
+    font-size: 13.2px !important;
+    line-height: 1.16 !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.025em !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
+  }
+
+  .mobile-views {
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    color: #475569 !important;
+    font-size: 10px !important;
+    font-weight: 850 !important;
+    line-height: 1 !important;
+    padding-top: 1px !important;
+  }
+
+  .mobile-views .material-symbols-rounded {
+    color: #10B981 !important;
+    font-size: 13px !important;
+  }
+
+  .mobile-owner-line,
+  .mobile-address-line {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+    color: #64748B !important;
+    font-size: 10px !important;
+    line-height: 1.18 !important;
+    font-weight: 750 !important;
+    overflow: hidden !important;
+  }
+
+  .mobile-owner-line {
+    align-items: center !important;
+  }
+
+  .mobile-owner-line .material-symbols-rounded,
+  .mobile-address-line .material-symbols-rounded {
+    flex: 0 0 auto !important;
+    font-size: 13px !important;
+    color: #F97316 !important;
+  }
+
+  .mobile-owner-line span:last-child,
+  .mobile-address-text {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+
+  .mobile-owner-line span:last-child {
+    display: block !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .mobile-address-text {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+  }
+
+  .mobile-field-list {
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px !important;
+  }
+
+  .mobile-field-list .mobile-field.full {
+    grid-column: 1 / -1 !important;
+  }
+
+  .mobile-field {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 4px 5px !important;
+    border-radius: 5px !important;
+    background: #F8FAFC !important;
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    overflow: hidden !important;
+  }
+
+  .mobile-field-label {
+    display: block !important;
+    color: #64748B !important;
+    font-size: 7.8px !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 2px !important;
+  }
+
+  .mobile-field-value {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    display: block !important;
+    color: #16245A !important;
+    font-size: 10.4px !important;
+    line-height: 1.12 !important;
+    font-weight: 900 !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  .mobile-field-value.price {
+    font-size: 12.2px !important;
+    letter-spacing: -0.02em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .mobile-field-value.muted {
+    color: #334155 !important;
+  }
+
+  .mobile-field.no-broker .mobile-field-value {
+    color: #047857 !important;
+  }
+
+  .mobile-card-actions {
+    min-width: 0 !important;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(48px, 1fr)) !important;
+    gap: 4px !important;
+    padding: 0 !important;
+    margin-top: auto !important;
+    border-top: 0 !important;
+    background: transparent !important;
+  }
+
+  .mobile-action-btn {
+    min-width: 0 !important;
+    min-height: 29px !important;
+    padding: 4px 3px !important;
+    border: 0 !important;
+    border-radius: 5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    color: #FFFFFF !important;
+    background: var(--primary-gradient) !important;
+    box-shadow: none !important;
+    font-size: 9px !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    cursor: pointer !important;
+  }
+
+  .mobile-action-btn.call,
+  .mobile-action-btn.whatsapp {
+    color: #047857 !important;
+    background: #DCFCE7 !important;
+  }
+
+  .mobile-action-btn .material-symbols-rounded {
+    flex: 0 0 auto !important;
+    font-size: 13px !important;
+  }
+
+  .mobile-requirement-thumb {
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.36), transparent 26%),
+      linear-gradient(135deg, #6366F1 0%, #06B6D4 100%) !important;
+  }
+
+  .mobile-requirement-icon {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 62px !important;
+    height: 62px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #FFFFFF !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.34) !important;
+    box-shadow: 0 14px 26px rgba(15, 23, 42, 0.16) !important;
+  }
+
+  .mobile-requirement-icon .material-symbols-rounded {
+    font-size: 36px !important;
+  }
+}
+
+@media (max-width: 374px) {
+  .mobile-card-top {
+    grid-template-columns: minmax(106px, 35%) minmax(0, 1fr) !important;
+    min-height: 238px !important;
+  }
+
+  .mobile-card-thumb,
+  .mobile-requirement-thumb {
+    min-height: 238px !important;
+  }
+
+  .mobile-card-info {
+    padding: 6px 6px 6px 7px !important;
+    gap: 3px !important;
+  }
+
+  .mobile-card-title { font-size: 12.2px !important; }
+  .mobile-owner-line,
+  .mobile-address-line { font-size: 9.3px !important; }
+  .mobile-field { padding: 3px 4px !important; }
+  .mobile-field-label { font-size: 7.2px !important; }
+  .mobile-field-value { font-size: 9.5px !important; }
+  .mobile-field-value.price { font-size: 11px !important; }
+  .mobile-action-btn { min-height: 27px !important; font-size: 8.4px !important; }
+  .mobile-action-btn .material-symbols-rounded { font-size: 12px !important; }
+}
+
+@media (min-width: 900px) {
+  /* Desktop stays original vertical layout. */
+  .filter-select.hidden-for-mode {
+    display: inline-flex !important;
+  }
+}
+</style>
+
+
+<script id="tingo-final-fit-card-script">
+(function() {
+  function setTextIfFound(selector, text) {
+    const el = document.querySelector(selector);
+    if (el) el.textContent = text;
+  }
+
+  setTextIfFound('#modeAvailableBtn .mode-label', 'Rooms Available');
+  setTextIfFound('#modeNeededBtn .mode-label', 'Rooms Required');
+
+  window.updateModeSwitchCompact = function() {
+    const wrap = document.getElementById('modeSwitchWrap');
+    if (!wrap) return;
+    wrap.classList.remove('compact');
+  };
+
+  window.tingoFormatMoney = function(value, fallback = '0') {
+    const raw = String(value ?? '').trim();
+    if (!raw) return formatListingRent(fallback);
+    return formatListingRent(raw);
+  };
+
+  window.tingoOwnerName = function(item, fallback = 'Posted by user') {
+    const ownerObj = item?.users || item?.user || item?.owner || {};
+    return item?.name || ownerObj?.name || fallback;
+  };
+
+  window.tingoBrokerageText = function(room) {
+    const type = String(room?.brokerage_type || '').trim();
+    const amount = String(room?.brokerage_amount || '').trim();
+    if (!type || type.toLowerCase() === 'no brokerage' || type.toLowerCase().includes('no broker')) return 'No Brokerage';
+    if (amount) return `${type}: ${tingoFormatMoney(amount)}`;
+    return type;
+  };
+
+  window.tingoIsNoBrokerage = function(room) {
+    const type = String(room?.brokerage_type || '').trim().toLowerCase();
+    return !type || type === 'no brokerage' || type.includes('no broker');
+  };
+
+  window.tingoActionButtons = function(item, source) {
+    const safeId = escapeHtml(item?.id || '');
+    const safeUserId = escapeHtml(item?.user_id || '');
+    const sourceType = source === 'requirement' ? 'requirement' : 'available';
+    let actions = '';
+
+    if (item?.show_contact && item?.contact_number) {
+      actions += `<button class="mobile-action-btn call" type="button" onclick="triggerAction(event, 'call', '${safeId}', '${escapeHtml(item.contact_number)}', '${sourceType}')"><span class="material-symbols-rounded">call</span>Call</button>`;
+    }
+
+    if (item?.show_whatsapp && item?.whatsapp_number) {
+      actions += `<button class="mobile-action-btn whatsapp" type="button" onclick="triggerAction(event, 'wa', '${safeId}', '${escapeHtml(item.whatsapp_number)}', '${sourceType}')"><span class="material-symbols-rounded">chat</span>WP</button>`;
+    }
+
+    if (safeUserId) {
+      actions += `<button class="mobile-action-btn message" type="button" onclick="startChat(event, '${safeId}', '${safeUserId}')"><span class="material-symbols-rounded">forum</span>Msg</button>`;
+    }
+
+    if (!actions) {
+      actions = `<button class="mobile-action-btn message" type="button" onclick="event.stopPropagation(); openRoom('${safeId}', '${sourceType === 'requirement' ? 'requirement' : 'available'}')"><span class="material-symbols-rounded">visibility</span>Details</button>`;
+    }
+    return actions;
+  };
+
+  function buildMobileField(label, value, extraClass = '') {
+    const safeValue = String(value ?? '').trim() || 'Not added';
+    return `<div class="mobile-field ${extraClass}"><span class="mobile-field-label">${escapeHtml(label)}</span><span class="mobile-field-value ${extraClass.includes('price-field') ? 'price' : ''} ${extraClass.includes('muted-field') ? 'muted' : ''}">${escapeHtml(safeValue)}</span></div>`;
+  }
+
+  window.tingoMobileAvailableCard = function(room) {
+    let imagesArr = [];
+    if (room.images && room.images.length > 0) imagesArr = room.images.split(',').map(s => s.trim()).filter(Boolean);
+    if (!imagesArr.length) imagesArr = ['https://via.placeholder.com/600x420?text=No+Image'];
+
+    const ownerName = tingoOwnerName(room);
+    const titleText = room.title || room.type || 'Room For Rent';
+    const locationText = room.location || 'Address not added';
+    const rentText = `${tingoFormatMoney(room.rent || 0)}/mo`;
+    const depositText = room.deposit ? tingoFormatMoney(room.deposit) : 'Not added';
+    const categoryText = cleanSearchTerm(room.category || room.type || 'Room');
+    const brokerageText = tingoBrokerageText(room);
+    const views = getListingViews(room);
+    const slidesHtml = imagesArr.map(src => `<img class="slide" loading="lazy" decoding="async" src="${escapeHtml(src)}" alt="${escapeHtml(titleText)}">`).join('');
+    const distanceField = Number.isFinite(Number(room._distanceKm)) ? buildMobileField('Distance', `${Number(room._distanceKm).toFixed(Number(room._distanceKm) < 10 ? 1 : 0)} km`, 'full muted-field') : '';
+
+    return `
+      <div class="card mobile-full-listing-card" onclick="openRoom('${escapeHtml(room.id)}', 'available')">
+        <div class="mobile-card-top">
+          <div class="mobile-card-thumb card-img-wrapper">
+            <div class="slides-track">${slidesHtml}</div>
+          </div>
+
+          <div class="mobile-card-info">
+            <div class="mobile-title-row">
+              <div class="mobile-card-title">${escapeHtml(titleText)}</div>
+              <div class="mobile-views"><span class="material-symbols-rounded">visibility</span>${escapeHtml(views)}</div>
+            </div>
+
+            <div class="mobile-owner-line"><span class="material-symbols-rounded">account_circle</span><span>Uploaded by ${escapeHtml(ownerName)}</span></div>
+            <div class="mobile-address-line"><span class="material-symbols-rounded">location_on</span><span class="mobile-address-text">${escapeHtml(locationText)}</span></div>
+
+            <div class="mobile-field-list">
+              ${buildMobileField('Rent', rentText, 'price-field')}
+              ${buildMobileField('Deposit', depositText, 'muted-field')}
+              ${buildMobileField('Category', categoryText, 'full')}
+              ${buildMobileField('Brokerage', brokerageText, `full ${tingoIsNoBrokerage(room) ? 'no-broker' : ''}`)}
+              ${distanceField}
+            </div>
+
+            <div class="mobile-card-actions">${tingoActionButtons(room, 'available')}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  window.tingoMobileRequirementCard = function(req) {
+    const ownerName = tingoOwnerName(req);
+    const titleText = req.title || 'Room Required';
+    const locationText = req.location || 'Preferred address not added';
+    const budgetText = req.budget || req.rent || req.expected_rent ? tingoFormatMoney(req.budget || req.rent || req.expected_rent) : 'Not added';
+    const depositText = req.deposit ? tingoFormatMoney(req.deposit) : 'Not added';
+    const categoryText = cleanSearchTerm(req.category || req.type || 'Any type');
+    const statusText = req.status || 'active';
+    const views = getListingViews(req);
+    const distanceField = Number.isFinite(Number(req._distanceKm)) ? buildMobileField('Distance', `${Number(req._distanceKm).toFixed(Number(req._distanceKm) < 10 ? 1 : 0)} km`, 'full muted-field') : '';
+
+    return `
+      <div class="card mobile-full-listing-card" onclick="openRoom('${escapeHtml(req.id)}', 'requirement')">
+        <div class="mobile-card-top">
+          <div class="mobile-requirement-thumb">
+            <div class="mobile-requirement-icon"><span class="material-symbols-rounded">person_search</span></div>
+          </div>
+
+          <div class="mobile-card-info">
+            <div class="mobile-title-row">
+              <div class="mobile-card-title">${escapeHtml(titleText)}</div>
+              <div class="mobile-views"><span class="material-symbols-rounded">visibility</span>${escapeHtml(views)}</div>
+            </div>
+
+            <div class="mobile-owner-line"><span class="material-symbols-rounded">account_circle</span><span>Uploaded by ${escapeHtml(ownerName)}</span></div>
+            <div class="mobile-address-line"><span class="material-symbols-rounded">location_on</span><span class="mobile-address-text">${escapeHtml(locationText)}</span></div>
+
+            <div class="mobile-field-list">
+              ${buildMobileField('Budget', budgetText, 'price-field')}
+              ${buildMobileField('Deposit', depositText, 'muted-field')}
+              ${buildMobileField('Category', categoryText, 'full')}
+              ${buildMobileField('Status', statusText, 'full no-broker')}
+              ${distanceField}
+            </div>
+
+            <div class="mobile-card-actions">${tingoActionButtons(req, 'requirement')}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  window.renderAvailableCard = function(room) {
+    return tingoIsDesktopFeed() ? tingoLazyDesktopAvailable(room) : tingoMobileAvailableCard(room);
+  };
+
+  window.renderRequirementCard = function(req) {
+    return tingoIsDesktopFeed() ? tingoDesktopRequirementCard(req) : tingoMobileRequirementCard(req);
+  };
+
+  async function fetchPostOptionRows() {
+    const active = await db.from('room_posts').select('type,brokerage_type,status').eq('status', 'active').limit(1000);
+    if (!active.error) return active;
+    return await db.from('room_posts').select('type,brokerage_type').limit(1000);
+  }
+
+  async function fetchRequirementOptionRows() {
+    const withStatus = await db.from('room_requirements').select('type,status').limit(1000);
+    if (!withStatus.error) return withStatus;
+    return await db.from('room_requirements').select('type').limit(1000);
+  }
+
+  function isActiveOptionRow(row) {
+    const status = String(row?.status || 'active').trim().toLowerCase();
+    return !status || status === 'active' || (!status.includes('inactive') && !status.includes('disabled') && !status.includes('rejected'));
+  }
+
+  function tingoOptionExists(select, value) {
+    if (!select || !value) return false;
+    return Array.from(select.options || []).some(option => option.value === value);
+  }
+
+  window.updateFilterUI = function() {
+    const filters = getActiveFilters();
+    const typeFilter = document.getElementById('filterType');
+    const brokerageFilter = document.getElementById('filterBrokerage');
+    const clearBtn = document.getElementById('clearFilters');
+
+    typeFilter?.classList.toggle('filter-active', Boolean(filters.type));
+
+    if (brokerageFilter) {
+      if (activePostMode === 'needed') {
+        brokerageFilter.value = '';
+        brokerageFilter.classList.add('hidden-for-mode');
+        brokerageFilter.classList.remove('filter-active');
+      } else {
+        brokerageFilter.classList.remove('hidden-for-mode');
+        brokerageFilter.classList.toggle('filter-active', Boolean(filters.brokerage));
+      }
+    }
+
+    const hasFilters = Boolean((typeFilter && typeFilter.value) || (activePostMode === 'available' && brokerageFilter && brokerageFilter.value));
+    clearBtn?.classList.toggle('visible', hasFilters);
+  };
+
+  window.loadFilterOptions = async function() {
+    const typeSelect = document.getElementById('filterType');
+    const brokerageSelect = document.getElementById('filterBrokerage');
+    if (!typeSelect) return;
+
+    const selectedType = typeSelect.value;
+    const selectedBrokerage = brokerageSelect ? brokerageSelect.value : '';
+
+    if (activePostMode === 'needed') {
+      const requirements = await fetchRequirementOptionRows();
+      if (requirements.error) console.warn('Requirement type option loading error', requirements.error);
+      const rows = (requirements.data || []).filter(isActiveOptionRow);
+      fillSelectOptions('filterType', rows.map(row => row.type), 'All required types');
+      if (tingoOptionExists(typeSelect, selectedType)) typeSelect.value = selectedType;
+      if (brokerageSelect) brokerageSelect.value = '';
+      updateFilterUI();
+      return;
+    }
+
+    const posts = await fetchPostOptionRows();
+    if (posts.error) console.warn('Room post type option loading error', posts.error);
+    const rows = (posts.data || []).filter(isActiveOptionRow);
+    fillSelectOptions('filterType', rows.map(row => row.type), 'All room types');
+    fillSelectOptions('filterBrokerage', rows.map(row => row.brokerage_type || 'No Brokerage'), 'All brokerage');
+    if (tingoOptionExists(typeSelect, selectedType)) typeSelect.value = selectedType;
+    if (brokerageSelect && tingoOptionExists(brokerageSelect, selectedBrokerage)) brokerageSelect.value = selectedBrokerage;
+    updateFilterUI();
+  };
+
+  window.setPostMode = async function(mode) {
+    activePostMode = mode === 'needed' ? 'needed' : 'available';
+    document.getElementById('modeAvailableBtn')?.classList.toggle('active', activePostMode === 'available');
+    document.getElementById('modeNeededBtn')?.classList.toggle('active', activePostMode === 'needed');
+
+    const typeFilter = document.getElementById('filterType');
+    const brokerageFilter = document.getElementById('filterBrokerage');
+    if (typeFilter) typeFilter.value = '';
+    if (brokerageFilter) brokerageFilter.value = '';
+
+    selectedSearchPlace = null;
+    hideSuggestionBox();
+    if (typeof tingoClearFeedCaches === 'function') tingoClearFeedCaches();
+    try { localStorage.removeItem('tingo_filter_html_v3'); } catch (e) {}
+    await loadFilterOptions();
+    loadRooms(getCurrentSearchText());
+  };
+
+  const originalBindFilterEvents = window.bindFilterEvents;
+  window.bindFilterEvents = function() {
+    if (originalBindFilterEvents && !document.body.dataset.finalFilterBound) {
+      originalBindFilterEvents();
+      document.body.dataset.finalFilterBound = '1';
+    }
+    ['filterType', 'filterBrokerage'].forEach(id => {
+      const element = document.getElementById(id);
+      if (!element || element.dataset.finalBound === '1') return;
+      element.dataset.finalBound = '1';
+      element.addEventListener('change', () => {
+        selectedSearchPlace = null;
+        hideSuggestionBox();
+        updateFilterUI();
+        if (typeof tingoClearFeedCaches === 'function') tingoClearFeedCaches();
+        loadRooms(getCurrentSearchText());
+      });
+    });
+  };
+
+  function finalRefreshVisibleFeed() {
+    updateModeSwitchCompact();
+    loadFilterOptions().finally(() => {
+      if (typeof tingoClearFeedCaches === 'function') tingoClearFeedCaches();
+      loadRooms(getCurrentSearchText(), selectedSearchPlace);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', finalRefreshVisibleFeed, { once: true });
+  } else {
+    setTimeout(finalRefreshVisibleFeed, 60);
+  }
+})();
+</script>
+
 </body>
 </html>
