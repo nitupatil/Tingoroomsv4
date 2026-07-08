@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Chats - TingoRooms</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +36,7 @@
 
 html, body {
   height: 100%;
+  height: 100dvh; /* Dynamic viewport height handles keyboards automatically */
   width: 100%;
   overflow: hidden; 
 }
@@ -53,6 +54,7 @@ body {
   margin: 0 auto;
   background: var(--bg);
   height: 100%;
+  height: 100dvh; /* Inherit dynamic height */
   position: relative;
   box-shadow: 0 20px 40px rgba(0,0,0,0.1);
   display: flex;
@@ -412,7 +414,9 @@ if (window.visualViewport) {
     const container = document.getElementById('appContainer');
     if (container && window.innerWidth < 900) {
       container.style.height = window.visualViewport.height + 'px';
+      window.scrollTo(0, 0); // Prevent body from scrolling off-canvas
     }
+    
     if (!document.getElementById("activeChatView").classList.contains("hidden")) {
       const chatView = document.getElementById("activeChatView");
       chatView.scrollTop = chatView.scrollHeight;
@@ -437,6 +441,16 @@ const chatHeader = document.getElementById("chatHeader");
 const emptyChatState = document.getElementById("emptyChatState");
 const headerTitle = document.getElementById("headerTitle");
 const msgInput = document.getElementById("msgInput");
+
+// Aggressively scroll into view when the input is tapped
+msgInput.addEventListener('focus', () => {
+  setTimeout(() => {
+    const chatView = document.getElementById("activeChatView");
+    if (!chatView.classList.contains("hidden")) {
+      chatView.scrollTop = chatView.scrollHeight;
+    }
+  }, 300); // 300ms delay allows the OS keyboard sliding animation to finish
+});
 
 let allChats = [];
 let chatUser = null;
@@ -745,6 +759,28 @@ async function loadChats(background = false) {
   }
 
   const keys = Object.keys(map);
+
+  // --- OPTIMIZED BATCH FETCHING FOR USER PROFILES ---
+  const userIdsToFetch = [];
+  keys.forEach(key => {
+    if (!map[key].isAdminConvo && map[key].otherId) {
+      userIdsToFetch.push(map[key].otherId);
+    }
+  });
+
+  let profilesMap = {};
+  if (userIdsToFetch.length > 0) {
+    const { data: profiles, error: profileErr } = await db
+      .from("public_user_profiles")
+      .select("id,name,avatar_url,gender")
+      .in("id", userIdsToFetch);
+      
+    if (!profileErr && profiles) {
+      profiles.forEach(p => profilesMap[p.id] = p);
+    }
+  }
+  // --- END BATCH FETCHING ---
+
   for (let key of keys) {
     let chat = map[key];
     try {
@@ -755,11 +791,7 @@ async function loadChats(background = false) {
         chat.user = { id: chat.otherId, name: "TingoRooms Support", avatar_url: "https://cdn-icons-png.flaticon.com/512/6024/6024190.png", is_verified: true };
         chat.room = post || { title: 'Official Support', status: 'active', postKind: chat.postType || "" };
       } else {
-        const { data: user } = await db
-          .from("public_user_profiles")
-          .select("id,name,avatar_url,gender")
-          .eq("id", chat.otherId)
-          .maybeSingle();
+        const user = profilesMap[chat.otherId];
         if (user) { chat.user = user; chat.room = post; } else { delete map[key]; }
       }
     } catch (err) { delete map[key]; }
