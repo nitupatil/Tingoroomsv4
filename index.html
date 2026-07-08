@@ -1902,6 +1902,96 @@ button {
   }
 }
 
+
+/* SMOOTH EXPERIENCE UPDATE: faster paint, softer tap/scroll, low layout shift */
+html {
+  scroll-behavior: smooth;
+}
+
+.app-container,
+.main-content,
+.search-suggestions,
+#notificationPanel {
+  overscroll-behavior: contain;
+}
+
+.card {
+  contain: layout paint style;
+  content-visibility: auto;
+  contain-intrinsic-size: 320px 420px;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.card-img-wrapper img,
+.card-img-wrapper img.slide,
+.owner-avatar,
+.logo {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.card.preparing-open {
+  transform: scale(0.985);
+  opacity: 0.92;
+}
+
+.feed-skeleton-card {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.94);
+  border: 1px solid rgba(226,232,240,0.84);
+  box-shadow: 0 12px 28px rgba(15,23,42,0.06);
+}
+
+.feed-skeleton-img {
+  height: clamp(185px, 56vw, 230px);
+  background: linear-gradient(90deg, #E2E8F0 0%, #F1F5F9 45%, #E2E8F0 100%);
+  background-size: 220% 100%;
+  animation: feedShimmer 1.1s linear infinite;
+}
+
+.feed-skeleton-body {
+  padding: 12px;
+}
+
+.feed-skeleton-line {
+  height: 12px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #E2E8F0 0%, #F8FAFC 45%, #E2E8F0 100%);
+  background-size: 220% 100%;
+  animation: feedShimmer 1.1s linear infinite;
+}
+
+.feed-skeleton-line.short { width: 46%; }
+.feed-skeleton-line.medium { width: 68%; }
+.feed-skeleton-line.long { width: 88%; }
+
+@keyframes feedShimmer {
+  from { background-position: 220% 0; }
+  to { background-position: -220% 0; }
+}
+
+.instant-cache-flash {
+  animation: instantCacheIn 0.18s ease both;
+}
+
+@keyframes instantCacheIn {
+  from { opacity: 0.72; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 </style>
 </head>
 
@@ -4542,34 +4632,357 @@ window.addEventListener('resize', () => {
   window.__tingoNavResizeTimer = setTimeout(updateReusableButtonsFrame, 120);
 });
 
-/* INIT */
-loadFilterOptions();
-bindFilterEvents();
-setupModeSwitchScroll();
-loadRooms();
-
-// Check if user is logged in for alerts & periodic refreshes
-const initialUserCheck = JSON.parse(localStorage.getItem("user"));
-if (initialUserCheck) {
-  loadNotifications();
-  checkNewMessages();
-  subscribeNotifications();
-  syncOneSignalId(initialUserCheck); // Make sure returning users get their ID tracked!
-}
 
 /* =========================================
-   AUTO REFRESH INTERVAL
+   SMOOTH UI PERFORMANCE UPDATE
+   Cache-first feed + reduced polling + visible-card sliders
+   ========================================= */
+const TINGO_FEED_CACHE_PREFIX = "tingo_home_feed_v5";
+const TINGO_RAW_CACHE_PREFIX = "tingo_home_rows_v5";
+const TINGO_PROFILE_CACHE_KEY = "tingo_public_profiles_v3";
+const TINGO_FILTER_CACHE_KEY = "tingo_filter_html_v3";
+const TINGO_SUGGESTION_CACHE_PREFIX = "tingo_suggestions_v4";
+const TINGO_CACHE_TTL = 90 * 1000;
+const TINGO_FILTER_CACHE_TTL = 10 * 60 * 1000;
+let tingoLoadRoomsSeq = 0;
+let tingoFeedRealtimeChannel = null;
+let tingoLastFeedKey = "";
+let tingoInitialFeedPainted = false;
+
+function tingoSafeJsonRead(key, fallback = null) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function tingoSafeJsonWrite(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+}
+
+function tingoNow() {
+  return Date.now ? Date.now() : new Date().getTime();
+}
+
+function tingoCacheKeyForFeed(search = "", selectedPlace = null) {
+  const filters = getActiveFilters ? getActiveFilters() : { type: "", brokerage: "" };
+  const placeKey = selectedPlace ? (selectedPlace.label || selectedPlace.displayName || `${selectedPlace.lat || ""},${selectedPlace.lon || ""}`) : "";
+  return [
+    TINGO_FEED_CACHE_PREFIX,
+    activePostMode || "available",
+    normalizeSearchKey(cleanSearchTerm(search || "")),
+    normalizeSearchKey(filters.type || ""),
+    normalizeSearchKey(filters.brokerage || ""),
+    normalizeSearchKey(placeKey || "")
+  ].join("|");
+}
+
+function tingoRawRowsCacheKey() {
+  const filters = getActiveFilters ? getActiveFilters() : { type: "", brokerage: "" };
+  return [
+    TINGO_RAW_CACHE_PREFIX,
+    activePostMode || "available",
+    normalizeSearchKey(filters.type || ""),
+    normalizeSearchKey(filters.brokerage || "")
+  ].join("|");
+}
+
+function tingoClearFeedCaches() {
+  try {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith(TINGO_FEED_CACHE_PREFIX) || key.startsWith(TINGO_RAW_CACHE_PREFIX) || key.startsWith(TINGO_SUGGESTION_CACHE_PREFIX)) {
+        localStorage.removeItem(key);
+      }
+    });
+  } catch (e) {}
+}
+
+function tingoShowFeedSkeleton() {
+  const container = document.getElementById("roomList");
+  if (!container || tingoInitialFeedPainted) return;
+  const count = window.innerWidth >= 900 ? 6 : 4;
+  container.innerHTML = Array.from({ length: count }).map(() => `
+    <div class="feed-skeleton-card" aria-hidden="true">
+      <div class="feed-skeleton-img"></div>
+      <div class="feed-skeleton-body">
+        <div class="feed-skeleton-line long"></div>
+        <div class="feed-skeleton-line medium"></div>
+        <div class="feed-skeleton-line short"></div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function tingoRenderCachedFeed(search = "", selectedPlace = null) {
+  const key = tingoCacheKeyForFeed(search, selectedPlace);
+  const cached = tingoSafeJsonRead(key);
+  if (!cached || !Array.isArray(cached.items)) return false;
+
+  tingoLastFeedKey = key;
+  window.__tingoSkipNextFeedCacheWrite = true;
+  renderRooms(cached.items, cached.statusText || "");
+  window.__tingoSkipNextFeedCacheWrite = false;
+
+  const container = document.getElementById("roomList");
+  if (container) {
+    container.classList.add("instant-cache-flash");
+    setTimeout(() => container.classList.remove("instant-cache-flash"), 220);
+  }
+
+  tingoInitialFeedPainted = true;
+  return true;
+}
+
+const tingoOriginalAttachOwnerProfiles = attachOwnerProfiles;
+attachOwnerProfiles = async function(items) {
+  const rows = Array.isArray(items) ? items : [];
+  if (!rows.length) return rows;
+
+  const profileCache = tingoSafeJsonRead(TINGO_PROFILE_CACHE_KEY, {}) || {};
+  const ids = [...new Set(rows.map(item => item && item.user_id).filter(Boolean).map(String))];
+  const missingIds = ids.filter(id => !profileCache[id]);
+
+  if (missingIds.length) {
+    try {
+      const { data, error } = await db
+        .from("public_user_profiles")
+        .select("id,name,avatar_url,gender")
+        .in("id", missingIds);
+
+      if (!error && data) {
+        data.forEach(profile => {
+          if (profile && profile.id) profileCache[String(profile.id)] = profile;
+        });
+        tingoSafeJsonWrite(TINGO_PROFILE_CACHE_KEY, profileCache);
+      }
+    } catch (e) {
+      console.warn("Cached owner profile load skipped", e);
+    }
+  }
+
+  return rows.map(item => {
+    const profile = profileCache[String(item && item.user_id)] || null;
+    return {
+      ...item,
+      user: item.user || item.users || item.owner || profile,
+      users: item.users || item.user || item.owner || profile,
+      owner: item.owner || item.user || item.users || profile
+    };
+  });
+};
+
+if (typeof loadAllSearchRowsForMode === "function") {
+  const tingoOriginalLoadAllSearchRowsForMode = loadAllSearchRowsForMode;
+  loadAllSearchRowsForMode = async function() {
+    const key = tingoRawRowsCacheKey();
+    const cached = tingoSafeJsonRead(key);
+    if (cached && Array.isArray(cached.rows) && (tingoNow() - Number(cached.savedAt || 0)) < TINGO_CACHE_TTL) {
+      return cached.rows;
+    }
+
+    const rows = await tingoOriginalLoadAllSearchRowsForMode();
+    tingoSafeJsonWrite(key, { savedAt: tingoNow(), rows });
+    return rows;
+  };
+}
+
+const tingoOriginalRenderAvailableCard = renderAvailableCard;
+renderAvailableCard = function(room) {
+  let html = tingoOriginalRenderAvailableCard(room);
+  html = html.replace(/<img class="slide"/g, '<img class="slide" loading="lazy" decoding="async"');
+  html = html.replace(/<img class="owner-avatar"/g, '<img class="owner-avatar" loading="lazy" decoding="async"');
+  return html;
+};
+
+function tingoEnsureSliderObserver() {
+  if (window.__tingoSliderObserver) return window.__tingoSliderObserver;
+  window.__tingoSliderObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const wrapper = entry.target;
+      const track = wrapper.querySelector('.slides-track');
+      const slides = track ? track.querySelectorAll('img.slide') : [];
+      if (!track || slides.length <= 1) return;
+
+      function stopSlider() {
+        if (wrapper._sliderInterval) {
+          clearInterval(wrapper._sliderInterval);
+          wrapper._sliderInterval = null;
+        }
+      }
+
+      function startSlider() {
+        if (wrapper._sliderInterval) return;
+        let idx = Number(wrapper.dataset.sliderIndex || 0);
+        wrapper._sliderInterval = setInterval(() => {
+          if (document.hidden) return;
+          idx = (idx + 1) % slides.length;
+          wrapper.dataset.sliderIndex = String(idx);
+          track.style.transform = `translateX(-${idx * 100}%)`;
+        }, 2400);
+      }
+
+      if (entry.isIntersecting) startSlider();
+      else stopSlider();
+    });
+  }, { root: document.querySelector('.app-container') || null, rootMargin: '160px 0px', threshold: 0.01 });
+  return window.__tingoSliderObserver;
+}
+
+initCardSliders = function() {
+  const observer = tingoEnsureSliderObserver();
+  document.querySelectorAll('.card-img-wrapper').forEach(wrapper => {
+    if (wrapper.dataset.sliderBound === '1') return;
+    wrapper.dataset.sliderBound = '1';
+    wrapper.dataset.sliderIndex = '0';
+    const track = wrapper.querySelector('.slides-track');
+    if (track) track.style.transform = 'translateX(0)';
+    observer.observe(wrapper);
+
+    wrapper.addEventListener('mouseenter', () => {
+      if (wrapper._sliderInterval) {
+        clearInterval(wrapper._sliderInterval);
+        wrapper._sliderInterval = null;
+      }
+    }, { passive: true });
+
+    wrapper.addEventListener('mouseleave', () => {
+      observer.unobserve(wrapper);
+      observer.observe(wrapper);
+    }, { passive: true });
+  });
+};
+
+const tingoOriginalRenderRooms = renderRooms;
+renderRooms = function(items, statusText = "") {
+  tingoOriginalRenderRooms(items, statusText);
+  tingoInitialFeedPainted = true;
+
+  if (!window.__tingoSkipNextFeedCacheWrite && tingoLastFeedKey && Array.isArray(items)) {
+    tingoSafeJsonWrite(tingoLastFeedKey, {
+      savedAt: tingoNow(),
+      statusText,
+      items: items.slice(0, 48)
+    });
+  }
+};
+
+const tingoOriginalLoadRooms = loadRooms;
+loadRooms = async function(search = "", selectedPlace = null) {
+  const seq = ++tingoLoadRoomsSeq;
+  const key = tingoCacheKeyForFeed(search, selectedPlace);
+  tingoLastFeedKey = key;
+
+  const hasCache = tingoRenderCachedFeed(search, selectedPlace);
+  if (!hasCache) tingoShowFeedSkeleton();
+
+  try {
+    await tingoOriginalLoadRooms(search, selectedPlace);
+  } catch (error) {
+    console.error(error);
+    if (!hasCache) showAppPopup(error.message || "Unable to load posts right now.", "Network issue");
+  } finally {
+    if (seq === tingoLoadRoomsSeq) tingoInitialFeedPainted = true;
+  }
+};
+
+const tingoOriginalLoadFilterOptions = loadFilterOptions;
+loadFilterOptions = async function() {
+  const cached = tingoSafeJsonRead(TINGO_FILTER_CACHE_KEY);
+  const typeSelect = document.getElementById("filterType");
+  const brokerageSelect = document.getElementById("filterBrokerage");
+
+  if (cached && (tingoNow() - Number(cached.savedAt || 0)) < TINGO_FILTER_CACHE_TTL) {
+    if (typeSelect && cached.typeHtml) typeSelect.innerHTML = cached.typeHtml;
+    if (brokerageSelect && cached.brokerageHtml) brokerageSelect.innerHTML = cached.brokerageHtml;
+    if (typeof updateFilterUI === "function") updateFilterUI();
+  }
+
+  await tingoOriginalLoadFilterOptions();
+  tingoSafeJsonWrite(TINGO_FILTER_CACHE_KEY, {
+    savedAt: tingoNow(),
+    typeHtml: typeSelect ? typeSelect.innerHTML : "",
+    brokerageHtml: brokerageSelect ? brokerageSelect.innerHTML : ""
+  });
+};
+
+const tingoOriginalFetchDatabaseSuggestions = fetchDatabaseSuggestions;
+fetchDatabaseSuggestions = async function(searchText) {
+  const term = cleanSearchTerm(searchText);
+  const key = `${TINGO_SUGGESTION_CACHE_PREFIX}|${activePostMode}|${normalizeSearchKey(term)}|${normalizeSearchKey(getActiveFilters().type || "")}|${normalizeSearchKey(getActiveFilters().brokerage || "")}`;
+  const cached = tingoSafeJsonRead(key);
+  if (cached && Array.isArray(cached.items) && (tingoNow() - Number(cached.savedAt || 0)) < TINGO_CACHE_TTL) {
+    return cached.items;
+  }
+
+  const items = await tingoOriginalFetchDatabaseSuggestions(searchText);
+  tingoSafeJsonWrite(key, { savedAt: tingoNow(), items });
+  return items;
+};
+
+function tingoScheduleFeedRefresh() {
+  clearTimeout(window.__tingoFeedRefreshTimer);
+  window.__tingoFeedRefreshTimer = setTimeout(() => {
+    if (document.hidden) return;
+    tingoClearFeedCaches();
+    loadRooms(getCurrentSearchText(), selectedSearchPlace);
+    loadFilterOptions();
+  }, 450);
+}
+
+function subscribeFeedUpdates() {
+  if (tingoFeedRealtimeChannel) return;
+  tingoFeedRealtimeChannel = db.channel('tingo-home-feed-updates')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'room_posts' }, tingoScheduleFeedRefresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'room_requirements' }, tingoScheduleFeedRefresh)
+    .subscribe();
+}
+
+function tingoBindSmoothNavigationFeedback() {
+  const container = document.getElementById('roomList');
+  if (!container || container.dataset.smoothNavBound === '1') return;
+  container.dataset.smoothNavBound = '1';
+  container.addEventListener('click', event => {
+    const card = event.target.closest('.card');
+    if (!card) return;
+    card.classList.add('preparing-open');
+  }, { passive: true });
+}
+
+function initSmoothHomePage() {
+  tingoBindSmoothNavigationFeedback();
+  loadFilterOptions();
+  bindFilterEvents();
+  setupModeSwitchScroll();
+  loadRooms();
+  subscribeFeedUpdates();
+
+  const initialUserCheck = JSON.parse(localStorage.getItem("user"));
+  if (initialUserCheck) {
+    loadNotifications();
+    checkNewMessages();
+    subscribeNotifications();
+    syncOneSignalId(initialUserCheck);
+  }
+}
+
+/* INIT */
+initSmoothHomePage();
+
+/* =========================================
+   LIGHT BACKGROUND REFRESH
+   Realtime handles new posts; this is only a gentle fallback.
    ========================================= */
 setInterval(() => {
-  // Only search if input is empty, otherwise we override the user's active search
-  const searchInput = document.getElementById("search").value;
-  if(!searchInput && !hasActiveFilters()) {
-      loadRooms();
-      loadFilterOptions();
+  if (document.hidden) return;
+  const searchInputValue = document.getElementById("search")?.value || "";
+  if (!searchInputValue && !hasActiveFilters()) {
+    loadRooms();
   }
   loadNotifications();
   checkNewMessages();
-}, 5000); // every 5 sec
+}, 45000); // gentle fallback every 45 sec
 
 </script>
 
