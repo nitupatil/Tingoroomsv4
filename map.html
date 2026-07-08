@@ -627,6 +627,13 @@ let searchAreaCircle = null;
 let searchAreaMarker = null;
 
 const LOCATION_CONTEXT = "Pune, Maharashtra, India";
+const GEO_SEARCH_CONTEXTS = [
+  "Pune, Maharashtra, India",
+  "Pimpri-Chinchwad, Pune, Maharashtra, India",
+  "Maharashtra, India",
+  "India",
+  ""
+];
 const PUNE_CENTER = { lat: 18.5204, lng: 73.8567 };
 const TINGO_CHARACTER_IMG = "https://i.ibb.co/vC7LPp5C/image-removebg-preview-5.png";
 const SEARCH_AREA_RADIUS_METERS = 1800;
@@ -787,16 +794,58 @@ function normalizeSearchValue(value) {
   return cleanSearchTerm(value).toLowerCase();
 }
 
+function normalizeLoose(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function levenshteinDistance(a, b) {
+  a = normalizeLoose(a);
+  b = normalizeLoose(b);
+  if (!a || !b) return Math.max(a.length, b.length);
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+function fuzzyTokenMatch(word, token) {
+  word = normalizeLoose(word);
+  token = normalizeLoose(token);
+  if (!word || !token) return false;
+  if (word.includes(token) || token.includes(word)) return true;
+  if (token.length <= 2) return word.startsWith(token);
+  return levenshteinDistance(word.slice(0, Math.max(token.length, Math.min(word.length, token.length + 2))), token) <= 1;
+}
+
 function includesSmart(value, searchText) {
-  const text = normalizeSearchValue(value);
-  const q = normalizeSearchValue(searchText);
+  const text = normalizeLoose(value);
+  const q = normalizeLoose(searchText);
   if (!q) return true;
   if (text.includes(q)) return true;
 
   const tokens = q.split(" ").filter(Boolean);
+  const words = text.split(" ").filter(Boolean);
   if (!tokens.length) return true;
 
-  return tokens.every(token => text.includes(token) || text.split(" ").some(word => word.startsWith(token)));
+  return tokens.every(token =>
+    text.includes(token) ||
+    words.some(word => fuzzyTokenMatch(word, token))
+  );
 }
 
 function postMatchesSearchText(post, searchText) {
@@ -906,24 +955,38 @@ async function geocodeMapLocation(text) {
   const locationText = cleanSearchTerm(text);
   if (!locationText) return null;
 
-  const cacheKey = "map_geo_" + locationText.toLowerCase();
+  const cacheKey = "map_geo_v2_" + locationText.toLowerCase();
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
     if (cached && isValidCoord(cached.lat, cached.lng)) return cached;
   } catch (e) {}
 
+  const queryVariants = GEO_SEARCH_CONTEXTS
+    .map(context => cleanSearchTerm(context ? `${locationText} ${context}` : locationText))
+    .filter(Boolean);
+
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&countrycodes=in&q=${encodeURIComponent(locationText + " " + LOCATION_CONTEXT)}`;
-    const response = await fetch(url, { headers: { "Accept": "application/json" } });
-    const data = await response.json();
-    if (!data || !data[0]) return null;
+    const responses = await Promise.allSettled(queryVariants.map(query => {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=4&accept-language=en&q=${encodeURIComponent(query)}`;
+      return fetch(url, { headers: { "Accept": "application/json" } }).then(response => response.json());
+    }));
+
+    const flat = [];
+    responses.forEach(result => {
+      if (result.status === "fulfilled" && Array.isArray(result.value)) {
+        flat.push(...result.value);
+      }
+    });
+
+    const first = flat.find(place => isValidCoord(place.lat, place.lon));
+    if (!first) return null;
 
     const result = {
-      label: getPlaceLabel(data[0]),
-      subLabel: getPlaceSubLabel(data[0]),
-      lat: Number(data[0].lat),
-      lng: Number(data[0].lon),
-      displayName: data[0].display_name || locationText
+      label: getPlaceLabel(first),
+      subLabel: getPlaceSubLabel(first),
+      lat: Number(first.lat),
+      lng: Number(first.lon),
+      displayName: first.display_name || locationText
     };
 
     if (isValidCoord(result.lat, result.lng)) {
@@ -1028,15 +1091,16 @@ function buildSavedLocationSuggestions(searchText) {
 
   getModePosts().forEach(post => {
     const fields = [
-      { label: post.location, sub: post.kind === "needed" ? "Saved requirement address" : "Saved property address", icon: post.kind === "needed" ? "person_search" : "home_work" },
-      { label: post.title, sub: post.location || (post.kind === "needed" ? "Room needed" : "Room available"), icon: "label" },
-      { label: post.type, sub: post.location || "Post type", icon: "category" }
+      { label: post.location, sub: post.kind === "needed" ? "Saved requirement address" : "Saved property address", icon: post.kind === "needed" ? "person_search" : "home_work", score: 3 },
+      { label: post.preferred_location, sub: "Preferred location", icon: "location_searching", score: 3 },
+      { label: post.title, sub: post.location || (post.kind === "needed" ? "Room needed" : "Room available"), icon: "label", score: 2 },
+      { label: post.type, sub: post.location || "Post type", icon: "category", score: 1 }
     ];
 
     fields.forEach(field => {
       const label = cleanSearchTerm(field.label);
       if (!label || !includesSmart(label, q)) return;
-      const key = label.toLowerCase();
+      const key = `${post.kind}:${label}`.toLowerCase();
       if (seen.has(key)) return;
       seen.add(key);
       const coords = getPostCoords(post);
@@ -1047,47 +1111,74 @@ function buildSavedLocationSuggestions(searchText) {
         icon: field.icon,
         lat: coords ? coords.lat : null,
         lng: coords ? coords.lng : null,
-        value: label
+        value: label,
+        score: field.score
       });
     });
   });
 
-  return suggestions.slice(0, 10);
+  return suggestions
+    .sort((a, b) => (b.score || 0) - (a.score || 0) || a.label.length - b.label.length)
+    .slice(0, 14);
 }
 
 async function fetchMapPlaceSuggestions(searchText) {
   const q = cleanSearchTerm(searchText);
-  if (q.length < 2) return [];
+  if (q.length < 1) return [];
+
+  const cacheKey = "map_suggest_v2_" + q.toLowerCase();
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+    if (Array.isArray(cached) && cached.length) return cached;
+  } catch (e) {}
+
+  const queryVariants = GEO_SEARCH_CONTEXTS
+    .map(context => cleanSearchTerm(context ? `${q} ${context}` : q))
+    .filter(Boolean);
 
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=7&countrycodes=in&q=${encodeURIComponent(q + " " + LOCATION_CONTEXT)}`;
-    const response = await fetch(url, { headers: { "Accept": "application/json" } });
-    const places = await response.json();
+    const responses = await Promise.allSettled(queryVariants.map(query => {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8&accept-language=en&q=${encodeURIComponent(query)}`;
+      return fetch(url, { headers: { "Accept": "application/json" } }).then(response => response.json());
+    }));
 
     const seen = new Set();
-    return (places || []).map(place => {
-      const label = getPlaceLabel(place);
-      const key = `${label}:${place.lat}:${place.lon}`.toLowerCase();
-      if (!label || seen.has(key)) return null;
-      seen.add(key);
-      return {
-        source: "map",
-        label,
-        subLabel: getPlaceSubLabel(place),
-        icon: "travel_explore",
-        lat: Number(place.lat),
-        lng: Number(place.lon),
-        value: label,
-        displayName: place.display_name || label
-      };
-    }).filter(item => item && isValidCoord(item.lat, item.lng)).slice(0, 6);
+    const suggestions = [];
+
+    responses.forEach(result => {
+      if (result.status !== "fulfilled" || !Array.isArray(result.value)) return;
+
+      result.value.forEach(place => {
+        if (!isValidCoord(place.lat, place.lon)) return;
+        const label = getPlaceLabel(place);
+        const displayName = place.display_name || label;
+        const key = `${label}:${place.lat}:${place.lon}`.toLowerCase();
+        if (!label || seen.has(key)) return;
+        seen.add(key);
+
+        suggestions.push({
+          source: "map",
+          label,
+          subLabel: getPlaceSubLabel(place),
+          icon: "travel_explore",
+          lat: Number(place.lat),
+          lng: Number(place.lon),
+          value: label,
+          displayName
+        });
+      });
+    });
+
+    const out = suggestions.slice(0, 18);
+    try { localStorage.setItem(cacheKey, JSON.stringify(out)); } catch (e) {}
+    return out;
   } catch (err) {
     console.warn("Map suggestion error", err);
     return [];
   }
 }
 
-function renderSuggestionList(savedSuggestions, mapSuggestions) {
+function renderSuggestionList(savedSuggestions, mapSuggestions, options = {}) {
   const parts = [];
 
   if (savedSuggestions.length) {
@@ -1104,7 +1195,7 @@ function renderSuggestionList(savedSuggestions, mapSuggestions) {
   }
 
   if (mapSuggestions.length) {
-    parts.push(`<div class="suggestion-section-title">Nearby Pune locations</div>`);
+    parts.push(`<div class="suggestion-section-title">Location suggestions</div>`);
     parts.push(mapSuggestions.map((item, index) => `
       <div class="suggestion-item" data-source="map" data-index="${index}">
         <span class="material-symbols-rounded">${escapeHtml(item.icon)}</span>
@@ -1116,8 +1207,12 @@ function renderSuggestionList(savedSuggestions, mapSuggestions) {
     `).join(""));
   }
 
+  if (!parts.length && options.loading) {
+    return `<div class="suggestion-empty">Searching locations and saved addresses...</div>`;
+  }
+
   if (!parts.length) {
-    return `<div class="suggestion-empty">No exact saved address yet. Continue typing or choose a nearby Pune location.</div>`;
+    return `<div class="suggestion-empty">No exact suggestion found yet. Existing room/requirement markers will stay visible; press search to view all posts.</div>`;
   }
 
   return parts.join("");
@@ -1160,8 +1255,12 @@ async function fetchMapSearchSuggestions(value) {
 
   const requestId = ++mapSuggestionRequestId;
   const saved = buildSavedLocationSuggestions(searchText);
-  const places = await fetchMapPlaceSuggestions(searchText);
 
+  // Show saved/backend suggestions immediately so the UI feels instant.
+  showSuggestionBox(renderSuggestionList(saved, [], { loading: true }));
+  attachSuggestionEvents(saved, []);
+
+  const places = await fetchMapPlaceSuggestions(searchText);
   if (requestId !== mapSuggestionRequestId) return;
 
   showSuggestionBox(renderSuggestionList(saved, places));
@@ -1192,10 +1291,6 @@ async function getFilteredMapPosts() {
   const target = await resolveSearchTarget(q);
   currentSearchTarget = target && isValidCoord(target.lat, target.lng) ? target : null;
 
-  if (currentSearchTarget && !isTargetServiceable(currentSearchTarget)) {
-    showMapNotice("We are currently serviceable only in Pune. Showing Pune-area posts and suggestions.", "location_on");
-  }
-
   const withDistance = addPostDistances(base, currentSearchTarget);
   const textMatches = withDistance.filter(post => postMatchesSearchText(post, q));
 
@@ -1223,8 +1318,16 @@ async function getFilteredMapPosts() {
     return merged;
   }
 
-  showMapStatus(`No mapped posts found for “${q}”. Try another nearby Pune location.`);
-  return [];
+  // Important: never clear existing room available / room requirement markers just because search text is wrong.
+  const fallback = addPostDistances(base, null);
+  const sortedFallback = userLocation && isValidCoord(userLocation.lat, userLocation.lng)
+    ? sortByDistanceThenRecent(fallback, "user")
+    : fallback;
+
+  currentSearchTarget = null;
+  clearSearchArea();
+  showMapStatus(`No result found for “${q}”. Showing all existing ${activeMode === "all" ? "available rooms and requirements" : activeMode + " posts"} instead.`);
+  return sortedFallback;
 }
 
 function getImage(post) {
@@ -1571,8 +1674,10 @@ mapSearchInput.addEventListener("input", () => {
   clearTimeout(window.__tingoMapSuggestionTimer);
 
   const value = mapSearchInput.value;
-  window.__tingoMapSuggestionTimer = setTimeout(() => fetchMapSearchSuggestions(value), 90);
-  window.__tingoMapSearchTimer = setTimeout(() => renderMap({ focusSearch: true }), 260);
+
+  // Suggestions must feel instant; render is slightly delayed so typing does not flicker markers.
+  window.__tingoMapSuggestionTimer = setTimeout(() => fetchMapSearchSuggestions(value), 35);
+  window.__tingoMapSearchTimer = setTimeout(() => renderMap({ focusSearch: true }), 420);
 });
 
 mapSearchInput.addEventListener("keydown", event => {
