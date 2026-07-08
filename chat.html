@@ -315,23 +315,83 @@ body {
 .inactive-banner { background: #FEE2E2; color: #DC2626; text-align: center; padding: 12px; font-size: 13px; font-weight: 600; border-top: 1px solid #FCA5A5; width: 100%; flex-shrink: 0;}
 
 /* THREAD CONTEXT BAR: always show the room/requirement for the open conversation */
-.thread-context {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 16px;
-  background: #EEF2FF;
-  color: #3730A3;
-  border-bottom: 1px solid rgba(165, 180, 252, 0.55);
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.25;
-  cursor: pointer;
-}
+.thread-context { display: none !important; }
 .thread-context .material-symbols-rounded { font-size: 18px; flex: 0 0 auto; }
 .thread-context-title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .thread-context-sub { color: #64748B; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.chat-title-stack {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  line-height: 1.15;
+}
+
+.chat-heading-name {
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-main);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-heading-room {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #DC2626;
+  background: #FEF2F2;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  font-size: 11.5px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.chat-heading-room .material-symbols-rounded {
+  font-size: 14px;
+  flex: 0 0 auto;
+}
+
+.chat-heading-room-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msg-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-end;
+  margin-top: 3px;
+  margin-bottom: -4px;
+  font-size: 10px;
+}
+
+.msg-check {
+  font-size: 14px !important;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.msg-check.read {
+  color: #38BDF8;
+}
+
 .send-btn:disabled { opacity: 0.62; cursor: not-allowed; transform: none !important; }
 
 
@@ -359,6 +419,123 @@ body {
   .app-container.chat-active .input-area {
     padding-bottom: max(12px, env(safe-area-inset-bottom));
     z-index: 1002;
+  }
+}
+
+/* FORCE MOBILE CHAT FIT: even when Android browser/Desktop-site mode reports a wide viewport,
+   coarse pointer devices still receive the mobile single-column chat layout. */
+@media (max-width: 899px), (pointer: coarse) {
+  html, body {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  .app-container {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 100dvh !important;
+    margin: 0 !important;
+    padding-right: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .sidebar {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    border-right: 0 !important;
+  }
+
+  .main-chat {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    display: none !important;
+  }
+
+  .app-container.chat-active .sidebar { display: none !important; }
+  .app-container.chat-active .main-chat { display: flex !important; }
+
+  .header, .sidebar-header {
+    width: 100% !important;
+    min-height: 56px !important;
+    padding: 9px 12px !important;
+  }
+
+  .header-title {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .chat-heading-name {
+    font-size: 14px !important;
+  }
+
+  .chat-heading-room {
+    max-width: calc(100vw - 74px) !important;
+    font-size: 11px !important;
+  }
+
+  .chat-box-container {
+    padding: 10px 9px !important;
+    min-width: 0 !important;
+  }
+
+  .message {
+    max-width: 78% !important;
+    font-size: 14px !important;
+  }
+
+  .message-row {
+    gap: 6px !important;
+  }
+
+  .msg-avatar {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .input-area {
+    width: 100% !important;
+    padding: 8px 10px max(8px, env(safe-area-inset-bottom)) !important;
+    gap: 8px !important;
+  }
+
+  .input-area input {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 11px 14px !important;
+  }
+
+  .send-btn {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .back-btn {
+    display: flex !important;
+  }
+
+  .bottom-nav-frame {
+    left: 50% !important;
+    right: auto !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    height: 112px !important;
+    transform: translateX(-50%) !important;
+    border-radius: 0 !important;
   }
 }
 
@@ -411,7 +588,7 @@ body {
 
     <div class="inactive-banner hidden" id="inactiveBanner">
       <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: text-bottom;">info</span>
-      This property is inactive. Chat is read-only.
+      This property is not active. Chat is read-only for both users.
     </div>
 
   </div>
@@ -479,6 +656,74 @@ let cachedMessagesHTML = "";
 let globalChatChannel = null;
 let isSendingMessage = false;
 let latestMessagesLoadToken = 0;
+let tingoAudioCtx = null;
+let tingoAudioUnlocked = false;
+const playedSoundMessageIds = new Set();
+
+
+/* ---------------- CHAT SOUNDS + HAPTIC FEEDBACK ---------------- */
+function getAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!tingoAudioCtx) tingoAudioCtx = new AudioContextClass();
+  if (tingoAudioCtx.state === "suspended") tingoAudioCtx.resume().catch(() => {});
+  return tingoAudioCtx;
+}
+
+function unlockTingoAudio() {
+  if (tingoAudioUnlocked) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  tingoAudioUnlocked = true;
+  playTinyTone(0.001, 880, 0.015);
+}
+
+function playTinyTone(delay, frequency, duration, volume = 0.045, type = "sine") {
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const start = ctx.currentTime + Math.max(0, delay || 0);
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, start);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(Math.max(volume, 0.0001), start + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + Math.max(duration, 0.03));
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
+  oscillator.start(start);
+  oscillator.stop(start + Math.max(duration, 0.03) + 0.025);
+}
+
+function playSendSound() {
+  unlockTingoAudio();
+  playTinyTone(0, 760, 0.055, 0.035, "triangle");
+  playTinyTone(0.055, 1120, 0.075, 0.035, "triangle");
+  if (navigator.vibrate) navigator.vibrate(18);
+}
+
+function playIncomingSound() {
+  unlockTingoAudio();
+  playTinyTone(0, 920, 0.06, 0.04, "sine");
+  playTinyTone(0.085, 720, 0.08, 0.035, "sine");
+  if (navigator.vibrate) navigator.vibrate([16, 24, 16]);
+}
+
+function playIncomingMessageSound(msg) {
+  if (!msg || msg.sender_id === currentUser.id || msg.receiver_id !== currentUser.id) return;
+  const soundKey = msg.id || [msg.sender_id, msg.receiver_id, msg.created_at, msg.message].join("|");
+  if (playedSoundMessageIds.has(soundKey)) return;
+  playedSoundMessageIds.add(soundKey);
+  if (playedSoundMessageIds.size > 80) {
+    const first = playedSoundMessageIds.values().next().value;
+    playedSoundMessageIds.delete(first);
+  }
+  playIncomingSound();
+}
+
+["pointerdown", "touchstart", "click", "keydown"].forEach(eventName => {
+  window.addEventListener(eventName, unlockTingoAudio, { once: true, passive: true });
+});
 
 /* GET PARAMS */
 const params = new URLSearchParams(window.location.search);
@@ -541,6 +786,9 @@ function setupGlobalChatListener() {
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
       const msg = payload.new || {};
       if (msg.receiver_id === currentUser.id || msg.sender_id === currentUser.id) {
+        if (msg.receiver_id === currentUser.id && msg.sender_id !== currentUser.id) {
+          playIncomingMessageSound(msg);
+        }
         loadChats(true);
       }
     })
@@ -749,21 +997,28 @@ function getPostTitleText(post) {
   return `${prefix}${post.title || (post.postKind === "needed" ? "Room Requirement" : "Room Details")}`;
 }
 
-function updateThreadContext(post) {
-  if (!threadContextBar) return;
-  if (!post) {
-    threadContextBar.classList.add("hidden");
-    threadContextBar.innerHTML = "";
-    return;
-  }
-  const label = post.postKind === "needed" ? "Room requirement" : "Room listing";
-  threadContextBar.innerHTML = `
-    <span class="material-symbols-rounded">home_work</span>
-    <div style="min-width:0;">
-      <div class="thread-context-sub">${escapeHtml(label)}</div>
-      <div class="thread-context-title">${escapeHtml(getPostTitleText(post))}</div>
+
+function buildChatHeaderTitle(nameHtml, roomText, roomPost) {
+  const safeRoomText = escapeHtml(roomText || "Direct Message");
+  const roomClick = roomPost && isValidId(roomPost.id)
+    ? `onclick="openRoom('${escapeHtml(roomPost.id)}', '${escapeHtml(roomPost.postKind || '')}')"`
+    : "";
+  return `
+    <div class="chat-title-stack">
+      <div class="chat-heading-name">${nameHtml}</div>
+      <div class="chat-heading-room" ${roomClick} title="${safeRoomText}">
+        <span class="material-symbols-rounded">home_work</span>
+        <span class="chat-heading-room-text">${safeRoomText}</span>
+      </div>
     </div>`;
-  threadContextBar.classList.remove("hidden");
+}
+
+function updateThreadContext(post) {
+  // Room/post title is shown only under the user name in the chat header.
+  // Keep this old context bar hidden to avoid duplicate room title.
+  if (!threadContextBar) return;
+  threadContextBar.classList.add("hidden");
+  threadContextBar.innerHTML = "";
 }
 
 function openCurrentRoomFromContext() {
@@ -820,8 +1075,8 @@ async function fetchPostMeta(postId, forceType = "") {
 
 function isPostChatAllowed(post) {
   if (!post) return true;
-  const status = String(post.status || "active").toLowerCase();
-  return ["active", "approved", "new", "published"].includes(status);
+  const status = String(post.status || "").toLowerCase().trim();
+  return status === "active";
 }
 
 function getMessagePostId(msg) { return firstValue(msg, ["post_id", "room_id", "listing_id", "requirement_id"], null); }
@@ -1074,7 +1329,11 @@ async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
   const isSupport = (adminCandidates || []).some(m => messageMatchesPost(m, currentPostId, currentPostType));
 
   if (isSupport) {
-    headerTitle.innerHTML = `<span style="color:var(--text-main); font-size:15px; display:flex; align-items:center; gap:4px;">TingoRooms Support <span class="material-symbols-rounded verified-tick">verified</span> <span class="admin-badge">ADMIN</span></span><br><span style="font-size:12px; color:var(--primary); font-weight:500;">${post ? escapeHtml(post.title) : 'Official Support'}</span>`;
+    headerTitle.innerHTML = buildChatHeaderTitle(
+      `TingoRooms Support <span class="material-symbols-rounded verified-tick">verified</span> <span class="admin-badge">ADMIN</span>`,
+      post ? getPostTitleText(post) : 'Official Support',
+      post
+    );
     chatUser = { id: userId, name: 'TingoRooms Support', avatar_url: 'https://cdn-icons-png.flaticon.com/512/6024/6024190.png', gender: null };
   } else {
     const { data: user, error } = await db
@@ -1096,8 +1355,11 @@ async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
       roleBadge = `<span class="role-badge owner">Owner</span>`;
     }
 
-    const titlePrefix = post && post.postKind === "needed" ? "Need: " : "";
-    headerTitle.innerHTML = `<span onclick="openRoom('${post ? post.id : ''}', '${post ? post.postKind : ''}')" style="cursor:pointer; color:var(--text-main); font-size:15px;">${escapeHtml(user.name)} ${roleBadge} <br> <span style="font-size:12px; color:var(--primary); font-weight:500;">${post ? titlePrefix + escapeHtml(post.title) : 'Direct Message'}</span></span>`;
+    headerTitle.innerHTML = buildChatHeaderTitle(
+      `${escapeHtml(user.name)} ${roleBadge}`,
+      post ? getPostTitleText(post) : 'Direct Message',
+      post
+    );
     chatUser = user;
   }
 
@@ -1125,6 +1387,7 @@ async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
       const msg = payload.new || {};
       if (isCurrentThreadMessage(msg)) {
+        playIncomingMessageSound(msg);
         loadMessages(userId, currentPostId, currentPostType, true);
       }
     })
@@ -1216,7 +1479,13 @@ async function loadMessages(userId, postIdToLoad, postTypeToLoad = "", forceScro
       if (isSent) {
         htmlString += `
           <div class="message-row sent-row">
-            <div class="message sent"><span>${safeMsg}</span><span style="font-size: 10px; color: ${timeColor}; align-self: flex-end; margin-top: 2px; margin-bottom: -4px;">${timeStr}</span></div>
+            <div class="message sent">
+              <span>${safeMsg}</span>
+              <span class="msg-meta" style="color: ${timeColor};">
+                <span>${timeStr}</span>
+                <span class="material-symbols-rounded msg-check ${msg.is_read ? 'read' : ''}">${msg.is_read ? 'done_all' : 'check'}</span>
+              </span>
+            </div>
             <img class="msg-avatar" src="${senderAvatar}" onerror="this.onerror=null;this.src='${senderFallback}'" alt="">
           </div>`;
       } else {
@@ -1269,7 +1538,7 @@ async function sendMessage() {
   if (currentChatUserId === currentUser.id) { alert("This is your own post."); return; }
 
   if (currentPostMeta && !isPostChatAllowed(currentPostMeta)) {
-    alert("This property is inactive. Chat is read-only.");
+    alert("This property is not active. Chat is read-only for both users.");
     return;
   }
 
@@ -1283,6 +1552,23 @@ async function sendMessage() {
   const payloadPostId = isValidId(currentPostId) ? currentPostId : null;
   const payloadPostType = normalizePostType(currentPostType || (currentPostMeta && currentPostMeta.postKind) || requestedType || "") || null;
   const originalText = text;
+
+  if (isValidId(payloadPostId)) {
+    const latestPost = await fetchPostMeta(payloadPostId, payloadPostType);
+    if (latestPost) {
+      currentPostMeta = latestPost;
+      currentPostId = latestPost.id || currentPostId;
+      currentPostType = latestPost.postKind || currentPostType;
+      if (!isPostChatAllowed(latestPost)) {
+        inputArea.classList.add("hidden");
+        inactiveBanner.classList.remove("hidden");
+        isSendingMessage = false;
+        if (sendBtn) sendBtn.disabled = false;
+        alert("This property is not active. Chat is read-only for both users.");
+        return;
+      }
+    }
+  }
 
   msgInput.value = "";
 
@@ -1315,6 +1601,7 @@ async function sendMessage() {
       return;
     }
 
+    playSendSound();
     await loadMessages(currentChatUserId, payloadPostId, payloadPostType, true);
     loadChats(true);
     msgInput.focus();
