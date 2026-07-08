@@ -1992,6 +1992,886 @@ html {
   }
 }
 
+
+
+/* =====================================================
+   NEW LISTING CARD UI - compact horizontal cards like app mockup
+   Only presentation/card markup is changed; search/filter/chat/load logic stays untouched.
+   ===================================================== */
+.main-content {
+  gap: 14px !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.card.listing-card,
+.listing-card {
+  width: 100% !important;
+  min-height: 198px !important;
+  display: grid !important;
+  grid-template-columns: minmax(142px, 38%) minmax(0, 1fr) !important;
+  overflow: hidden !important;
+  border-radius: 16px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #D8E3F2 !important;
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.075) !important;
+  cursor: pointer !important;
+  contain-intrinsic-size: 198px 398px !important;
+}
+
+.card.listing-card:active {
+  transform: scale(0.985) !important;
+}
+
+.listing-card .card-img-wrapper,
+.listing-thumb {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 198px !important;
+  overflow: hidden !important;
+  border-radius: 14px 0 0 14px !important;
+  background: #EEF2F7 !important;
+}
+
+.listing-card .card-img-wrapper::after,
+.listing-thumb::after {
+  display: none !important;
+}
+
+.listing-card .slides-track {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.listing-card .card-img-wrapper img,
+.listing-card .card-img-wrapper img.slide {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  background: #EEF2F7 !important;
+}
+
+.listing-card .price-badge {
+  display: none !important;
+}
+
+.owner-mini-badge {
+  position: absolute !important;
+  top: 10px !important;
+  left: 10px !important;
+  z-index: 3 !important;
+  width: 30px !important;
+  height: 23px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 9px !important;
+  color: #FFFFFF !important;
+  background: linear-gradient(135deg, #22C55E, #16A34A) !important;
+  border: 1px solid rgba(255,255,255,0.82) !important;
+  box-shadow: 0 7px 16px rgba(22, 163, 74, 0.26) !important;
+}
+
+.owner-mini-badge .material-symbols-rounded {
+  font-size: 17px !important;
+}
+
+.listing-badge {
+  position: absolute !important;
+  right: 8px !important;
+  bottom: 10px !important;
+  z-index: 3 !important;
+  max-width: calc(100% - 16px) !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+  color: #172554 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(226, 232, 240, 0.92) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18) !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.035em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.listing-card .card-content,
+.listing-info {
+  min-width: 0 !important;
+  height: 100% !important;
+  padding: 12px 13px 11px 14px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+}
+
+.listing-price-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+
+.listing-price {
+  min-width: 0 !important;
+  color: #16245A !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.045em !important;
+  white-space: nowrap !important;
+}
+
+.listing-price .per-month {
+  margin-left: 2px !important;
+  color: #64748B !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em !important;
+  vertical-align: 2px !important;
+}
+
+.listing-views {
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  color: #475569 !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  padding-top: 2px !important;
+}
+
+.listing-views .material-symbols-rounded {
+  color: #10B981 !important;
+  font-size: 16px !important;
+}
+
+.listing-card .title,
+.listing-title {
+  margin: 0 !important;
+  color: #0F172A !important;
+  font-size: 15.5px !important;
+  line-height: 1.18 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.035em !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.listing-location {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  color: #64748B !important;
+  font-size: 13px !important;
+  line-height: 1.18 !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.listing-location .material-symbols-rounded {
+  flex: 0 0 auto !important;
+  color: #F97316 !important;
+  font-size: 17px !important;
+}
+
+.listing-location span:last-child {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.listing-spec-row {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding-top: 6px !important;
+  border-top: 1px solid #E2E8F0 !important;
+}
+
+.listing-type-pill {
+  min-width: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  color: #334155 !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.listing-type-pill .material-symbols-rounded {
+  flex: 0 0 auto !important;
+  color: #2563EB !important;
+  font-size: 18px !important;
+}
+
+.listing-mini-actions {
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.listing-icon-btn,
+.listing-icon-off {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  color: #2563EB !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+
+.listing-icon-btn .material-symbols-rounded,
+.listing-icon-off .material-symbols-rounded {
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+
+.listing-icon-btn:active {
+  transform: scale(0.86) !important;
+}
+
+.listing-icon-off {
+  color: #EF4444 !important;
+  cursor: default !important;
+  opacity: 0.92 !important;
+}
+
+.view-details-btn {
+  width: 100% !important;
+  min-height: 40px !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 15px !important;
+  color: #334155 !important;
+  background: linear-gradient(180deg, #F8FAFC 0%, #E8EEF6 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.92), 0 3px 8px rgba(15, 23, 42, 0.12) !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+  transition: transform 0.16s ease, box-shadow 0.16s ease !important;
+}
+
+.view-details-btn:active {
+  transform: scale(0.97) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 1px 4px rgba(15, 23, 42, 0.12) !important;
+}
+
+.needed-listing-card .requirement-thumb {
+  position: relative !important;
+  min-height: 198px !important;
+  border-radius: 14px 0 0 14px !important;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.32), transparent 22%),
+    linear-gradient(135deg, #6366F1 0%, #06B6D4 100%) !important;
+  overflow: hidden !important;
+}
+
+.needed-listing-card .requirement-thumb::before {
+  content: '' !important;
+  position: absolute !important;
+  right: -30px !important;
+  bottom: -30px !important;
+  width: 110px !important;
+  height: 110px !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,0.22) !important;
+}
+
+.requirement-thumb-icon {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 74px !important;
+  height: 74px !important;
+  border-radius: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #FFFFFF !important;
+  background: rgba(255,255,255,0.18) !important;
+  border: 1px solid rgba(255,255,255,0.34) !important;
+  box-shadow: 0 18px 32px rgba(15,23,42,0.18) !important;
+}
+
+.requirement-thumb-icon .material-symbols-rounded {
+  font-size: 42px !important;
+}
+
+.needed-listing-card .listing-price {
+  font-size: 21px !important;
+  letter-spacing: -0.035em !important;
+}
+
+@media (max-width: 519px) {
+  .main-content {
+    gap: 14px !important;
+    padding: 10px 10px calc(var(--safe-bottom) + 12px) !important;
+  }
+
+  .card.listing-card,
+  .listing-card {
+    grid-template-columns: minmax(142px, 38.7%) minmax(0, 1fr) !important;
+    min-height: 198px !important;
+    border-radius: 16px !important;
+  }
+
+  .listing-card .card-img-wrapper,
+  .listing-thumb,
+  .needed-listing-card .requirement-thumb {
+    min-height: 198px !important;
+  }
+
+  .listing-card .card-content,
+  .listing-info {
+    padding: 12px 12px 11px 14px !important;
+    gap: 5px !important;
+  }
+
+  .listing-price {
+    font-size: 23px !important;
+  }
+
+  .listing-card .title,
+  .listing-title {
+    font-size: 15.5px !important;
+  }
+
+  .listing-location {
+    font-size: 13px !important;
+  }
+
+  .view-details-btn {
+    min-height: 40px !important;
+    font-size: 14px !important;
+  }
+}
+
+@media (max-width: 374px) {
+  .card.listing-card,
+  .listing-card {
+    grid-template-columns: minmax(122px, 37%) minmax(0, 1fr) !important;
+    min-height: 186px !important;
+  }
+
+  .listing-card .card-img-wrapper,
+  .listing-thumb,
+  .needed-listing-card .requirement-thumb {
+    min-height: 186px !important;
+  }
+
+  .listing-card .card-content,
+  .listing-info {
+    padding: 10px 10px 10px 11px !important;
+  }
+
+  .listing-price { font-size: 20px !important; }
+  .listing-card .title,
+  .listing-title { font-size: 14px !important; }
+  .listing-location,
+  .listing-type-pill { font-size: 12px !important; }
+  .listing-mini-actions { gap: 5px !important; }
+  .view-details-btn { min-height: 36px !important; font-size: 13px !important; }
+}
+
+@media (min-width: 520px) and (max-width: 899px) {
+  .main-content {
+    grid-template-columns: 1fr !important;
+    max-width: 560px !important;
+    margin: 0 auto !important;
+  }
+
+  .card.listing-card,
+  .listing-card {
+    grid-template-columns: 190px minmax(0, 1fr) !important;
+    min-height: 220px !important;
+  }
+
+  .listing-card .card-img-wrapper,
+  .listing-thumb,
+  .needed-listing-card .requirement-thumb {
+    min-height: 220px !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .main-content {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)) !important;
+    gap: 18px !important;
+  }
+
+  .card.listing-card,
+  .listing-card {
+    grid-template-columns: 168px minmax(0, 1fr) !important;
+    min-height: 210px !important;
+    border-radius: 18px !important;
+  }
+
+  .listing-card .card-img-wrapper,
+  .listing-thumb,
+  .needed-listing-card .requirement-thumb {
+    min-height: 210px !important;
+    border-radius: 16px 0 0 16px !important;
+  }
+
+  .listing-price { font-size: 24px !important; }
+  .listing-card .title,
+  .listing-title { font-size: 16px !important; }
+}
+
+
+
+/* =====================================================
+   FINAL MOBILE FULL-DETAIL CARD + DESKTOP KEEP-AS-IS
+   Desktop returns to the normal vertical card layout.
+   Mobile shows: image | complete info, then Call | WhatsApp | Message.
+   ===================================================== */
+@media (max-width: 899px) {
+  .main-content {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 10px 8px calc(var(--safe-bottom) + 14px) !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .card.mobile-full-listing-card {
+    width: 100% !important;
+    min-height: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+    border-radius: 18px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #D7E2F0 !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.075) !important;
+    cursor: pointer !important;
+    contain-intrinsic-size: 260px 420px !important;
+  }
+
+  .mobile-card-top {
+    display: grid !important;
+    grid-template-columns: minmax(136px, 38%) minmax(0, 1fr) !important;
+    min-height: 226px !important;
+  }
+
+  .mobile-card-thumb,
+  .mobile-requirement-thumb {
+    position: relative !important;
+    width: 100% !important;
+    min-height: 226px !important;
+    overflow: hidden !important;
+    border-radius: 17px 0 0 0 !important;
+    background: #EEF2F7 !important;
+  }
+
+  .mobile-card-thumb::after,
+  .mobile-requirement-thumb::after {
+    display: none !important;
+  }
+
+  .mobile-card-thumb .slides-track {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .mobile-card-thumb img,
+  .mobile-card-thumb img.slide {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    background: #EEF2F7 !important;
+  }
+
+  .mobile-image-badge,
+  .mobile-owner-icon {
+    position: absolute !important;
+    z-index: 3 !important;
+  }
+
+  .mobile-owner-icon {
+    top: 10px !important;
+    left: 10px !important;
+    width: 30px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 9px !important;
+    color: #FFFFFF !important;
+    background: linear-gradient(135deg, #22C55E, #16A34A) !important;
+    border: 1px solid rgba(255, 255, 255, 0.82) !important;
+    box-shadow: 0 8px 16px rgba(22, 163, 74, 0.24) !important;
+  }
+
+  .mobile-owner-icon .material-symbols-rounded {
+    font-size: 17px !important;
+  }
+
+  .mobile-image-badge {
+    right: 8px !important;
+    bottom: 9px !important;
+    max-width: calc(100% - 16px) !important;
+    padding: 4px 8px !important;
+    border-radius: 999px !important;
+    color: #172554 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(226, 232, 240, 0.92) !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18) !important;
+    font-size: 9.5px !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.035em !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .mobile-card-info {
+    min-width: 0 !important;
+    padding: 10px 10px 9px 11px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+  }
+
+  .mobile-title-row {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+  }
+
+  .mobile-card-title {
+    min-width: 0 !important;
+    color: #0F172A !important;
+    font-size: 14.5px !important;
+    line-height: 1.15 !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.035em !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .mobile-views {
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    color: #475569 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    padding-top: 2px !important;
+  }
+
+  .mobile-views .material-symbols-rounded {
+    color: #10B981 !important;
+    font-size: 15px !important;
+  }
+
+  .mobile-owner-line,
+  .mobile-address-line {
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 5px !important;
+    color: #64748B !important;
+    font-size: 11px !important;
+    line-height: 1.18 !important;
+    font-weight: 700 !important;
+  }
+
+  .mobile-owner-line {
+    align-items: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .mobile-owner-line .material-symbols-rounded,
+  .mobile-address-line .material-symbols-rounded {
+    flex: 0 0 auto !important;
+    font-size: 15px !important;
+    color: #F97316 !important;
+    vertical-align: -3px !important;
+  }
+
+
+
+  .mobile-address-text {
+    min-width: 0 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .mobile-price-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 5px !important;
+    margin-top: 1px !important;
+  }
+
+  .mobile-rent-box,
+  .mobile-deposit-box {
+    min-width: 0 !important;
+    padding: 6px 7px !important;
+    border-radius: 12px !important;
+    background: #F8FAFC !important;
+    border: 1px solid rgba(226, 232, 240, 0.92) !important;
+  }
+
+  .mobile-info-label {
+    display: block !important;
+    margin-bottom: 2px !important;
+    color: #64748B !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.045em !important;
+    text-transform: uppercase !important;
+  }
+
+  .mobile-rent-value,
+  .mobile-deposit-value {
+    min-width: 0 !important;
+    display: block !important;
+    color: #16245A !important;
+    font-size: 15px !important;
+    line-height: 1.05 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.035em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .mobile-deposit-value {
+    color: #334155 !important;
+    font-size: 13px !important;
+  }
+
+  .mobile-info-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 5px !important;
+  }
+
+  .mobile-info-pill {
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 5px 6px !important;
+    border-radius: 11px !important;
+    color: #334155 !important;
+    background: #F1F5F9 !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    font-size: 10.5px !important;
+    font-weight: 850 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .mobile-info-pill.highlight {
+    color: #047857 !important;
+    background: #ECFDF5 !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+  }
+
+  .mobile-info-pill .material-symbols-rounded {
+    flex: 0 0 auto !important;
+    color: #2563EB !important;
+    font-size: 15px !important;
+  }
+
+  .mobile-info-pill.highlight .material-symbols-rounded {
+    color: #10B981 !important;
+  }
+
+  .mobile-card-actions {
+    display: flex !important;
+    gap: 7px !important;
+    padding: 8px !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.92) !important;
+    background: #FFFFFF !important;
+  }
+
+  .mobile-action-btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    min-height: 38px !important;
+    border: 0 !important;
+    border-radius: 13px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    color: #FFFFFF !important;
+    background: var(--primary-gradient) !important;
+    box-shadow: 0 7px 14px rgba(79, 70, 229, 0.18) !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+  }
+
+  .mobile-action-btn.call,
+  .mobile-action-btn.whatsapp {
+    color: #047857 !important;
+    background: #DCFCE7 !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-action-btn .material-symbols-rounded {
+    font-size: 16px !important;
+  }
+
+  .mobile-action-btn:active {
+    transform: scale(0.96) !important;
+  }
+
+  .mobile-requirement-thumb {
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.32), transparent 24%),
+      linear-gradient(135deg, #6366F1 0%, #06B6D4 100%) !important;
+  }
+
+  .mobile-requirement-icon {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 72px !important;
+    height: 72px !important;
+    border-radius: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #FFFFFF !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.34) !important;
+    box-shadow: 0 18px 32px rgba(15, 23, 42, 0.18) !important;
+  }
+
+  .mobile-requirement-icon .material-symbols-rounded {
+    font-size: 42px !important;
+  }
+}
+
+@media (max-width: 374px) {
+  .mobile-card-top {
+    grid-template-columns: minmax(122px, 37%) minmax(0, 1fr) !important;
+    min-height: 216px !important;
+  }
+
+  .mobile-card-thumb,
+  .mobile-requirement-thumb {
+    min-height: 216px !important;
+  }
+
+  .mobile-card-info {
+    padding: 9px 8px 8px 9px !important;
+    gap: 4px !important;
+  }
+
+  .mobile-card-title { font-size: 13.4px !important; }
+  .mobile-owner-line,
+  .mobile-address-line { font-size: 10.4px !important; }
+  .mobile-rent-value { font-size: 13.2px !important; }
+  .mobile-deposit-value { font-size: 12px !important; }
+  .mobile-info-pill { font-size: 9.6px !important; padding: 5px !important; }
+  .mobile-action-btn { min-height: 35px !important; font-size: 10px !important; gap: 3px !important; }
+}
+
+@media (min-width: 900px) {
+  /* Keep desktop feed cards in the earlier/full vertical desktop layout, not the new mobile split card. */
+  .main-content {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 24px !important;
+    padding: 24px 24px calc(var(--safe-bottom) + 20px) 24px !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  .panel-open .main-content { margin-right: 30% !important; width: 70% !important; }
+  .nav-left .main-content { margin-right: 120px !important; margin-left: 0 !important; width: calc(100% - 120px) !important; }
+  .panel-open.nav-left .main-content { margin-right: 0 !important; margin-left: 30% !important; width: 70% !important; }
+
+  .card:not(.mobile-full-listing-card) {
+    display: block !important;
+    min-height: 0 !important;
+    border-radius: 24px !important;
+    overflow: hidden !important;
+  }
+
+  .card:not(.mobile-full-listing-card) .card-img-wrapper {
+    height: clamp(300px, 24vw, 380px) !important;
+    min-height: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .card:not(.mobile-full-listing-card) .card-img-wrapper img,
+  .card:not(.mobile-full-listing-card) .card-img-wrapper img.slide {
+    object-fit: contain !important;
+  }
+
+  .card:not(.mobile-full-listing-card) .card-content {
+    display: block !important;
+    height: auto !important;
+    padding: 16px !important;
+  }
+
+  .card:not(.mobile-full-listing-card) .title {
+    font-size: 18px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .card:not(.mobile-full-listing-card) .owner-name {
+    font-size: 13px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .card:not(.mobile-full-listing-card) .location {
+    font-size: 14px !important;
+    margin-bottom: 12px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -4949,6 +5829,380 @@ function tingoBindSmoothNavigationFeedback() {
     card.classList.add('preparing-open');
   }, { passive: true });
 }
+
+
+
+/* =====================================================
+   NEW CARD MARKUP OVERRIDE
+   Keeps existing navigation, search, chat, call/WhatsApp handlers and data loading intact.
+   ===================================================== */
+function formatListingRent(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '₹0';
+  const numeric = raw.replace(/[^0-9.]/g, '');
+  if (numeric && !Number.isNaN(Number(numeric))) {
+    return '₹' + Number(numeric).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+  if (raw.startsWith('₹') || /[a-zA-Z]/.test(raw)) return raw;
+  return `₹${raw}`;
+}
+
+function getListingViews(item) {
+  const value = item?.views_count ?? item?.view_count ?? item?.views ?? item?.visit_count ?? item?.viewed_count ?? 0;
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) && numberValue >= 0 ? Math.round(numberValue) : 0;
+}
+
+function getListingBadgeText(item) {
+  const brokerage = String(item?.brokerage_type || '').trim().toLowerCase();
+  if (!brokerage || brokerage === 'no brokerage' || brokerage === 'no_brokerage' || brokerage.includes('no broker')) {
+    return 'INDEPENDENT';
+  }
+  if (brokerage.includes('owner')) return 'OWNER';
+  if (brokerage.includes('broker')) return 'BROKER';
+  return String(item?.brokerage_type || 'INDEPENDENT').trim().toUpperCase();
+}
+
+function getCompactType(value, fallback = '1 Room ...') {
+  const text = cleanSearchTerm(value || fallback);
+  if (!text) return fallback;
+  return text.length > 18 ? `${text.slice(0, 17).trim()}...` : text;
+}
+
+function renderListingMiniActions(item, source) {
+  const safeId = escapeHtml(item.id || '');
+  const safeUserId = escapeHtml(item.user_id || '');
+  const sourceType = source === 'requirement' ? 'requirement' : 'available';
+  let html = '';
+
+  if (item.show_contact && item.contact_number) {
+    html += `<button class="listing-icon-btn" type="button" aria-label="Call" onclick="triggerAction(event, 'call', '${safeId}', '${escapeHtml(item.contact_number)}', '${sourceType}')"><span class="material-symbols-rounded">call</span></button>`;
+  } else {
+    html += `<span class="listing-icon-off" title="Contact hidden"><span class="material-symbols-rounded">phone_disabled</span></span>`;
+  }
+
+  if (item.show_whatsapp && item.whatsapp_number) {
+    html += `<button class="listing-icon-btn" type="button" aria-label="WhatsApp" onclick="triggerAction(event, 'wa', '${safeId}', '${escapeHtml(item.whatsapp_number)}', '${sourceType}')"><span class="material-symbols-rounded">two_wheeler</span></button>`;
+  } else {
+    html += `<span class="listing-icon-off" title="WhatsApp hidden"><span class="material-symbols-rounded">block</span></span>`;
+  }
+
+  html += `<button class="listing-icon-btn" type="button" aria-label="Chat" onclick="startChat(event, '${safeId}', '${safeUserId}')"><span class="material-symbols-rounded">restaurant</span></button>`;
+  return html;
+}
+
+renderAvailableCard = function(room) {
+  let imagesArr = [];
+  if (room.images && room.images.length > 0) {
+    imagesArr = room.images.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  if (!imagesArr.length) imagesArr = ['https://via.placeholder.com/600x420?text=No+Image'];
+
+  const slidesHtml = imagesArr.map(src => `<img class="slide" loading="lazy" decoding="async" src="${escapeHtml(src)}" alt="${escapeHtml(room.title || 'Room')}">`).join('');
+  const rentText = formatListingRent(room.rent);
+  const views = getListingViews(room);
+  const badgeText = getListingBadgeText(room);
+  const typeText = getCompactType(room.type, '1 Room ...');
+  const titleText = room.title || room.type || 'Room For Rent';
+  const locationText = room.location || 'Location not added';
+
+  return `
+    <div class="card listing-card available-listing-card" onclick="openRoom('${escapeHtml(room.id)}', 'available')">
+      <div class="card-img-wrapper listing-thumb">
+        <div class="slides-track">${slidesHtml}</div>
+        <div class="owner-mini-badge" aria-hidden="true"><span class="material-symbols-rounded">person</span></div>
+        <div class="listing-badge">${escapeHtml(badgeText)}</div>
+      </div>
+
+      <div class="card-content listing-info">
+        <div class="listing-price-row">
+          <div class="listing-price">${escapeHtml(rentText)}<span class="per-month">/mo</span></div>
+          <div class="listing-views"><span class="material-symbols-rounded">visibility</span>${escapeHtml(views)}</div>
+        </div>
+
+        <div class="title listing-title">${escapeHtml(titleText)}</div>
+
+        <div class="listing-location">
+          <span class="material-symbols-rounded">location_on</span>
+          <span>${escapeHtml(locationText)}</span>
+        </div>
+
+        <div class="listing-spec-row">
+          <div class="listing-type-pill"><span class="material-symbols-rounded">single_bed</span><span>${escapeHtml(typeText)}</span></div>
+          <div class="listing-mini-actions">${renderListingMiniActions(room, 'available')}</div>
+        </div>
+
+        <button type="button" class="view-details-btn" onclick="event.stopPropagation(); openRoom('${escapeHtml(room.id)}', 'available')">View Details</button>
+      </div>
+    </div>
+  `;
+};
+
+renderRequirementCard = function(req) {
+  const views = getListingViews(req);
+  const typeText = getCompactType(req.type, 'Any type');
+  const titleText = req.title || 'Room Needed';
+  const locationText = req.location || 'Preferred location not added';
+  const priceText = req.budget || req.rent || req.expected_rent || 'Need Room';
+
+  return `
+    <div class="card listing-card needed-listing-card" onclick="openRoom('${escapeHtml(req.id)}', 'requirement')">
+      <div class="listing-thumb requirement-thumb">
+        <div class="owner-mini-badge" aria-hidden="true"><span class="material-symbols-rounded">person_search</span></div>
+        <div class="requirement-thumb-icon"><span class="material-symbols-rounded">travel_explore</span></div>
+        <div class="listing-badge">ROOM NEEDED</div>
+      </div>
+
+      <div class="card-content listing-info">
+        <div class="listing-price-row">
+          <div class="listing-price">${escapeHtml(formatListingRent(priceText))}<span class="per-month">${priceText === 'Need Room' ? '' : '/mo'}</span></div>
+          <div class="listing-views"><span class="material-symbols-rounded">visibility</span>${escapeHtml(views)}</div>
+        </div>
+
+        <div class="title listing-title">${escapeHtml(titleText)}</div>
+
+        <div class="listing-location">
+          <span class="material-symbols-rounded">location_on</span>
+          <span>${escapeHtml(locationText)}</span>
+        </div>
+
+        <div class="listing-spec-row">
+          <div class="listing-type-pill"><span class="material-symbols-rounded">single_bed</span><span>${escapeHtml(typeText)}</span></div>
+          <div class="listing-mini-actions">${renderListingMiniActions(req, 'requirement')}</div>
+        </div>
+
+        <button type="button" class="view-details-btn" onclick="event.stopPropagation(); openRoom('${escapeHtml(req.id)}', 'requirement')">View Details</button>
+      </div>
+    </div>
+  `;
+};
+
+
+
+/* =====================================================
+   FINAL RENDER OVERRIDE: desktop original, mobile complete split card.
+   ===================================================== */
+function tingoIsDesktopFeed() {
+  return window.innerWidth >= 900;
+}
+
+function tingoFormatMoney(value, fallback = '0') {
+  const raw = String(value ?? '').trim();
+  if (!raw) return formatListingRent(fallback);
+  return formatListingRent(raw);
+}
+
+function tingoOwnerName(item, fallback = 'Posted by user') {
+  const ownerObj = item?.users || item?.user || item?.owner || {};
+  return item?.name || ownerObj?.name || fallback;
+}
+
+function tingoBrokerageText(room) {
+  const type = String(room?.brokerage_type || '').trim();
+  const amount = String(room?.brokerage_amount || '').trim();
+  if (!type || type.toLowerCase() === 'no brokerage' || type.toLowerCase().includes('no broker')) return 'No Brokerage';
+  if (amount) return `${type}: ${tingoFormatMoney(amount)}`;
+  return type;
+}
+
+function tingoIsNoBrokerage(room) {
+  const type = String(room?.brokerage_type || '').trim().toLowerCase();
+  return !type || type === 'no brokerage' || type.includes('no broker');
+}
+
+function tingoActionButtons(item, source) {
+  const safeId = escapeHtml(item?.id || '');
+  const safeUserId = escapeHtml(item?.user_id || '');
+  const sourceType = source === 'requirement' ? 'requirement' : 'available';
+  let actions = '';
+
+  if (item?.show_contact && item?.contact_number) {
+    actions += `<button class="mobile-action-btn call" type="button" onclick="triggerAction(event, 'call', '${safeId}', '${escapeHtml(item.contact_number)}', '${sourceType}')"><span class="material-symbols-rounded">call</span>Call</button>`;
+  }
+
+  if (item?.show_whatsapp && item?.whatsapp_number) {
+    actions += `<button class="mobile-action-btn whatsapp" type="button" onclick="triggerAction(event, 'wa', '${safeId}', '${escapeHtml(item.whatsapp_number)}', '${sourceType}')"><span class="material-symbols-rounded">chat</span>WhatsApp</button>`;
+  }
+
+  if (safeUserId) {
+    actions += `<button class="mobile-action-btn message" type="button" onclick="startChat(event, '${safeId}', '${safeUserId}')"><span class="material-symbols-rounded">forum</span>Message</button>`;
+  }
+
+  if (!actions) {
+    actions = `<button class="mobile-action-btn message" type="button" onclick="event.stopPropagation(); openRoom('${safeId}', '${sourceType === 'requirement' ? 'requirement' : 'available'}')"><span class="material-symbols-rounded">visibility</span>Details</button>`;
+  }
+  return actions;
+}
+
+function tingoLazyDesktopAvailable(room) {
+  if (typeof tingoOriginalRenderAvailableCard === 'function') {
+    let html = tingoOriginalRenderAvailableCard(room);
+    html = html.replace(/<img class="slide"(?![^>]*loading=)/g, '<img class="slide" loading="lazy" decoding="async"');
+    html = html.replace(/<img class="owner-avatar"(?![^>]*loading=)/g, '<img class="owner-avatar" loading="lazy" decoding="async"');
+    return html;
+  }
+  return '';
+}
+
+function tingoDesktopRequirementCard(req) {
+  let actions = '';
+  if (req.show_contact && req.contact_number) {
+    actions += `<button class="btn-action btn-call" onclick="triggerAction(event, 'call', '${escapeHtml(req.id)}', '${escapeHtml(req.contact_number)}', 'requirement')"><span class="material-symbols-rounded">call</span>Call</button>`;
+  }
+  if (req.show_whatsapp && req.whatsapp_number) {
+    actions += `<button class="btn-action btn-wa" onclick="triggerAction(event, 'wa', '${escapeHtml(req.id)}', '${escapeHtml(req.whatsapp_number)}', 'requirement')"><span class="material-symbols-rounded">chat</span>WhatsApp</button>`;
+  }
+  actions += `<button class="btn-action btn-chat" onclick="startChat(event, '${escapeHtml(req.id)}', '${escapeHtml(req.user_id)}')"><span class="material-symbols-rounded">forum</span>Chat</button>`;
+
+  const ownerName = tingoOwnerName(req);
+  const distanceTag = Number.isFinite(Number(req._distanceKm)) ? `<div class="detail-tag distance-meta"><span class="material-symbols-rounded">near_me</span>${Number(req._distanceKm).toFixed(Number(req._distanceKm) < 10 ? 1 : 0)} km away</div>` : '';
+
+  return `
+    <div class="card requirement-card" onclick="openRoom('${escapeHtml(req.id)}', 'requirement')">
+      <div class="requirement-hero">
+        <div class="requirement-label"><span class="material-symbols-rounded" style="font-size:15px;">person_search</span>Room Needed</div>
+        <div class="requirement-vector"><span class="material-symbols-rounded">travel_explore</span></div>
+        <div class="title">${escapeHtml(req.title || 'Room requirement')}</div>
+        <div class="requirement-desc">${escapeHtml(req.description || 'Looking for a suitable room or roommate.')}</div>
+      </div>
+      <div class="card-content">
+        <div class="owner-name"><span class="material-symbols-rounded">account_circle</span> ${escapeHtml(ownerName)}</div>
+        <div class="location"><span class="material-symbols-rounded">location_on</span>${escapeHtml(req.location || 'Preferred location not added')}</div>
+        <div class="details-row">
+          <div class="detail-tag highlight"><span class="material-symbols-rounded">apartment</span>${escapeHtml(req.type || 'Any type')}</div>
+          <div class="detail-tag"><span class="material-symbols-rounded">verified</span>${escapeHtml(req.status || 'pending')}</div>
+          <div class="detail-tag posted-meta"><span class="material-symbols-rounded">schedule</span>${escapeHtml(formatPostDate(req))}</div>
+          ${distanceTag}
+        </div>
+        <div class="card-actions">${actions}</div>
+      </div>
+    </div>
+  `;
+}
+
+function tingoMobileAvailableCard(room) {
+  let imagesArr = [];
+  if (room.images && room.images.length > 0) imagesArr = room.images.split(',').map(s => s.trim()).filter(Boolean);
+  if (!imagesArr.length) imagesArr = ['https://via.placeholder.com/600x420?text=No+Image'];
+
+  const ownerName = tingoOwnerName(room);
+  const titleText = room.title || room.type || 'Room For Rent';
+  const locationText = room.location || 'Address not added';
+  const rentText = tingoFormatMoney(room.rent || 0);
+  const depositText = tingoFormatMoney(room.deposit || 0);
+  const categoryText = cleanSearchTerm(room.category || room.type || 'Room');
+  const brokerageText = tingoBrokerageText(room);
+  const badgeText = getListingBadgeText(room);
+  const views = getListingViews(room);
+  const slidesHtml = imagesArr.map(src => `<img class="slide" loading="lazy" decoding="async" src="${escapeHtml(src)}" alt="${escapeHtml(titleText)}">`).join('');
+  const distancePill = Number.isFinite(Number(room._distanceKm)) ? `<div class="mobile-info-pill"><span class="material-symbols-rounded">near_me</span>${Number(room._distanceKm).toFixed(Number(room._distanceKm) < 10 ? 1 : 0)} km</div>` : '';
+
+  return `
+    <div class="card mobile-full-listing-card" onclick="openRoom('${escapeHtml(room.id)}', 'available')">
+      <div class="mobile-card-top">
+        <div class="mobile-card-thumb card-img-wrapper">
+          <div class="slides-track">${slidesHtml}</div>
+          <div class="mobile-owner-icon" aria-hidden="true"><span class="material-symbols-rounded">person</span></div>
+          <div class="mobile-image-badge">${escapeHtml(badgeText)}</div>
+        </div>
+
+        <div class="mobile-card-info">
+          <div class="mobile-title-row">
+            <div class="mobile-card-title">${escapeHtml(titleText)}</div>
+            <div class="mobile-views"><span class="material-symbols-rounded">visibility</span>${escapeHtml(views)}</div>
+          </div>
+
+          <div class="mobile-owner-line"><span class="material-symbols-rounded">account_circle</span><span>Uploaded by ${escapeHtml(ownerName)}</span></div>
+          <div class="mobile-address-line"><span class="material-symbols-rounded">location_on</span><span class="mobile-address-text">${escapeHtml(locationText)}</span></div>
+
+          <div class="mobile-price-row">
+            <div class="mobile-rent-box"><span class="mobile-info-label">Rent</span><span class="mobile-rent-value">${escapeHtml(rentText)}/mo</span></div>
+            <div class="mobile-deposit-box"><span class="mobile-info-label">Deposit</span><span class="mobile-deposit-value">${escapeHtml(depositText)}</span></div>
+          </div>
+
+          <div class="mobile-info-grid">
+            <div class="mobile-info-pill"><span class="material-symbols-rounded">apartment</span>${escapeHtml(categoryText)}</div>
+            <div class="mobile-info-pill ${tingoIsNoBrokerage(room) ? 'highlight' : ''}"><span class="material-symbols-rounded">handshake</span>${escapeHtml(brokerageText)}</div>
+            ${distancePill}
+          </div>
+        </div>
+      </div>
+      <div class="mobile-card-actions">${tingoActionButtons(room, 'available')}</div>
+    </div>
+  `;
+}
+
+function tingoMobileRequirementCard(req) {
+  const ownerName = tingoOwnerName(req);
+  const titleText = req.title || 'Room Needed';
+  const locationText = req.location || 'Preferred address not added';
+  const budgetText = tingoFormatMoney(req.budget || req.rent || req.expected_rent || 0);
+  const depositText = req.deposit ? tingoFormatMoney(req.deposit) : 'Not added';
+  const categoryText = cleanSearchTerm(req.category || req.type || 'Any type');
+  const statusText = req.status || 'pending';
+  const views = getListingViews(req);
+  const distancePill = Number.isFinite(Number(req._distanceKm)) ? `<div class="mobile-info-pill"><span class="material-symbols-rounded">near_me</span>${Number(req._distanceKm).toFixed(Number(req._distanceKm) < 10 ? 1 : 0)} km</div>` : '';
+
+  return `
+    <div class="card mobile-full-listing-card" onclick="openRoom('${escapeHtml(req.id)}', 'requirement')">
+      <div class="mobile-card-top">
+        <div class="mobile-requirement-thumb">
+          <div class="mobile-owner-icon" aria-hidden="true"><span class="material-symbols-rounded">person_search</span></div>
+          <div class="mobile-requirement-icon"><span class="material-symbols-rounded">travel_explore</span></div>
+          <div class="mobile-image-badge">ROOM NEEDED</div>
+        </div>
+
+        <div class="mobile-card-info">
+          <div class="mobile-title-row">
+            <div class="mobile-card-title">${escapeHtml(titleText)}</div>
+            <div class="mobile-views"><span class="material-symbols-rounded">visibility</span>${escapeHtml(views)}</div>
+          </div>
+
+          <div class="mobile-owner-line"><span class="material-symbols-rounded">account_circle</span><span>Uploaded by ${escapeHtml(ownerName)}</span></div>
+          <div class="mobile-address-line"><span class="material-symbols-rounded">location_on</span><span class="mobile-address-text">${escapeHtml(locationText)}</span></div>
+
+          <div class="mobile-price-row">
+            <div class="mobile-rent-box"><span class="mobile-info-label">Budget</span><span class="mobile-rent-value">${escapeHtml(budgetText)}</span></div>
+            <div class="mobile-deposit-box"><span class="mobile-info-label">Deposit</span><span class="mobile-deposit-value">${escapeHtml(depositText)}</span></div>
+          </div>
+
+          <div class="mobile-info-grid">
+            <div class="mobile-info-pill"><span class="material-symbols-rounded">apartment</span>${escapeHtml(categoryText)}</div>
+            <div class="mobile-info-pill highlight"><span class="material-symbols-rounded">verified</span>${escapeHtml(statusText)}</div>
+            ${distancePill}
+          </div>
+        </div>
+      </div>
+      <div class="mobile-card-actions">${tingoActionButtons(req, 'requirement')}</div>
+    </div>
+  `;
+}
+
+renderAvailableCard = function(room) {
+  return tingoIsDesktopFeed() ? tingoLazyDesktopAvailable(room) : tingoMobileAvailableCard(room);
+};
+
+renderRequirementCard = function(req) {
+  return tingoIsDesktopFeed() ? tingoDesktopRequirementCard(req) : tingoMobileRequirementCard(req);
+};
+
+let tingoLastFeedWasDesktop = tingoIsDesktopFeed();
+let tingoResizeRenderTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(tingoResizeRenderTimer);
+  tingoResizeRenderTimer = setTimeout(() => {
+    const nowDesktop = tingoIsDesktopFeed();
+    if (nowDesktop === tingoLastFeedWasDesktop) return;
+    tingoLastFeedWasDesktop = nowDesktop;
+
+    const cached = tingoLastFeedKey ? tingoSafeJsonRead(tingoLastFeedKey) : null;
+    if (cached && Array.isArray(cached.items)) {
+      renderRooms(cached.items, cached.statusText || '');
+    } else {
+      loadRooms(getCurrentSearchText(), selectedSearchPlace);
+    }
+  }, 180);
+}, { passive: true });
 
 function initSmoothHomePage() {
   tingoBindSmoothNavigationFeedback();
