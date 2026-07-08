@@ -574,7 +574,7 @@ const msgInput = document.getElementById("msgInput");
 const searchInput = document.getElementById("searchInput");
 
 /* ---------------- STATE ---------------- */
-const CACHE_VERSION = "v7_fast";
+const CACHE_VERSION = "v9_mobile_sendfix";
 const MAX_RAW_MESSAGES = 1200;
 const MAX_THREAD_MESSAGES = 350;
 const CACHE_PREFIX = `tingo_${CACHE_VERSION}_${currentUser.id}`;
@@ -748,6 +748,40 @@ function mergeRawMessages(messages) {
   if (!messages || messages.length === 0) return;
   rawMessagesCache = mergeMessages(rawMessagesCache, messages);
   saveRawMessagesCache();
+}
+
+function setLocalMessageDeliveryState(localId, deliveryState, payloadPostId, payloadPostType) {
+  if (!localId) return;
+
+  currentThreadMessages = currentThreadMessages.map(m =>
+    m && m.id === localId ? { ...m, delivery_status: deliveryState } : m
+  );
+  setCachedThread(currentChatUserId, payloadPostId, payloadPostType, currentThreadMessages);
+
+  rawMessagesCache = rawMessagesCache.map(m =>
+    m && m.id === localId ? { ...m, delivery_status: deliveryState } : m
+  );
+  saveRawMessagesCache();
+}
+
+function replaceLocalMessageWithServer(localId, serverMsg, payloadPostId, payloadPostType) {
+  if (!localId || !serverMsg) return false;
+
+  const withoutLocalThread = currentThreadMessages.filter(m => !(m && m.id === localId));
+  currentThreadMessages = mergeMessages(withoutLocalThread, [serverMsg]);
+  setCachedThread(currentChatUserId, payloadPostId, payloadPostType, currentThreadMessages);
+
+  rawMessagesCache = mergeMessages(rawMessagesCache.filter(m => !(m && m.id === localId)), [serverMsg]);
+  saveRawMessagesCache();
+  return true;
+}
+
+function withTimeout(promise, ms, timeoutMessage) {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(timeoutMessage || "Request timed out")), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
 }
 
 /* ---------------- VIEWPORT / KEYBOARD FIX ---------------- */
@@ -1026,16 +1060,10 @@ function getOtherUserId(msg) {
 function getPostTableCandidates(forceType = "") {
   const type = normalizePostType(forceType || requestedType || "");
   const available = [{ table: "room_posts", kind: "available" }];
-  const needed = [
-    { table: "room_requirements", kind: "needed" },
-    { table: "room_requirement", kind: "needed" },
-    { table: "rooms_needed", kind: "needed" },
-    { table: "room_needed", kind: "needed" },
-    { table: "room_needs", kind: "needed" },
-    { table: "needed_rooms", kind: "needed" },
-    { table: "requirement_posts", kind: "needed" },
-    { table: "requirements", kind: "needed" }
-  ];
+  const needed = [{ table: "room_requirements", kind: "needed" }];
+
+  // Only query the real tables. The earlier version checked many old table names,
+  // creating repeated 404 console noise and slowing chat opening on mobile.
   if (type === "needed") return [...needed, ...available];
   if (type === "available") return [...available, ...needed];
   return [...available, ...needed];
@@ -1570,7 +1598,7 @@ function renderActiveChatUI(forceScroll = false) {
     const isSent = msg.sender_id === currentUser.id;
     const timeStr = formatTimeShort(msg.created_at);
     const safeMsg = escapeHtml(msg.message || "").replace(/\n/g, '<br>');
-    const pending = String(msg.id || '').startsWith('local_');
+    const pending = String(msg.id || '').startsWith('local_') && msg.delivery_status !== 'sent';
 
     if (msg.is_admin_message && !isSent) {
       htmlString += `
@@ -1650,7 +1678,7 @@ async function sendMessage() {
   msgInput.value = "";
 
   const optimisticMsg = {
-    id: `local_${Date.now()}`,
+    id: `local_${Date.now()}_${Math.random().toString(16).slice(2)}`,
     sender_id: currentUser.id,
     receiver_id: currentChatUserId,
     post_id: payloadPostId,
@@ -1658,9 +1686,10 @@ async function sendMessage() {
     room_id: payloadPostType === "available" ? payloadPostId : null,
     message: oldText,
     is_read: false,
-    is_first_message: currentThreadMessages.length === 0,
+    is_first_message: currentThreadMessages.filter(m => !String(m.id || '').startsWith('local_')).length === 0,
     is_admin_message: false,
     sender_role: 'user',
+    delivery_status: 'sending',
     created_at: new Date().toISOString()
   };
 
@@ -1679,13 +1708,39 @@ async function sendMessage() {
     room_id: payloadPostType === "available" ? payloadPostId : null,
     message: oldText,
     is_read: false,
-    is_first_message: currentThreadMessages.filter(m => !String(m.id || '').startsWith('local_')).length === 0,
+    is_first_message: optimisticMsg.is_first_message,
     is_admin_message: false,
     sender_role: 'user'
   };
 
-  const { error } = await db.from("messages").insert(insertPayload);
-  if (error) {
+  try {
+    // First insert normally. This does not depend on realtime and does not require SELECT permission.
+    const { error } = await withTimeout(
+      db.from("messages").insert(insertPayload),
+      15000,
+      "Network timeout while sending message"
+    );
+
+    if (error) throw error;
+
+    // Insert succeeded. Remove the visible "sending" label immediately.
+    // A follow-up sync/realtime will replace this local item with the real server row.
+    setLocalMessageDeliveryState(optimisticMsg.id, 'sent', payloadPostId, payloadPostType);
+    renderActiveChatUI(true);
+    renderChatListFromMessages(rawMessagesCache, true);
+
+    const syncAfterSend = () => {
+      if (!currentChatUserId) return;
+      loadMessages(currentChatUserId, payloadPostId, payloadPostType, false, false);
+    };
+
+    // Run two syncs because some mobile WebViews delay network/realtime events.
+    setTimeout(syncAfterSend, 350);
+    setTimeout(syncAfterSend, 1600);
+
+    try { msgInput.focus({ preventScroll: true }); } catch (e) {}
+    keepInputVisible(false);
+  } catch (error) {
     currentThreadMessages = currentThreadMessages.filter(m => m.id !== optimisticMsg.id);
     setCachedThread(currentChatUserId, payloadPostId, payloadPostType, currentThreadMessages);
     rawMessagesCache = rawMessagesCache.filter(m => m.id !== optimisticMsg.id);
@@ -1693,14 +1748,9 @@ async function sendMessage() {
     renderActiveChatUI(true);
     renderChatListFromMessages(rawMessagesCache, true);
     msgInput.value = oldText;
-    alert("Message not sent: " + error.message);
-    return;
+    console.error("Message send failed:", error);
+    alert("Message not sent: " + (error && error.message ? error.message : "Please try again."));
   }
-
-  // Realtime will replace the optimistic local message. This tiny delayed sync covers browsers where realtime is blocked.
-  setTimeout(() => loadMessages(currentChatUserId, payloadPostId, payloadPostType, false, true), 1200);
-  msgInput.focus({ preventScroll: true });
-  keepInputVisible(false);
 }
 
 function handleKeyPress(e) {
