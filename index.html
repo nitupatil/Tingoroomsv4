@@ -2872,6 +2872,387 @@ html {
   }
 }
 
+
+
+/* =====================================================
+   COMPACT MOBILE UI UPDATE
+   Smaller top controls + smaller bottom buttons so one full post
+   stays clearly visible on mobile screens.
+   ===================================================== */
+@media (max-width: 899px) {
+  :root {
+    --safe-bottom: 104px !important;
+  }
+
+  .app-container {
+    scroll-padding-bottom: calc(var(--safe-bottom) + 10px) !important;
+  }
+
+  /* Compact top brand/search area */
+  .header {
+    gap: 6px 7px !important;
+    padding: 9px 14px 6px !important;
+  }
+
+  .header .logo {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 13px !important;
+  }
+
+  .tingo-brand-title {
+    font-size: 20px !important;
+    line-height: 0.92 !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  .tingo-brand-title span {
+    margin-top: 2px !important;
+    font-size: 8.5px !important;
+    letter-spacing: 0.15em !important;
+  }
+
+  .notification {
+    width: 35px !important;
+    height: 35px !important;
+  }
+
+  .notification .material-symbols-rounded {
+    font-size: 23px !important;
+  }
+
+  .notification .badge {
+    top: 5px !important;
+    right: 5px !important;
+    width: 8px !important;
+    height: 8px !important;
+  }
+
+  .search-box input {
+    height: 44px !important;
+    padding-left: 40px !important;
+    padding-right: 52px !important;
+    font-size: 13.5px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 18px rgba(41,55,96,0.07) !important;
+  }
+
+  .search-box > .search-leading,
+  .search-box > .material-symbols-rounded:not(.search-action-btn .material-symbols-rounded) {
+    left: 14px !important;
+    font-size: 21px !important;
+  }
+
+  .search-action-btn {
+    right: 5px !important;
+    width: 35px !important;
+    height: 35px !important;
+    box-shadow: 0 9px 18px rgba(91, 67, 242, 0.22) !important;
+  }
+
+  .search-action-btn .material-symbols-rounded {
+    font-size: 21px !important;
+  }
+
+  /* Compact filter chips */
+  .filter-bar {
+    gap: 8px !important;
+    padding: 5px 14px 6px !important;
+  }
+
+  .filter-select,
+  .filter-reset {
+    height: 34px !important;
+    font-size: 11px !important;
+    font-weight: 850 !important;
+    box-shadow: 0 6px 14px rgba(41,55,96,0.05) !important;
+  }
+
+  .filter-select {
+    padding: 0 25px 0 12px !important;
+  }
+
+  /* Compact Available / Required switch */
+  .mode-switch-wrap,
+  .mode-switch-wrap.compact {
+    padding: 5px 14px 7px !important;
+  }
+
+  .mode-switch,
+  .mode-switch-wrap.compact .mode-switch {
+    gap: 6px !important;
+    padding: 4px !important;
+    box-shadow: 0 8px 18px rgba(41,55,96,0.06) !important;
+  }
+
+  .mode-btn,
+  .mode-switch-wrap.compact .mode-btn,
+  .mode-switch-wrap.compact #modeAvailableBtn,
+  .mode-switch-wrap.compact #modeNeededBtn {
+    min-height: 34px !important;
+    padding: 0 10px !important;
+    font-size: 11px !important;
+    gap: 5px !important;
+  }
+
+  .mode-btn .material-symbols-rounded {
+    font-size: 17px !important;
+  }
+
+  .mode-btn.active,
+  .mode-switch-wrap.compact .mode-btn.active {
+    box-shadow: 0 8px 16px rgba(91, 67, 242, 0.20) !important;
+  }
+
+  /* Keep feed close to controls without touching them */
+  .main-content {
+    gap: 12px !important;
+    padding: 8px 14px calc(var(--safe-bottom) + env(safe-area-inset-bottom) + 18px) !important;
+  }
+
+  /* Slightly compact the Instagram card so the first post is visible clearly */
+  .card.ig-listing-card {
+    border-radius: 22px !important;
+    box-shadow: 0 10px 24px rgba(41,55,96,0.09) !important;
+  }
+
+  .ig-image-box.card-img-wrapper {
+    height: clamp(198px, 55vw, 245px) !important;
+    border-radius: 19px 19px 0 0 !important;
+  }
+
+  .ig-heart-btn {
+    top: 11px !important;
+    right: 11px !important;
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .ig-heart-btn .material-symbols-rounded {
+    font-size: 23px !important;
+  }
+
+  .ig-count-badge {
+    right: 12px !important;
+    bottom: 12px !important;
+    min-width: 38px !important;
+    height: 24px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+  }
+
+  .ig-details {
+    padding: 10px 12px 12px !important;
+  }
+
+  .ig-meta-row {
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    margin-bottom: 7px !important;
+  }
+
+  .ig-owner-avatar {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .ig-owner-name {
+    margin-bottom: 3px !important;
+    font-size: 11.4px !important;
+  }
+
+  .ig-location {
+    font-size: 10.8px !important;
+  }
+
+  .ig-owner-name .material-symbols-rounded,
+  .ig-location .material-symbols-rounded {
+    font-size: 14px !important;
+  }
+
+  .ig-time {
+    font-size: 10.5px !important;
+  }
+
+  .ig-title {
+    margin-bottom: 8px !important;
+    font-size: 15px !important;
+  }
+
+  .ig-field-grid {
+    gap: 7px !important;
+  }
+
+  .ig-field {
+    min-height: 45px !important;
+    padding: 6px 8px !important;
+    border-radius: 12px !important;
+  }
+
+  .ig-field-label {
+    margin-bottom: 3px !important;
+    font-size: 8px !important;
+  }
+
+  .ig-field-value {
+    font-size: 12.6px !important;
+  }
+
+  .ig-field-value.price {
+    font-size: 14px !important;
+  }
+
+  .ig-actions {
+    gap: 7px !important;
+    margin-top: 9px !important;
+  }
+
+  .ig-action-btn {
+    height: 36px !important;
+    padding: 0 5px !important;
+    border-radius: 12px !important;
+    gap: 4px !important;
+    font-size: 10.8px !important;
+  }
+
+  .ig-action-btn .material-symbols-rounded {
+    font-size: 16px !important;
+  }
+
+  .ig-requirement-image {
+    height: clamp(190px, 52vw, 235px) !important;
+  }
+
+  .ig-safe-banner {
+    padding: 12px 14px !important;
+    border-radius: 20px !important;
+  }
+
+  .ig-safe-banner-icon {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .ig-safe-banner-title {
+    font-size: 12.5px !important;
+  }
+
+  .ig-safe-banner-sub {
+    font-size: 11px !important;
+  }
+
+  /* Smaller bottom navigation iframe. Content is scaled, not clipped. */
+  .bottom-nav-frame {
+    height: 112px !important;
+    width: 112% !important;
+    max-width: 482px !important;
+    transform: translateX(-50%) scale(0.89) !important;
+    transform-origin: bottom center !important;
+  }
+
+  /* Fallback if inline .bottom-nav is used instead of button.html iframe */
+  .bottom-nav {
+    padding-top: 7px !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+    border-radius: 20px 20px 0 0 !important;
+  }
+
+  .nav-item .material-symbols-rounded {
+    font-size: 23px !important;
+  }
+
+  .nav-item span:last-child {
+    font-size: 9.5px !important;
+  }
+
+  .nav-item.post-btn .material-symbols-rounded {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 30px !important;
+    border-width: 4px !important;
+    border-radius: 18px !important;
+  }
+}
+
+@media (max-width: 374px) {
+  :root { --safe-bottom: 98px !important; }
+
+  .header {
+    padding: 8px 11px 5px !important;
+  }
+
+  .header .logo {
+    width: 33px !important;
+    height: 33px !important;
+  }
+
+  .tingo-brand-title {
+    font-size: 18px !important;
+  }
+
+  .tingo-brand-title span {
+    font-size: 7.8px !important;
+  }
+
+  .notification {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .search-box input {
+    height: 41px !important;
+    font-size: 12.8px !important;
+  }
+
+  .search-action-btn {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .filter-bar,
+  .mode-switch-wrap,
+  .mode-switch-wrap.compact {
+    padding-left: 11px !important;
+    padding-right: 11px !important;
+  }
+
+  .filter-select,
+  .filter-reset {
+    height: 32px !important;
+    font-size: 10.2px !important;
+  }
+
+  .mode-btn,
+  .mode-switch-wrap.compact .mode-btn {
+    min-height: 32px !important;
+    font-size: 10.2px !important;
+  }
+
+  .main-content {
+    padding-left: 11px !important;
+    padding-right: 11px !important;
+  }
+
+  .ig-image-box.card-img-wrapper {
+    height: clamp(178px, 52vw, 215px) !important;
+  }
+
+  .ig-field {
+    min-height: 42px !important;
+    padding: 6px 7px !important;
+  }
+
+  .ig-action-btn {
+    height: 34px !important;
+    font-size: 10px !important;
+  }
+
+  .bottom-nav-frame {
+    transform: translateX(-50%) scale(0.86) !important;
+    width: 116.3% !important;
+    max-width: 500px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -7266,6 +7647,2040 @@ setInterval(() => {
     document.addEventListener('DOMContentLoaded', bindScrollWatch, { once: true });
   } else {
     bindScrollWatch();
+  }
+})();
+</script>
+
+
+<!-- TingoRooms Instagram-style portrait-safe UI update -->
+<style id="tingo-instagram-portrait-ui-final">
+@media (max-width: 899px) {
+  :root {
+    --primary: #5B43F2;
+    --primary-dark: #24305A;
+    --primary-gradient: linear-gradient(135deg, #6F35F4 0%, #4358F2 52%, #08B8D7 100%);
+    --success: #059669;
+    --success-soft: #E9FFF3;
+    --safe-bottom: 132px;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    background:
+      radial-gradient(circle at 12% 6%, rgba(111, 53, 244, 0.16), transparent 30%),
+      radial-gradient(circle at 88% 12%, rgba(8, 184, 215, 0.14), transparent 28%),
+      #F7FAFF !important;
+  }
+
+  .app-container {
+    width: 100% !important;
+    max-width: 430px !important;
+    min-height: 100dvh !important;
+    height: 100dvh !important;
+    margin: 0 auto !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    background:
+      radial-gradient(circle at 84% 6%, rgba(91, 67, 242, 0.16), transparent 26%),
+      radial-gradient(circle at 2% 18%, rgba(8, 184, 215, 0.10), transparent 28%),
+      linear-gradient(180deg, #FFFFFF 0%, #F7FAFF 42%, #FFFFFF 100%) !important;
+    scroll-padding-bottom: calc(var(--safe-bottom) + 18px) !important;
+  }
+
+  .app-container::before,
+  .app-container::after {
+    display: none !important;
+  }
+
+  /* Top area like the reference image. It stays in normal flow so cards never hide under it. */
+  .header {
+    position: relative !important;
+    top: auto !important;
+    z-index: 1200 !important;
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    grid-template-areas:
+      "logo brand bell"
+      "search search search" !important;
+    align-items: center !important;
+    gap: 10px 9px !important;
+    width: 100% !important;
+    padding: 14px 16px 10px !important;
+    background: transparent !important;
+    border-bottom: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .header .logo {
+    grid-area: logo !important;
+    width: 45px !important;
+    height: 45px !important;
+    border-radius: 16px !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .tingo-brand-title {
+    grid-area: brand !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    color: #1977D2 !important;
+    font-size: 25px !important;
+    line-height: 0.95 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.04em !important;
+  }
+
+  .tingo-brand-title span {
+    display: block !important;
+    margin-top: 3px !important;
+    color: #2A5C99 !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  .notification {
+    grid-area: bell !important;
+    justify-self: end !important;
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.78) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: #16245A !important;
+  }
+
+  .notification .material-symbols-rounded {
+    font-size: 28px !important;
+  }
+
+  .notification .badge {
+    display: block !important;
+    top: 7px !important;
+    right: 7px !important;
+    width: 9px !important;
+    height: 9px !important;
+  }
+
+  .search-box {
+    grid-area: search !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .search-box input {
+    width: 100% !important;
+    height: 55px !important;
+    padding: 0 62px 0 47px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(214, 224, 239, 0.95) !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 12px 28px rgba(41, 55, 96, 0.08) !important;
+    color: #172554 !important;
+    font-size: 15.5px !important;
+    font-weight: 650 !important;
+  }
+
+  .search-box input::placeholder {
+    color: #93A2B8 !important;
+  }
+
+  .search-box > .search-leading,
+  .search-box > .material-symbols-rounded:not(.search-action-btn .material-symbols-rounded) {
+    left: 17px !important;
+    color: #718096 !important;
+    font-size: 25px !important;
+  }
+
+  .search-action-btn {
+    right: 7px !important;
+    width: 43px !important;
+    height: 43px !important;
+    border-radius: 50% !important;
+    background: var(--primary-gradient) !important;
+    box-shadow: 0 14px 28px rgba(91, 67, 242, 0.25) !important;
+  }
+
+  .search-action-btn .material-symbols-rounded {
+    font-size: 24px !important;
+  }
+
+  .filter-bar {
+    position: relative !important;
+    top: auto !important;
+    z-index: 900 !important;
+    width: 100% !important;
+    display: flex !important;
+    gap: 10px !important;
+    padding: 8px 16px 9px !important;
+    overflow-x: auto !important;
+    background: transparent !important;
+    border-bottom: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .filter-select,
+  .filter-reset {
+    height: 42px !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex: 1 1 0 !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(214, 224, 239, 0.96) !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    color: #172554 !important;
+    box-shadow: 0 9px 20px rgba(41, 55, 96, 0.06) !important;
+    font-size: 12.5px !important;
+    font-weight: 850 !important;
+  }
+
+  .filter-select {
+    padding: 0 30px 0 14px !important;
+  }
+
+  .filter-select.hidden-for-mode {
+    display: none !important;
+  }
+
+  .mode-switch-wrap,
+  .mode-switch-wrap.compact {
+    position: relative !important;
+    top: auto !important;
+    z-index: 890 !important;
+    width: 100% !important;
+    padding: 8px 16px 10px !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+
+  .mode-switch,
+  .mode-switch-wrap.compact .mode-switch {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding: 5px !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.74) !important;
+    border: 1px solid rgba(214, 224, 239, 0.94) !important;
+    box-shadow: 0 12px 26px rgba(41, 55, 96, 0.07) !important;
+  }
+
+  .mode-btn,
+  .mode-switch-wrap.compact .mode-btn,
+  .mode-switch-wrap.compact #modeAvailableBtn,
+  .mode-switch-wrap.compact #modeNeededBtn {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 42px !important;
+    padding: 0 12px !important;
+    border-radius: 999px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
+    overflow: visible !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: #627086 !important;
+    background: transparent !important;
+    font-size: 12.5px !important;
+    font-weight: 900 !important;
+  }
+
+  .mode-btn.active,
+  .mode-switch-wrap.compact .mode-btn.active {
+    color: #FFFFFF !important;
+    background: var(--primary-gradient) !important;
+    box-shadow: 0 12px 24px rgba(91, 67, 242, 0.22) !important;
+  }
+
+  .mode-switch-wrap.compact .mode-label,
+  .mode-switch-wrap.compact .mode-btn .material-symbols-rounded,
+  .mode-label,
+  .mode-btn .material-symbols-rounded {
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  .mode-btn .material-symbols-rounded {
+    font-size: 20px !important;
+  }
+
+  .main-content {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px 16px calc(var(--safe-bottom) + env(safe-area-inset-bottom) + 18px) !important;
+    overflow: visible !important;
+  }
+
+  .search-status {
+    border-radius: 18px !important;
+    margin: 0 !important;
+  }
+
+  .card.ig-listing-card {
+    contain: none !important;
+    content-visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    overflow: hidden !important;
+    border-radius: 24px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    border: 1px solid rgba(214, 224, 239, 0.92) !important;
+    box-shadow: 0 14px 30px rgba(41, 55, 96, 0.10) !important;
+    cursor: pointer !important;
+  }
+
+  .ig-image-box.card-img-wrapper {
+    position: relative !important;
+    width: 100% !important;
+    height: clamp(222px, 62vw, 286px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    border-radius: 20px 20px 0 0 !important;
+    background: #EEF3FB !important;
+    border: 0 !important;
+  }
+
+  .ig-image-box.card-img-wrapper::after {
+    display: none !important;
+  }
+
+  .ig-image-box .slides-track {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    transition: transform 0.55s ease !important;
+  }
+
+  .ig-slide-frame {
+    position: relative !important;
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #EEF3FB !important;
+  }
+
+  .ig-slide-frame::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: -18px !important;
+    background-image: var(--photo) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    filter: blur(20px) saturate(1.05) !important;
+    transform: scale(1.12) !important;
+    opacity: 0.50 !important;
+  }
+
+  .ig-slide-frame::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(15,23,42,0.06)) !important;
+    pointer-events: none !important;
+  }
+
+  .ig-slide-frame img,
+  .ig-slide-frame img.slide {
+    position: relative !important;
+    z-index: 2 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    background: transparent !important;
+    display: block !important;
+  }
+
+  .ig-heart-btn {
+    position: absolute !important;
+    top: 14px !important;
+    right: 14px !important;
+    z-index: 5 !important;
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #64748B !important;
+    background: rgba(255,255,255,0.88) !important;
+    border: 1px solid rgba(255,255,255,0.78) !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.15) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+  }
+
+  .ig-heart-btn .material-symbols-rounded {
+    font-size: 27px !important;
+  }
+
+  .ig-count-badge {
+    position: absolute !important;
+    right: 14px !important;
+    bottom: 14px !important;
+    z-index: 5 !important;
+    min-width: 42px !important;
+    height: 27px !important;
+    padding: 0 10px !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #FFFFFF !important;
+    background: rgba(15, 23, 42, 0.72) !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    box-shadow: 0 8px 18px rgba(15,23,42,0.18) !important;
+  }
+
+  .ig-details {
+    padding: 13px 14px 14px !important;
+    background: rgba(255,255,255,0.98) !important;
+  }
+
+  .ig-meta-row {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    gap: 10px !important;
+    align-items: center !important;
+    margin-bottom: 9px !important;
+  }
+
+  .ig-owner-avatar {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid #FFFFFF !important;
+    box-shadow: 0 8px 18px rgba(15,23,42,0.10) !important;
+  }
+
+  .ig-owner-lines {
+    min-width: 0 !important;
+  }
+
+  .ig-owner-name,
+  .ig-location {
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    color: #58677F !important;
+    overflow: hidden !important;
+  }
+
+  .ig-owner-name {
+    margin-bottom: 4px !important;
+    font-size: 12.7px !important;
+    line-height: 1.15 !important;
+    font-weight: 850 !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .ig-location {
+    font-size: 12px !important;
+    line-height: 1.16 !important;
+    font-weight: 750 !important;
+  }
+
+  .ig-location-text {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .ig-owner-name .material-symbols-rounded,
+  .ig-location .material-symbols-rounded {
+    flex: 0 0 auto !important;
+    font-size: 16px !important;
+    color: #F97316 !important;
+  }
+
+  .ig-time {
+    align-self: start !important;
+    color: #94A3B8 !important;
+    font-size: 11.5px !important;
+    font-weight: 850 !important;
+    white-space: nowrap !important;
+  }
+
+  .ig-title {
+    margin: 0 0 10px !important;
+    color: #0F172A !important;
+    font-size: 17px !important;
+    line-height: 1.18 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.035em !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .ig-field-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .ig-field {
+    min-width: 0 !important;
+    min-height: 54px !important;
+    padding: 8px 9px !important;
+    border-radius: 13px !important;
+    background: rgba(248, 250, 252, 0.84) !important;
+    border: 1px solid rgba(214, 224, 239, 0.94) !important;
+    overflow: hidden !important;
+  }
+
+  .ig-field-label {
+    display: block !important;
+    margin-bottom: 4px !important;
+    color: #64748B !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.055em !important;
+    text-transform: uppercase !important;
+  }
+
+  .ig-field-value {
+    display: block !important;
+    min-width: 0 !important;
+    color: #16245A !important;
+    font-size: 14px !important;
+    line-height: 1.12 !important;
+    font-weight: 950 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .ig-field-value.price {
+    color: #5836F1 !important;
+    font-size: 15.5px !important;
+    letter-spacing: -0.03em !important;
+  }
+
+  .ig-field.full {
+    grid-column: 1 / -1 !important;
+  }
+
+  .ig-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+    padding-top: 0 !important;
+    border-top: 0 !important;
+  }
+
+  .ig-action-btn {
+    min-width: 0 !important;
+    height: 43px !important;
+    padding: 0 8px !important;
+    border: 0 !important;
+    border-radius: 13px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+    color: #4F46E5 !important;
+    background: #F0EDFF !important;
+    font-size: 12px !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+  }
+
+  .ig-action-btn.call,
+  .ig-action-btn.whatsapp {
+    color: #047857 !important;
+    background: #E9FFF3 !important;
+  }
+
+  .ig-action-btn .material-symbols-rounded {
+    font-size: 18px !important;
+  }
+
+  .ig-requirement-image {
+    position: relative !important;
+    height: clamp(210px, 58vw, 270px) !important;
+    border-radius: 20px 20px 0 0 !important;
+    overflow: hidden !important;
+    background:
+      radial-gradient(circle at 22% 12%, rgba(255,255,255,0.36), transparent 26%),
+      linear-gradient(135deg, #6F35F4 0%, #08B8D7 100%) !important;
+  }
+
+  .ig-requirement-icon {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 82px !important;
+    height: 82px !important;
+    border-radius: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #FFFFFF !important;
+    background: rgba(255,255,255,0.18) !important;
+    border: 1px solid rgba(255,255,255,0.38) !important;
+    box-shadow: 0 18px 32px rgba(15, 23, 42, 0.18) !important;
+  }
+
+  .ig-requirement-icon .material-symbols-rounded {
+    font-size: 46px !important;
+  }
+
+  .ig-safe-banner {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 15px 16px !important;
+    border-radius: 22px !important;
+    color: #24305A !important;
+    background: rgba(255,255,255,0.92) !important;
+    border: 1px solid rgba(214, 224, 239, 0.92) !important;
+    box-shadow: 0 12px 26px rgba(41, 55, 96, 0.08) !important;
+  }
+
+  .ig-safe-banner-icon {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #5B43F2 !important;
+    background: #EEF2FF !important;
+    flex: 0 0 auto !important;
+  }
+
+  .ig-safe-banner-icon .material-symbols-rounded {
+    font-size: 27px !important;
+  }
+
+  .ig-safe-banner-title {
+    font-size: 13.5px !important;
+    font-weight: 950 !important;
+    margin-bottom: 3px !important;
+  }
+
+  .ig-safe-banner-sub {
+    color: #64748B !important;
+    font-size: 12px !important;
+    font-weight: 750 !important;
+  }
+
+  .bottom-nav-frame {
+    height: 112px !important;
+    max-width: 430px !important;
+  }
+}
+
+@media (max-width: 374px) {
+  .header {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .filter-bar,
+  .mode-switch-wrap {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .main-content {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .tingo-brand-title {
+    font-size: 22px !important;
+  }
+
+  .search-box input {
+    height: 50px !important;
+    font-size: 14px !important;
+  }
+
+  .ig-image-box.card-img-wrapper {
+    height: clamp(198px, 58vw, 238px) !important;
+  }
+
+  .ig-details {
+    padding: 11px 11px 12px !important;
+  }
+
+  .ig-field {
+    min-height: 50px !important;
+    padding: 7px 7px !important;
+  }
+
+  .ig-field-value {
+    font-size: 12.8px !important;
+  }
+
+  .ig-field-value.price {
+    font-size: 14px !important;
+  }
+
+  .ig-action-btn {
+    height: 39px !important;
+    font-size: 11px !important;
+    gap: 4px !important;
+  }
+}
+
+@media (max-height: 740px) and (max-width: 899px) {
+  .header {
+    padding-top: 10px !important;
+    padding-bottom: 8px !important;
+    gap: 8px !important;
+  }
+
+  .header .logo {
+    width: 39px !important;
+    height: 39px !important;
+  }
+
+  .tingo-brand-title {
+    font-size: 22px !important;
+  }
+
+  .search-box input {
+    height: 48px !important;
+  }
+
+  .search-action-btn {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .filter-select {
+    height: 38px !important;
+  }
+
+  .mode-btn,
+  .mode-switch-wrap.compact .mode-btn {
+    min-height: 38px !important;
+  }
+
+  .filter-bar {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+  }
+
+  .mode-switch-wrap {
+    padding-top: 5px !important;
+    padding-bottom: 7px !important;
+  }
+
+  .ig-image-box.card-img-wrapper {
+    height: clamp(188px, 52vw, 230px) !important;
+  }
+
+  .ig-meta-row {
+    margin-bottom: 7px !important;
+  }
+
+  .ig-title {
+    margin-bottom: 8px !important;
+    font-size: 15.5px !important;
+  }
+
+  .ig-field {
+    min-height: 47px !important;
+    padding: 6px 7px !important;
+  }
+
+  .ig-actions {
+    margin-top: 9px !important;
+  }
+
+  .ig-action-btn {
+    height: 38px !important;
+  }
+}
+
+@media (min-width: 520px) and (max-width: 899px) {
+  .app-container {
+    max-width: 760px !important;
+  }
+
+  .main-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+  }
+
+  .ig-image-box.card-img-wrapper {
+    height: clamp(240px, 42vw, 310px) !important;
+  }
+}
+</style>
+
+<script id="tingo-instagram-portrait-ui-final-script">
+(function() {
+  function esc(value) {
+    if (typeof escapeHtml === 'function') return escapeHtml(value ?? '');
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function cssPhotoUrl(value) {
+    return String(value || '')
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/\n/g, '')
+      .replace(/\r/g, '');
+  }
+
+  function money(value) {
+    if (typeof tingoFormatMoney === 'function') return tingoFormatMoney(value || 0);
+    const raw = String(value ?? '').trim();
+    if (!raw) return '₹0';
+    if (raw.includes('₹')) return raw;
+    const n = Number(raw.replace(/[^0-9.]/g, ''));
+    if (!Number.isFinite(n)) return `₹${raw}`;
+    return `₹${n.toLocaleString('en-IN')}`;
+  }
+
+  function ownerData(item) {
+    const ownerObj = item?.users || item?.user || item?.owner || {};
+    const name = item?.name || ownerObj?.name || 'Posted by user';
+    const avatar = ownerObj?.avatar_url && String(ownerObj.avatar_url).trim()
+      ? ownerObj.avatar_url
+      : (typeof getDefaultAvatar === 'function' ? getDefaultAvatar(ownerObj?.gender) : 'https://i.ibb.co/N2ZhwrRn/Gemini-Generated-Image-h4mxnvh4mxnvh4mx-2.gif');
+    return { name, avatar };
+  }
+
+  function timeAgo(item) {
+    const raw = (typeof getPostTimestamp === 'function') ? getPostTimestamp(item) : (item?.updated_at || item?.created_at || '');
+    if (!raw) return 'New';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return 'New';
+    const diff = Date.now() - d.getTime();
+    const mins = Math.max(1, Math.floor(diff / 60000));
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d ago`;
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+  }
+
+  function brokerage(room) {
+    if (typeof tingoBrokerageText === 'function') return tingoBrokerageText(room);
+    const type = String(room?.brokerage_type || '').trim();
+    if (!type || type.toLowerCase().includes('no broker')) return 'No Brokerage';
+    if (room?.brokerage_amount) return `${type}: ${money(room.brokerage_amount)}`;
+    return type;
+  }
+
+  function imagesFrom(item) {
+    let arr = [];
+    if (item?.images && String(item.images).trim()) {
+      arr = String(item.images).split(',').map(s => s.trim()).filter(Boolean);
+    }
+    if (!arr.length && item?.image_url) arr = [String(item.image_url).trim()].filter(Boolean);
+    if (!arr.length) arr = ['https://via.placeholder.com/900x1200?text=No+Image'];
+    return arr;
+  }
+
+  function actionButtons(item, source) {
+    const sourceType = source === 'requirement' ? 'requirement' : 'available';
+    const safeId = esc(item?.id || '');
+    const safeUser = esc(item?.user_id || '');
+    let html = '';
+
+    if (item?.show_contact && item?.contact_number) {
+      html += `<button class="ig-action-btn call" type="button" onclick="triggerAction(event, 'call', '${safeId}', '${esc(item.contact_number)}', '${sourceType}')"><span class="material-symbols-rounded">call</span>Call</button>`;
+    } else {
+      html += `<button class="ig-action-btn call" type="button" onclick="event.stopPropagation(); showAppPopup && showAppPopup('Contact number is not visible for this post.', 'Contact hidden')"><span class="material-symbols-rounded">call</span>Call</button>`;
+    }
+
+    if (item?.show_whatsapp && item?.whatsapp_number) {
+      html += `<button class="ig-action-btn whatsapp" type="button" onclick="triggerAction(event, 'wa', '${safeId}', '${esc(item.whatsapp_number)}', '${sourceType}')"><span class="material-symbols-rounded">chat</span>WhatsApp</button>`;
+    } else {
+      html += `<button class="ig-action-btn whatsapp" type="button" onclick="event.stopPropagation(); showAppPopup && showAppPopup('WhatsApp is not visible for this post.', 'WhatsApp hidden')"><span class="material-symbols-rounded">chat</span>WhatsApp</button>`;
+    }
+
+    html += `<button class="ig-action-btn message" type="button" onclick="startChat(event, '${safeId}', '${safeUser}')"><span class="material-symbols-rounded">forum</span>Message</button>`;
+    return html;
+  }
+
+  function distanceField(item) {
+    const km = Number(item?._distanceKm);
+    if (!Number.isFinite(km)) return '';
+    const value = `${km.toFixed(km < 10 ? 1 : 0)} km away`;
+    return `<div class="ig-field full"><span class="ig-field-label">Distance</span><span class="ig-field-value">${esc(value)}</span></div>`;
+  }
+
+  function availableCard(room) {
+    const images = imagesFrom(room);
+    const owner = ownerData(room);
+    const title = room?.title || room?.type || 'Room available';
+    const location = room?.location || 'Location not added';
+    const type = room?.type || room?.category || 'Room';
+    const photoCount = images.length || 1;
+    const slides = images.map(src => {
+      const safe = esc(src);
+      return `<div class="ig-slide-frame" style="--photo: url('${cssPhotoUrl(safe)}')"><img class="slide" loading="lazy" decoding="async" src="${safe}" alt="${esc(title)}"></div>`;
+    }).join('');
+
+    return `
+      <div class="card ig-listing-card" onclick="openRoom('${esc(room?.id || '')}', 'available')">
+        <div class="ig-image-box card-img-wrapper">
+          <div class="slides-track">${slides}</div>
+          <div class="ig-heart-btn"><span class="material-symbols-rounded">favorite</span></div>
+          <div class="ig-count-badge">1/${photoCount}</div>
+        </div>
+
+        <div class="ig-details">
+          <div class="ig-meta-row">
+            <img class="ig-owner-avatar" src="${esc(owner.avatar)}" alt="owner">
+            <div class="ig-owner-lines">
+              <div class="ig-owner-name"><span class="material-symbols-rounded">account_circle</span><span>Uploaded by ${esc(owner.name)}</span></div>
+              <div class="ig-location"><span class="material-symbols-rounded">location_on</span><span class="ig-location-text">${esc(location)}</span></div>
+            </div>
+            <div class="ig-time">${esc(timeAgo(room))}</div>
+          </div>
+
+          <div class="ig-title">${esc(title)}</div>
+
+          <div class="ig-field-grid">
+            <div class="ig-field"><span class="ig-field-label">Rent</span><span class="ig-field-value price">${esc(money(room?.rent || 0))}/mo</span></div>
+            <div class="ig-field"><span class="ig-field-label">Deposit</span><span class="ig-field-value">${esc(money(room?.deposit || 0))}</span></div>
+            <div class="ig-field"><span class="ig-field-label">Category</span><span class="ig-field-value">${esc(type)}</span></div>
+            <div class="ig-field"><span class="ig-field-label">Brokerage</span><span class="ig-field-value">${esc(brokerage(room))}</span></div>
+            ${distanceField(room)}
+          </div>
+
+          <div class="ig-actions">${actionButtons(room, 'available')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function requirementCard(req) {
+    const owner = ownerData(req);
+    const title = req?.title || 'Room requirement';
+    const location = req?.location || 'Preferred location not added';
+    const type = req?.type || req?.category || 'Any type';
+    const budget = req?.budget || req?.rent || req?.expected_rent || 0;
+
+    return `
+      <div class="card ig-listing-card" onclick="openRoom('${esc(req?.id || '')}', 'requirement')">
+        <div class="ig-requirement-image">
+          <div class="ig-requirement-icon"><span class="material-symbols-rounded">person_search</span></div>
+          <div class="ig-count-badge">NEEDED</div>
+        </div>
+
+        <div class="ig-details">
+          <div class="ig-meta-row">
+            <img class="ig-owner-avatar" src="${esc(owner.avatar)}" alt="owner">
+            <div class="ig-owner-lines">
+              <div class="ig-owner-name"><span class="material-symbols-rounded">account_circle</span><span>Uploaded by ${esc(owner.name)}</span></div>
+              <div class="ig-location"><span class="material-symbols-rounded">location_on</span><span class="ig-location-text">${esc(location)}</span></div>
+            </div>
+            <div class="ig-time">${esc(timeAgo(req))}</div>
+          </div>
+
+          <div class="ig-title">${esc(title)}</div>
+
+          <div class="ig-field-grid">
+            <div class="ig-field"><span class="ig-field-label">Budget</span><span class="ig-field-value price">${esc(money(budget))}</span></div>
+            <div class="ig-field"><span class="ig-field-label">Deposit</span><span class="ig-field-value">${esc(req?.deposit ? money(req.deposit) : 'Not added')}</span></div>
+            <div class="ig-field"><span class="ig-field-label">Category</span><span class="ig-field-value">${esc(type)}</span></div>
+            <div class="ig-field"><span class="ig-field-label">Status</span><span class="ig-field-value">${esc(req?.status || 'pending')}</span></div>
+            ${distanceField(req)}
+          </div>
+
+          <div class="ig-actions">${actionButtons(req, 'requirement')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function addBrandTitle() {
+    const header = document.querySelector('.header');
+    const logo = header?.querySelector('.logo');
+    if (!header || !logo || header.querySelector('.tingo-brand-title')) return;
+    const brand = document.createElement('div');
+    brand.className = 'tingo-brand-title';
+    brand.innerHTML = 'TINGO<span>ROOMS</span>';
+    logo.insertAdjacentElement('afterend', brand);
+  }
+
+  function addSafetyBanner() {
+    const list = document.getElementById('roomList');
+    if (!list || list.querySelector('.ig-safe-banner')) return;
+    const banner = document.createElement('div');
+    banner.className = 'ig-safe-banner';
+    banner.innerHTML = `
+      <div class="ig-safe-banner-icon"><span class="material-symbols-rounded">verified_user</span></div>
+      <div>
+        <div class="ig-safe-banner-title">Secure. Verified. Hassle-Free.</div>
+        <div class="ig-safe-banner-sub">All listings are verified for your safety</div>
+      </div>
+    `;
+    list.appendChild(banner);
+  }
+
+  const previousAvailable = (typeof renderAvailableCard === 'function') ? renderAvailableCard : null;
+  const previousRequirement = (typeof renderRequirementCard === 'function') ? renderRequirementCard : null;
+  const previousRenderRooms = (typeof renderRooms === 'function') ? renderRooms : null;
+
+  const nextAvailableRenderer = function(room) {
+    if (window.innerWidth >= 900 && previousAvailable) return previousAvailable(room);
+    return availableCard(room);
+  };
+
+  const nextRequirementRenderer = function(req) {
+    if (window.innerWidth >= 900 && previousRequirement) return previousRequirement(req);
+    return requirementCard(req);
+  };
+
+  window.renderAvailableCard = nextAvailableRenderer;
+  window.renderRequirementCard = nextRequirementRenderer;
+  try { renderAvailableCard = nextAvailableRenderer; } catch (e) {}
+  try { renderRequirementCard = nextRequirementRenderer; } catch (e) {}
+
+  if (previousRenderRooms) {
+    const nextRenderRooms = function(items, statusText = '') {
+      previousRenderRooms(items, statusText);
+      if (window.innerWidth < 900 && items && items.length) {
+        addSafetyBanner();
+      }
+    };
+    window.renderRooms = nextRenderRooms;
+    try { renderRooms = nextRenderRooms; } catch (e) {}
+  }
+
+  window.updateModeSwitchCompact = function() {
+    const wrap = document.getElementById('modeSwitchWrap');
+    if (wrap) wrap.classList.remove('compact');
+  };
+
+  function refreshFeedSoon() {
+    addBrandTitle();
+    const wrap = document.getElementById('modeSwitchWrap');
+    if (wrap) wrap.classList.remove('compact');
+    if (typeof loadRooms === 'function') {
+      setTimeout(() => loadRooms(typeof getCurrentSearchText === 'function' ? getCurrentSearchText() : '', typeof selectedSearchPlace !== 'undefined' ? selectedSearchPlace : null), 120);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', refreshFeedSoon, { once: true });
+  } else {
+    refreshFeedSoon();
+  }
+
+  window.addEventListener('resize', () => {
+    clearTimeout(window.__tingoInstagramUiResizeTimer);
+    window.__tingoInstagramUiResizeTimer = setTimeout(refreshFeedSoon, 180);
+  }, { passive: true });
+})();
+</script>
+
+
+
+<!-- TingoRooms auto-hide top controls + full address visibility update -->
+<style id="tingo-auto-hide-top-full-address-update">
+@media (max-width: 899px) {
+  /* Smoothly collapse/restore the complete top search/filter section. */
+  .header,
+  .filter-bar,
+  .mode-switch-wrap {
+    transform-origin: top center !important;
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease,
+      max-height 0.20s ease,
+      padding 0.20s ease,
+      margin 0.20s ease !important;
+    will-change: opacity, transform, max-height, padding !important;
+  }
+
+  .header {
+    max-height: 124px !important;
+    overflow: visible !important;
+  }
+
+  .filter-bar {
+    max-height: 56px !important;
+    overflow: hidden !important;
+  }
+
+  .mode-switch-wrap,
+  .mode-switch-wrap.compact {
+    max-height: 62px !important;
+    overflow: hidden !important;
+  }
+
+  .app-container.tingo-top-hidden .header,
+  .app-container.tingo-top-hidden .filter-bar,
+  .app-container.tingo-top-hidden .mode-switch-wrap,
+  .app-container.tingo-top-hidden .mode-switch-wrap.compact {
+    max-height: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-18px) scale(0.985) !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .app-container.tingo-top-hidden .header *,
+  .app-container.tingo-top-hidden .filter-bar *,
+  .app-container.tingo-top-hidden .mode-switch-wrap * {
+    pointer-events: none !important;
+  }
+
+  /* When top controls are hidden, first card moves up naturally but never hides under bottom nav. */
+  .app-container.tingo-top-hidden .main-content {
+    padding-top: 10px !important;
+    padding-bottom: calc(var(--safe-bottom) + env(safe-area-inset-bottom) + 26px) !important;
+  }
+
+  /* Full address visible inside every card. No ellipsis/cut-off. */
+  .ig-meta-row {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    align-items: flex-start !important;
+    gap: 9px !important;
+  }
+
+  .ig-owner-lines {
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  .ig-owner-name {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .ig-location {
+    align-items: flex-start !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+
+  .ig-location .material-symbols-rounded {
+    margin-top: 1px !important;
+  }
+
+  .ig-location-text {
+    min-width: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .ig-time {
+    grid-column: 2 !important;
+    justify-self: start !important;
+    align-self: start !important;
+    margin-top: 2px !important;
+    font-size: 10.8px !important;
+    opacity: 0.88 !important;
+  }
+
+  .ig-title {
+    -webkit-line-clamp: 2 !important;
+  }
+}
+</style>
+
+<script id="tingo-auto-hide-top-full-address-script">
+(function() {
+  let lastTop = 0;
+  let ticking = false;
+  let revealUntil = 0;
+  let touchStartY = null;
+
+  function root() {
+    if (window.innerWidth >= 900) return document.scrollingElement || document.documentElement;
+    return document.querySelector('.app-container') || document.scrollingElement || document.documentElement;
+  }
+
+  function topValue() {
+    const r = root();
+    if (r === document.scrollingElement || r === document.documentElement || r === document.body) {
+      return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    }
+    return r.scrollTop || 0;
+  }
+
+  function setTopVisible(visible) {
+    const app = document.querySelector('.app-container');
+    if (!app) return;
+    app.classList.toggle('tingo-top-hidden', !visible);
+    const suggestionBox = document.getElementById('searchSuggestions');
+    if (!visible && suggestionBox) suggestionBox.classList.remove('show');
+  }
+
+  function update(forceShow) {
+    const app = document.querySelector('.app-container');
+    if (!app) return;
+
+    if (window.innerWidth >= 900) {
+      app.classList.remove('tingo-top-hidden');
+      lastTop = topValue();
+      return;
+    }
+
+    const now = Date.now();
+    const top = topValue();
+    const diff = top - lastTop;
+
+    /*
+      Finger slide up => page scrolls down => diff positive => hide top controls.
+      Finger slide down even slightly => page scrolls up => diff negative => show immediately.
+    */
+    if (forceShow || top <= 8 || diff < -1) {
+      setTopVisible(true);
+      revealUntil = now + 900;
+    } else if (top > 38 && diff > 3 && now > revealUntil) {
+      setTopVisible(false);
+    }
+
+    lastTop = Math.max(0, top);
+  }
+
+  function request(forceShow) {
+    if (forceShow) {
+      update(true);
+      return;
+    }
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      update(false);
+    });
+  }
+
+  function bind() {
+    const r = root();
+    lastTop = topValue();
+
+    if (r && r.dataset.tingoAutoHideTopBound !== '1') {
+      r.dataset.tingoAutoHideTopBound = '1';
+      r.addEventListener('scroll', () => request(false), { passive: true });
+      r.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches && e.touches.length ? e.touches[0].clientY : null;
+      }, { passive: true });
+      r.addEventListener('touchmove', (e) => {
+        if (touchStartY == null || !e.touches || !e.touches.length) return;
+        const y = e.touches[0].clientY;
+        if (y - touchStartY > 3) request(true); // even a minor downward pull reveals search/filter
+      }, { passive: true });
+    }
+
+    if (document.body.dataset.tingoAutoHideTopWindowBound !== '1') {
+      document.body.dataset.tingoAutoHideTopWindowBound = '1';
+      window.addEventListener('resize', () => request(true), { passive: true });
+      window.addEventListener('orientationchange', () => setTimeout(() => request(true), 120), { passive: true });
+    }
+
+    request(true);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bind, { once: true });
+  } else {
+    bind();
+  }
+})();
+</script>
+
+
+
+<!-- TingoRooms Amazon-style compact sticky top update -->
+<style id="tingo-amazon-compact-sticky-update">
+@media (max-width: 899px) {
+  :root {
+    --safe-bottom: 86px !important;
+  }
+
+  /* Compact sticky top: logo + brand + search + bell in one row */
+  .header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 2200 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    max-height: 52px !important;
+    padding: 6px 8px 5px !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    background: rgba(248, 250, 252, 0.92) !important;
+    border-bottom: 0 !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.045) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+  }
+
+  .logo {
+    width: 29px !important;
+    height: 29px !important;
+    border-radius: 10px !important;
+    border-width: 1px !important;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.12) !important;
+  }
+
+  .tingo-brand-title {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 43px !important;
+    margin-right: 1px !important;
+    color: #2563EB !important;
+    font-size: 13px !important;
+    line-height: 0.86 !important;
+    letter-spacing: -0.04em !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+  }
+
+  .tingo-brand-title span {
+    display: block !important;
+    margin-top: 1px !important;
+    color: #0F766E !important;
+    font-size: 7.5px !important;
+    line-height: 1 !important;
+    letter-spacing: 0.08em !important;
+    font-weight: 850 !important;
+  }
+
+  .search-box {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  .search-box input {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding-left: 31px !important;
+    padding-right: 36px !important;
+    border-radius: 999px !important;
+    font-size: 11.4px !important;
+    font-weight: 650 !important;
+    background: rgba(255,255,255,0.96) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.88), 0 5px 13px rgba(15, 23, 42, 0.055) !important;
+  }
+
+  .search-box > .search-leading,
+  .search-box > .material-symbols-rounded:not(.search-action-btn .material-symbols-rounded) {
+    left: 10px !important;
+    font-size: 17px !important;
+  }
+
+  .search-action-btn {
+    right: 4px !important;
+    width: 28px !important;
+    height: 28px !important;
+    box-shadow: 0 5px 13px rgba(79, 70, 229, 0.22) !important;
+  }
+
+  .search-action-btn .material-symbols-rounded {
+    font-size: 17px !important;
+  }
+
+  .notification {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 13px !important;
+    box-shadow: 0 5px 13px rgba(15, 23, 42, 0.055) !important;
+  }
+
+  .notification .material-symbols-rounded {
+    font-size: 20px !important;
+  }
+
+  .notification .badge {
+    top: 6px !important;
+    right: 7px !important;
+    width: 7px !important;
+    height: 7px !important;
+    border-width: 1.5px !important;
+  }
+
+  /* Compact filter chips stay sticky like shopping apps. */
+  .filter-bar {
+    position: sticky !important;
+    top: 48px !important;
+    z-index: 2100 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    width: 100% !important;
+    min-height: 37px !important;
+    max-height: 40px !important;
+    padding: 4px 8px 5px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    background: rgba(248, 250, 252, 0.92) !important;
+    border-bottom: 0 !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.035) !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+  }
+
+  .filter-select,
+  .filter-reset {
+    height: 29px !important;
+    min-height: 29px !important;
+    max-width: 122px !important;
+    min-width: 104px !important;
+    padding: 0 24px 0 10px !important;
+    border-radius: 999px !important;
+    font-size: 10.7px !important;
+    font-weight: 850 !important;
+    background: rgba(255,255,255,0.96) !important;
+    box-shadow: 0 5px 12px rgba(15, 23, 42, 0.04) !important;
+  }
+
+  .filter-reset.visible {
+    min-width: auto !important;
+    padding: 0 10px !important;
+  }
+
+  /* Rooms Available / Rooms Required: compact, sticky, and only this part hides on slide up. */
+  .mode-switch-wrap,
+  .mode-switch-wrap.compact {
+    position: sticky !important;
+    top: 86px !important;
+    z-index: 2050 !important;
+    width: 100% !important;
+    min-height: 40px !important;
+    max-height: 44px !important;
+    padding: 3px 8px 5px !important;
+    margin: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    overflow: hidden !important;
+    pointer-events: auto !important;
+    background: rgba(248, 250, 252, 0.90) !important;
+    box-shadow: 0 9px 18px rgba(15, 23, 42, 0.03) !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+    transition: opacity 0.16s ease, transform 0.16s ease, max-height 0.18s ease, padding 0.18s ease !important;
+  }
+
+  .mode-switch,
+  .mode-switch-wrap.compact .mode-switch {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    padding: 3px !important;
+    border-radius: 999px !important;
+    background: rgba(255,255,255,0.96) !important;
+    border: 1px solid rgba(226, 232, 240, 0.88) !important;
+    box-shadow: 0 5px 13px rgba(15, 23, 42, 0.045) !important;
+  }
+
+  .mode-btn,
+  .mode-switch-wrap.compact .mode-btn {
+    position: static !important;
+    width: auto !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 7px !important;
+    border-radius: 999px !important;
+    gap: 4px !important;
+    font-size: 10.5px !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+  }
+
+  .mode-btn .material-symbols-rounded,
+  .mode-switch-wrap.compact .mode-btn .material-symbols-rounded {
+    font-size: 15px !important;
+  }
+
+  .mode-switch-wrap.compact .mode-label {
+    opacity: 1 !important;
+    width: auto !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+
+  .mode-switch-wrap.compact #modeAvailableBtn,
+  .mode-switch-wrap.compact #modeNeededBtn {
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+
+  /* Previous auto-hide class should NOT hide the logo/search/filter now. */
+  .app-container.tingo-top-hidden .header,
+  .app-container.tingo-top-hidden .filter-bar {
+    max-height: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+    background: rgba(248, 250, 252, 0.92) !important;
+    border: 0 !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04) !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+  }
+
+  .app-container.tingo-top-hidden .header {
+    min-height: 48px !important;
+    max-height: 52px !important;
+    padding: 6px 8px 5px !important;
+  }
+
+  .app-container.tingo-top-hidden .filter-bar {
+    min-height: 37px !important;
+    max-height: 40px !important;
+    padding: 4px 8px 5px !important;
+  }
+
+  .app-container.tingo-top-hidden .header *,
+  .app-container.tingo-top-hidden .filter-bar * {
+    pointer-events: auto !important;
+  }
+
+  /* Slide up hides only Available/Required switch. Minor slide down reveals it instantly via existing JS. */
+  .app-container.tingo-top-hidden .mode-switch-wrap,
+  .app-container.tingo-top-hidden .mode-switch-wrap.compact {
+    max-height: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-8px) scale(0.99) !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .app-container.tingo-top-hidden .mode-switch-wrap * {
+    pointer-events: none !important;
+  }
+
+  .app-container.tingo-top-hidden .main-content {
+    padding-top: 8px !important;
+    padding-bottom: calc(var(--safe-bottom) + env(safe-area-inset-bottom) + 28px) !important;
+  }
+
+  .main-content {
+    padding-top: 8px !important;
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+    padding-bottom: calc(var(--safe-bottom) + env(safe-area-inset-bottom) + 28px) !important;
+    gap: 13px !important;
+  }
+
+  /* Keep one listing clearly visible: image remains portrait-safe but card details are a little tighter. */
+  .ig-listing-card {
+    border-radius: 22px !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06) !important;
+  }
+
+  .ig-image-box {
+    border-radius: 21px 21px 0 0 !important;
+  }
+
+  .ig-details {
+    padding: 10px 11px 12px !important;
+    gap: 8px !important;
+  }
+
+  .ig-meta-row {
+    gap: 8px !important;
+  }
+
+  .ig-owner-avatar {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .ig-owner-name,
+  .ig-location {
+    font-size: 12px !important;
+    line-height: 1.25 !important;
+  }
+
+  .ig-location {
+    margin-top: 4px !important;
+  }
+
+  .ig-location-text {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .ig-title {
+    margin: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.18 !important;
+  }
+
+  .ig-field-grid {
+    gap: 7px !important;
+  }
+
+  .ig-field {
+    min-height: 48px !important;
+    padding: 7px 8px !important;
+    border-radius: 13px !important;
+  }
+
+  .ig-field-label {
+    font-size: 9.3px !important;
+  }
+
+  .ig-field-value {
+    font-size: 13.8px !important;
+  }
+
+  .ig-field-value.price {
+    font-size: 15px !important;
+  }
+
+  .ig-actions {
+    gap: 7px !important;
+    margin-top: 1px !important;
+  }
+
+  .ig-action-btn {
+    min-height: 37px !important;
+    border-radius: 13px !important;
+    font-size: 11.5px !important;
+  }
+
+  /* Bottom button area a little smaller and less intrusive. */
+  .bottom-nav-frame {
+    height: 92px !important;
+  }
+
+  .bottom-nav {
+    padding-top: 7px !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media (max-width: 374px) {
+  .tingo-brand-title {
+    display: none !important;
+  }
+
+  .header {
+    gap: 5px !important;
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+  }
+
+  .filter-select {
+    min-width: 96px !important;
+    max-width: 112px !important;
+    font-size: 10.2px !important;
+  }
+
+  .mode-btn,
+  .mode-switch-wrap.compact .mode-btn {
+    font-size: 10px !important;
+    padding: 0 5px !important;
+  }
+}
+</style>
+
+<script id="tingo-amazon-compact-sticky-script">
+(function() {
+  function keepOnlyModeAutoHidden() {
+    const app = document.querySelector('.app-container');
+    if (!app || window.innerWidth >= 900) return;
+    /* Existing scroll script uses .tingo-top-hidden. CSS above converts that behavior
+       into hiding only the Available/Required switch, while header + filters stay sticky. */
+    const wrap = document.getElementById('modeSwitchWrap');
+    if (wrap) wrap.classList.remove('compact');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', keepOnlyModeAutoHidden, { once: true });
+  } else {
+    keepOnlyModeAutoHidden();
+  }
+  window.addEventListener('resize', keepOnlyModeAutoHidden, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(keepOnlyModeAutoHidden, 120), { passive: true });
+})();
+</script>
+
+
+
+<!-- TingoRooms final mode-tabs hide + colorful rent/deposit polish -->
+<style id="tingo-final-mode-hide-color-fields-update">
+@media (max-width: 899px) {
+  /* Strong final rule: only Rooms Available / Rooms Required should disappear on upward slide. */
+  #modeSwitchWrap {
+    transform-origin: top center !important;
+    transition:
+      max-height 0.16s ease,
+      min-height 0.16s ease,
+      height 0.16s ease,
+      padding 0.16s ease,
+      opacity 0.14s ease,
+      transform 0.16s ease,
+      visibility 0.16s ease !important;
+    will-change: max-height, opacity, transform !important;
+  }
+
+  #modeSwitchWrap.tingo-mode-tabs-hidden,
+  #modeSwitchWrap.switch-hidden,
+  .app-container.tingo-top-hidden #modeSwitchWrap,
+  .app-container.tingo-top-hidden #modeSwitchWrap.compact {
+    display: block !important;
+    max-height: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-14px) scale(0.985) !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  #modeSwitchWrap.tingo-mode-tabs-hidden .mode-switch,
+  #modeSwitchWrap.switch-hidden .mode-switch,
+  .app-container.tingo-top-hidden #modeSwitchWrap .mode-switch {
+    opacity: 0 !important;
+    transform: translateY(-8px) scale(0.985) !important;
+    pointer-events: none !important;
+  }
+
+  /* Header + filter always stay visible and sticky, even when the mode tabs are hidden. */
+  .app-container.tingo-top-hidden .header,
+  .app-container.tingo-top-hidden .filter-bar,
+  .header,
+  .filter-bar {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Add stronger multi-color backgrounds for important fields. */
+  .ig-field-grid .ig-field,
+  .mobile-field {
+    border: 1px solid rgba(255,255,255,0.68) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.76), 0 5px 14px rgba(15, 23, 42, 0.045) !important;
+  }
+
+  .ig-field-grid .ig-field:nth-child(1),
+  .mobile-field.field-rent,
+  .mobile-field.field-budget,
+  .mobile-field.price-field {
+    background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 52%, #FFE4E6 100%) !important;
+    border-color: rgba(251, 146, 60, 0.46) !important;
+  }
+
+  .ig-field-grid .ig-field:nth-child(1) .ig-field-label,
+  .mobile-field.field-rent .mobile-field-label,
+  .mobile-field.field-budget .mobile-field-label,
+  .mobile-field.price-field .mobile-field-label {
+    color: #C2410C !important;
+  }
+
+  .ig-field-grid .ig-field:nth-child(1) .ig-field-value,
+  .mobile-field.field-rent .mobile-field-value,
+  .mobile-field.field-budget .mobile-field-value,
+  .mobile-field.price-field .mobile-field-value {
+    color: #7C2D12 !important;
+  }
+
+  .ig-field-grid .ig-field:nth-child(2),
+  .mobile-field.field-deposit {
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 52%, #EDE9FE 100%) !important;
+    border-color: rgba(96, 165, 250, 0.48) !important;
+  }
+
+  .ig-field-grid .ig-field:nth-child(2) .ig-field-label,
+  .mobile-field.field-deposit .mobile-field-label {
+    color: #1D4ED8 !important;
+  }
+
+  .ig-field-grid .ig-field:nth-child(2) .ig-field-value,
+  .mobile-field.field-deposit .mobile-field-value {
+    color: #1E3A8A !important;
+  }
+
+  .ig-field-grid .ig-field:nth-child(3),
+  .mobile-field.field-category {
+    background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 48%, #FAE8FF 100%) !important;
+    border-color: rgba(167, 139, 250, 0.46) !important;
+  }
+
+  .ig-field-grid .ig-field:nth-child(3) .ig-field-label,
+  .ig-field-grid .ig-field:nth-child(3) .ig-field-value,
+  .mobile-field.field-category .mobile-field-label,
+  .mobile-field.field-category .mobile-field-value {
+    color: #5B21B6 !important;
+  }
+
+  .ig-field-grid .ig-field:nth-child(4),
+  .mobile-field.field-brokerage,
+  .mobile-field.field-status {
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 52%, #CCFBF1 100%) !important;
+    border-color: rgba(52, 211, 153, 0.46) !important;
+  }
+
+  .ig-field-grid .ig-field:nth-child(4) .ig-field-label,
+  .ig-field-grid .ig-field:nth-child(4) .ig-field-value,
+  .mobile-field.field-brokerage .mobile-field-label,
+  .mobile-field.field-brokerage .mobile-field-value,
+  .mobile-field.field-status .mobile-field-label,
+  .mobile-field.field-status .mobile-field-value {
+    color: #047857 !important;
+  }
+
+  .ig-field.full,
+  .mobile-field.field-distance {
+    background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 52%, #FFE4E6 100%) !important;
+    border-color: rgba(244, 114, 182, 0.42) !important;
+  }
+
+  .ig-field.full .ig-field-label,
+  .ig-field.full .ig-field-value,
+  .mobile-field.field-distance .mobile-field-label,
+  .mobile-field.field-distance .mobile-field-value {
+    color: #BE185D !important;
+  }
+
+  .ig-field-label,
+  .mobile-field-label {
+    opacity: 0.95 !important;
+    letter-spacing: 0.06em !important;
+  }
+
+  .ig-field-value,
+  .mobile-field-value {
+    font-weight: 950 !important;
+  }
+}
+</style>
+
+<script id="tingo-final-mode-tabs-hide-script">
+(function() {
+  let lastTop = 0;
+  let ticking = false;
+  let touchY = null;
+  let lastActionAt = 0;
+
+  function mobileRoot() {
+    if (window.innerWidth >= 900) return document.scrollingElement || document.documentElement;
+    return document.querySelector('.app-container') || document.scrollingElement || document.documentElement;
+  }
+
+  function scrollTop() {
+    const r = mobileRoot();
+    if (r === document.scrollingElement || r === document.documentElement || r === document.body) {
+      return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    }
+    return r.scrollTop || 0;
+  }
+
+  function setModeTabsVisible(visible) {
+    const app = document.querySelector('.app-container');
+    const wrap = document.getElementById('modeSwitchWrap');
+    if (!app || !wrap) return;
+
+    if (window.innerWidth >= 900) {
+      app.classList.remove('tingo-top-hidden');
+      wrap.classList.remove('tingo-mode-tabs-hidden', 'switch-hidden', 'compact');
+      return;
+    }
+
+    if (visible) {
+      app.classList.remove('tingo-top-hidden');
+      wrap.classList.remove('tingo-mode-tabs-hidden', 'switch-hidden', 'compact');
+    } else {
+      app.classList.add('tingo-top-hidden');
+      wrap.classList.add('tingo-mode-tabs-hidden', 'switch-hidden');
+      wrap.classList.remove('compact');
+      const suggestions = document.getElementById('searchSuggestions');
+      if (suggestions) suggestions.classList.remove('show');
+    }
+  }
+
+  function update(forceShow) {
+    const top = scrollTop();
+    const diff = top - lastTop;
+
+    if (window.innerWidth >= 900) {
+      setModeTabsVisible(true);
+      lastTop = top;
+      return;
+    }
+
+    if (forceShow || top <= 12 || diff < -0.5) {
+      setModeTabsVisible(true);
+      lastActionAt = Date.now();
+    } else if (top > 42 && diff > 0.8 && Date.now() - lastActionAt > 80) {
+      setModeTabsVisible(false);
+      lastActionAt = Date.now();
+    }
+
+    lastTop = Math.max(0, top);
+  }
+
+  function request(forceShow) {
+    if (forceShow) {
+      update(true);
+      return;
+    }
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function() {
+      ticking = false;
+      update(false);
+    });
+  }
+
+  window.tingoShowModeTabs = function() { request(true); };
+  window.tingoHideModeTabs = function() { setModeTabsVisible(false); };
+  window.updateModeSwitchCompact = function() { request(false); };
+
+  function bind() {
+    const r = mobileRoot();
+    lastTop = scrollTop();
+    setModeTabsVisible(true);
+
+    if (r && r.dataset.tingoFinalModeHideBound !== '1') {
+      r.dataset.tingoFinalModeHideBound = '1';
+      r.addEventListener('scroll', function() { request(false); }, { passive: true });
+      r.addEventListener('touchstart', function(e) {
+        touchY = e.touches && e.touches.length ? e.touches[0].clientY : null;
+      }, { passive: true });
+      r.addEventListener('touchmove', function(e) {
+        if (touchY == null || !e.touches || !e.touches.length) return;
+        const y = e.touches[0].clientY;
+        const delta = y - touchY;
+        if (delta > 2) {
+          // Finger moving down => user wants controls back instantly.
+          request(true);
+        } else if (delta < -2 && scrollTop() > 30) {
+          // Finger moving up => hide the Available/Required switch while sliding.
+          setModeTabsVisible(false);
+        }
+      }, { passive: true });
+      r.addEventListener('touchend', function() { touchY = null; }, { passive: true });
+    }
+
+    if (document.body.dataset.tingoFinalModeHideWindowBound !== '1') {
+      document.body.dataset.tingoFinalModeHideWindowBound = '1';
+      window.addEventListener('wheel', function(e) {
+        if (window.innerWidth >= 900) return;
+        if (e.deltaY < 0) request(true);
+        if (e.deltaY > 0 && scrollTop() > 30) setModeTabsVisible(false);
+      }, { passive: true });
+      window.addEventListener('resize', function() { request(true); }, { passive: true });
+      window.addEventListener('orientationchange', function() { setTimeout(function() { request(true); }, 120); }, { passive: true });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bind, { once: true });
+  } else {
+    bind();
   }
 })();
 </script>
