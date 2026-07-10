@@ -3272,10 +3272,10 @@ html {
       <div id="searchSuggestions" class="search-suggestions" aria-label="Search suggestions"></div>
     </div>
 
-    <div class="notification" onclick="openNotifications()">
+    <button type="button" id="notificationButton" class="notification" onclick="openNotifications()" aria-label="Open notifications" aria-expanded="false">
       <span class="material-symbols-rounded">notifications</span>
-      <div class="badge"></div>
-    </div>
+      <span id="notificationBadge" class="badge" aria-label="0 unread notifications">0</span>
+    </button>
   </div>
 
   <div class="filter-bar" id="filterBar" aria-label="Type and property filters">
@@ -3305,25 +3305,24 @@ html {
   </div>
 
 
-  <div id="notificationPanel" style="
-    position:fixed;
-    top:0;
-    right:-100%;
-    width:90%;
-    max-width:400px;
-    height:100%;
-    background:white;
-    z-index:2000;
-    transition:0.3s;
-    box-shadow:-5px 0 15px rgba(0,0,0,0.1);
-    overflow-y:auto;
-  ">
-    <div style="padding:15px;font-weight:bold;border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-      Notifications
-      <span class="material-symbols-rounded" onclick="closeNotifications()" style="cursor:pointer; font-size:20px; color:gray;">close</span>
+  <div id="notificationOverlay" class="notification-overlay" onclick="closeNotifications()" aria-hidden="true"></div>
+
+  <aside id="notificationPanel" class="notification-panel" aria-hidden="true" aria-label="Notifications">
+    <div class="notification-drag-handle" aria-hidden="true"></div>
+    <div class="notification-panel-header">
+      <div class="notification-heading-wrap">
+        <div class="notification-heading-icon"><span class="material-symbols-rounded">notifications_active</span></div>
+        <div>
+          <div class="notification-heading">Notifications</div>
+          <div id="notificationSubheading" class="notification-subheading">Your latest TingoRooms updates</div>
+        </div>
+      </div>
+      <button type="button" class="notification-close-btn" onclick="closeNotifications()" aria-label="Close notifications">
+        <span class="material-symbols-rounded">close</span>
+      </button>
     </div>
-    <div id="notificationList"></div>
-  </div>
+    <div id="notificationList" class="notification-list" aria-live="polite"></div>
+  </aside>
 
   <div id="appPopup" class="app-popup hidden" role="status" aria-live="polite">
     <div class="app-popup-icon"><span class="material-symbols-rounded">info</span></div>
@@ -4188,98 +4187,494 @@ function openChatList() {
 }
 
 /* =========================================
-   NEW NOTIFICATION LOGIC (AUTO-READ)
+   NOTIFICATION SLIDER + UNREAD COUNT + SOUND
    ========================================= */
+let notificationChannel = null;
+let notificationItems = [];
+let notificationKnownIds = new Set();
+let notificationsInitialised = false;
+let notificationAudioContext = null;
+let notificationMarkTimer = null;
+let notificationSwipeState = null;
 
-/* OPEN NOTIFICATIONS */
-async function openNotifications() {
-  const user = JSON.parse(localStorage.getItem("user"));
+function getLoggedInUser() {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn("Unable to read logged-in user", error);
+    return null;
+  }
+}
 
-  if (!user) {
-    window.location.href = "user.html";
+function notificationSeenKey(userId) {
+  return `tingo_seen_notification_ids_${userId}`;
+}
+
+function getSeenNotificationIds(userId) {
+  try {
+    const value = JSON.parse(localStorage.getItem(notificationSeenKey(userId)) || "[]");
+    return new Set(Array.isArray(value) ? value.map(String) : []);
+  } catch (_) {
+    return new Set();
+  }
+}
+
+function saveSeenNotificationIds(userId, ids) {
+  try {
+    const compactIds = Array.from(ids).slice(-500);
+    localStorage.setItem(notificationSeenKey(userId), JSON.stringify(compactIds));
+  } catch (error) {
+    console.warn("Unable to save notification seen state", error);
+  }
+}
+
+function getWelcomeNotification(user) {
+  if (!user?.id) return null;
+
+  const createdKey = `tingo_welcome_notification_created_${user.id}`;
+  let createdAt = localStorage.getItem(createdKey);
+  if (!createdAt) {
+    createdAt = new Date().toISOString();
+    try { localStorage.setItem(createdKey, createdAt); } catch (_) {}
+  }
+
+  return {
+    id: `tingo-welcome-${user.id}`,
+    user_id: user.id,
+    title: "Welcome to TingoRooms 👋",
+    message: "Find rooms and roommates with a safer, simpler and more secure experience. Your latest room, chat and account updates will appear here.",
+    created_at: createdAt,
+    is_read: false,
+    _localWelcome: true
+  };
+}
+
+function combineNotifications(databaseItems, user) {
+  const seenIds = getSeenNotificationIds(user.id);
+  const rows = Array.isArray(databaseItems) ? databaseItems.map(item => ({
+    ...item,
+    is_read: item.is_read === true || seenIds.has(String(item.id))
+  })) : [];
+
+  const hasDatabaseWelcome = rows.some(item =>
+    String(item.title || "").toLowerCase().includes("welcome to tingorooms")
+  );
+
+  if (!hasDatabaseWelcome) {
+    const welcome = getWelcomeNotification(user);
+    if (welcome) {
+      welcome.is_read = seenIds.has(String(welcome.id));
+      rows.push(welcome);
+    }
+  }
+
+  return rows.sort((a, b) => {
+    const aTime = new Date(a.created_at || 0).getTime() || 0;
+    const bTime = new Date(b.created_at || 0).getTime() || 0;
+    return bTime - aTime;
+  });
+}
+
+function isNotificationPanelOpen() {
+  return document.getElementById("notificationPanel")?.classList.contains("open") || false;
+}
+
+function updateNotificationBadge(listOrCount) {
+  const badge = document.getElementById("notificationBadge");
+  if (!badge) return;
+
+  const count = Array.isArray(listOrCount)
+    ? listOrCount.filter(item => item.is_read !== true).length
+    : Math.max(0, Number(listOrCount) || 0);
+
+  badge.textContent = count > 99 ? "99+" : String(count);
+  badge.setAttribute("aria-label", `${count} unread notification${count === 1 ? "" : "s"}`);
+  badge.classList.toggle("has-unread", count > 0);
+
+  const subheading = document.getElementById("notificationSubheading");
+  if (subheading) {
+    subheading.textContent = count > 0
+      ? `${count} new notification${count === 1 ? "" : "s"}`
+      : "You are all caught up";
+  }
+}
+
+function formatNotificationTime(value) {
+  if (!value) return "Just now";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Recently";
+
+  const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (diffSeconds < 60) return "Just now";
+  if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+  if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
+  if (diffSeconds < 604800) return `${Math.floor(diffSeconds / 86400)}d ago`;
+
+  return date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined });
+}
+
+function getNotificationIcon(item) {
+  const text = `${item?.title || ""} ${item?.message || ""}`.toLowerCase();
+  if (item?._localWelcome || text.includes("welcome")) return "waving_hand";
+  if (text.includes("chat") || text.includes("message")) return "forum";
+  if (text.includes("approved") || text.includes("active")) return "verified";
+  if (text.includes("room") || text.includes("listing")) return "home_work";
+  if (text.includes("security") || text.includes("login")) return "shield_person";
+  return "notifications_active";
+}
+
+function renderNotificationLoading() {
+  const container = document.getElementById("notificationList");
+  if (!container) return;
+  container.innerHTML = `
+    <div class="notification-loading-card">
+      <span class="notification-loading-dot"></span>
+      <span class="notification-loading-dot"></span>
+      <span class="notification-loading-dot"></span>
+    </div>
+  `;
+}
+
+function renderNotifications(list) {
+  const container = document.getElementById("notificationList");
+  if (!container) return;
+
+  const safeList = Array.isArray(list) ? list : [];
+  const realNotificationCount = safeList.filter(item => !item._localWelcome).length;
+
+  if (safeList.length === 0) {
+    container.innerHTML = `
+      <div class="notification-empty-state">
+        <div class="notification-empty-icon"><span class="material-symbols-rounded">notifications_off</span></div>
+        <div class="notification-empty-title">No notifications yet</div>
+        <div class="notification-empty-message">New room, chat and account updates will appear here.</div>
+      </div>
+    `;
+    updateNotificationBadge(0);
     return;
   }
 
-  document.getElementById("notificationPanel").style.right = "0";
-  loadNotifications();
+  const cards = safeList.map(item => {
+    const unread = item.is_read !== true;
+    return `
+      <article class="notification-card ${unread ? "unread" : ""} ${item._localWelcome ? "welcome" : ""}">
+        <div class="notification-card-icon"><span class="material-symbols-rounded">${getNotificationIcon(item)}</span></div>
+        <div class="notification-card-content">
+          <div class="notification-card-topline">
+            <div class="notification-card-title">${escapeHtml(item.title || "TingoRooms update")}</div>
+            ${unread ? '<span class="notification-new-pill">NEW</span>' : ''}
+          </div>
+          <div class="notification-card-message">${escapeHtml(item.message || "You have a new update.")}</div>
+          <div class="notification-card-time"><span class="material-symbols-rounded">schedule</span>${escapeHtml(formatNotificationTime(item.created_at))}</div>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  const emptyTail = realNotificationCount === 0 ? `
+    <div class="notification-empty-state compact">
+      <div class="notification-empty-icon"><span class="material-symbols-rounded">done_all</span></div>
+      <div class="notification-empty-title">No other notifications</div>
+      <div class="notification-empty-message">You are all caught up for now.</div>
+    </div>
+  ` : "";
+
+  container.innerHTML = cards + emptyTail;
+  updateNotificationBadge(safeList);
 }
 
-/* CLOSE NOTIFICATIONS */
-function closeNotifications() {
-  document.getElementById("notificationPanel").style.right = "-100%";
+function ensureNotificationAudioContext() {
+  try {
+    if (!notificationAudioContext) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) notificationAudioContext = new AudioContextClass();
+    }
+    if (notificationAudioContext?.state === "suspended") {
+      notificationAudioContext.resume().catch(() => {});
+    }
+  } catch (_) {}
+  return notificationAudioContext;
 }
 
-/* LOAD NOTIFICATIONS (UPDATED TO AUTO MARK AS READ) */
-async function loadNotifications() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return;
+function playNotificationSound() {
+  const context = ensureNotificationAudioContext();
+  if (!context || context.state !== "running") return;
 
-  const { data } = await db
+  const now = context.currentTime;
+  const notes = [659.25, 783.99, 1046.50];
+  notes.forEach((frequency, index) => {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const start = now + (index * 0.095);
+    const end = start + 0.16;
+
+    oscillator.type = index === 2 ? "sine" : "triangle";
+    oscillator.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.12, start + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, end);
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(start);
+    oscillator.stop(end + 0.02);
+  });
+
+  try { navigator.vibrate?.([35, 30, 45]); } catch (_) {}
+}
+
+async function markAllNotificationsSeen(user = getLoggedInUser()) {
+  if (!user?.id || notificationItems.length === 0) return;
+
+  const seenIds = getSeenNotificationIds(user.id);
+  notificationItems.forEach(item => {
+    if (item?.id != null) seenIds.add(String(item.id));
+    item.is_read = true;
+  });
+  saveSeenNotificationIds(user.id, seenIds);
+  renderNotifications(notificationItems);
+
+  const unreadDatabaseIds = notificationItems
+    .filter(item => !item._localWelcome && item?.id != null)
+    .map(item => item.id);
+
+  if (unreadDatabaseIds.length > 0) {
+    const { error } = await db
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("user_id", user.id)
+      .eq("is_read", false);
+
+    if (error) console.warn("Notification read status is stored locally; database update was not available.", error.message);
+  }
+}
+
+async function loadNotifications(options = {}) {
+  const user = getLoggedInUser();
+  if (!user?.id) {
+    notificationItems = [];
+    updateNotificationBadge(0);
+    if (isNotificationPanelOpen()) renderNotifications([]);
+    return;
+  }
+
+  const { markSeen = isNotificationPanelOpen(), announceNew = true } = options;
+  const { data, error } = await db
     .from("notifications")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  if (!data) return;
-
-  renderNotifications(data);
-
-  // AUTO MARK AS READ AFTER LOADING
-  await db
-    .from("notifications")
-    .update({ is_read: true })
-    .eq("user_id", user.id)
-    .eq("is_read", false);
-}
-
-/* RENDER NOTIFICATIONS */
-function renderNotifications(list) {
-  const container = document.getElementById("notificationList");
-  container.innerHTML = "";
-
-  if (!list || list.length === 0) {
-    container.innerHTML = "<p style='padding:15px; color:gray;'>No notifications</p>";
+  if (error) {
+    console.error("Unable to load notifications", error);
+    if (isNotificationPanelOpen()) {
+      const container = document.getElementById("notificationList");
+      if (container) {
+        container.innerHTML = `
+          <div class="notification-empty-state">
+            <div class="notification-empty-icon error"><span class="material-symbols-rounded">cloud_off</span></div>
+            <div class="notification-empty-title">Could not load updates</div>
+            <div class="notification-empty-message">Check your connection and try again.</div>
+            <button type="button" class="notification-retry-btn" onclick="loadNotifications({ markSeen: isNotificationPanelOpen(), announceNew: false })">Try again</button>
+          </div>
+        `;
+      }
+    }
     return;
   }
 
-  list.forEach(n => {
-    container.innerHTML += `
-      <div style="
-        padding:12px;
-        border-bottom:1px solid #eee;
-        font-weight:${n.is_read ? "normal" : "bold"};
-        background:${n.is_read ? "#fff" : "#eef2ff"};
-      ">
-        <div>${n.title}</div>
-        <div style="font-size:12px;color:gray">${n.message}</div>
-      </div>
-    `;
+  const combined = combineNotifications(data || [], user);
+  const databaseIds = combined.filter(item => !item._localWelcome && item?.id != null).map(item => String(item.id));
+  const newlyArrived = notificationsInitialised
+    ? databaseIds.filter(id => !notificationKnownIds.has(id))
+    : [];
+
+  databaseIds.forEach(id => notificationKnownIds.add(id));
+  notificationItems = combined;
+  renderNotifications(notificationItems);
+
+  if (announceNew && newlyArrived.length > 0) playNotificationSound();
+  notificationsInitialised = true;
+
+  clearTimeout(notificationMarkTimer);
+  if (markSeen && isNotificationPanelOpen()) {
+    notificationMarkTimer = setTimeout(() => markAllNotificationsSeen(user), 420);
+  }
+}
+
+function showNotificationsPanel() {
+  const panel = document.getElementById("notificationPanel");
+  const overlay = document.getElementById("notificationOverlay");
+  const button = document.getElementById("notificationButton");
+  const app = document.querySelector(".app-container");
+  if (!panel || !overlay) return;
+
+  panel.style.transform = "";
+  panel.style.transition = "";
+  overlay.style.opacity = "";
+  panel.classList.add("open");
+  overlay.classList.add("open");
+  panel.setAttribute("aria-hidden", "false");
+  overlay.setAttribute("aria-hidden", "false");
+  button?.setAttribute("aria-expanded", "true");
+  document.body.classList.add("notification-open");
+  app?.classList.add("notification-open");
+
+  renderNotificationLoading();
+  loadNotifications({ markSeen: true, announceNew: false });
+}
+
+function closeNotifications() {
+  const panel = document.getElementById("notificationPanel");
+  const overlay = document.getElementById("notificationOverlay");
+  const button = document.getElementById("notificationButton");
+  const app = document.querySelector(".app-container");
+
+  clearTimeout(notificationMarkTimer);
+  panel?.classList.remove("open");
+  overlay?.classList.remove("open");
+  panel?.setAttribute("aria-hidden", "true");
+  overlay?.setAttribute("aria-hidden", "true");
+  button?.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("notification-open");
+  app?.classList.remove("notification-open");
+
+  if (panel) {
+    panel.style.transition = "";
+    panel.style.transform = "";
+  }
+  if (overlay) overlay.style.opacity = "";
+  notificationSwipeState = null;
+}
+
+function openNotifications() {
+  ensureNotificationAudioContext();
+
+  if (isNotificationPanelOpen()) {
+    closeNotifications();
+    return;
+  }
+
+  const user = getLoggedInUser();
+  if (!user?.id) {
+    try {
+      localStorage.setItem("tingo_open_notifications_after_login", "1");
+      localStorage.setItem("tingo_post_login_redirect", "index.html?openNotifications=1");
+    } catch (_) {}
+    window.location.href = `user.html?redirect=${encodeURIComponent("index.html?openNotifications=1")}`;
+    return;
+  }
+
+  showNotificationsPanel();
+}
+
+function maybeOpenNotificationsAfterLogin(user) {
+  if (!user?.id) return;
+  const params = new URLSearchParams(window.location.search);
+  const requestedByUrl = params.get("openNotifications") === "1";
+  const requestedByStorage = localStorage.getItem("tingo_open_notifications_after_login") === "1";
+  if (!requestedByUrl && !requestedByStorage) return;
+
+  try {
+    localStorage.removeItem("tingo_open_notifications_after_login");
+    localStorage.removeItem("tingo_post_login_redirect");
+  } catch (_) {}
+
+  if (requestedByUrl && window.history?.replaceState) {
+    params.delete("openNotifications");
+    const cleanQuery = params.toString();
+    window.history.replaceState({}, document.title, `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ""}${window.location.hash}`);
+  }
+
+  setTimeout(showNotificationsPanel, 180);
+}
+
+function bindNotificationSwipe() {
+  const panel = document.getElementById("notificationPanel");
+  const overlay = document.getElementById("notificationOverlay");
+  if (!panel || panel.dataset.swipeBound === "1") return;
+  panel.dataset.swipeBound = "1";
+
+  panel.addEventListener("touchstart", event => {
+    if (!isNotificationPanelOpen() || !event.touches?.length) return;
+    const touch = event.touches[0];
+    notificationSwipeState = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      currentX: touch.clientX,
+      startTime: Date.now(),
+      dragging: false
+    };
+  }, { passive: true });
+
+  panel.addEventListener("touchmove", event => {
+    if (!notificationSwipeState || !event.touches?.length) return;
+    const touch = event.touches[0];
+    const dx = Math.max(0, touch.clientX - notificationSwipeState.startX);
+    const dy = touch.clientY - notificationSwipeState.startY;
+    notificationSwipeState.currentX = touch.clientX;
+
+    if (!notificationSwipeState.dragging) {
+      if (Math.abs(dy) > Math.abs(dx) + 8) return;
+      if (dx < 6) return;
+      notificationSwipeState.dragging = true;
+    }
+
+    event.preventDefault();
+    panel.style.transition = "none";
+    panel.style.transform = `translateX(${Math.min(dx, panel.offsetWidth)}px)`;
+    if (overlay) overlay.style.opacity = String(Math.max(0, 1 - (dx / Math.max(panel.offsetWidth, 1))));
+  }, { passive: false });
+
+  panel.addEventListener("touchend", () => {
+    if (!notificationSwipeState) return;
+    const dx = Math.max(0, notificationSwipeState.currentX - notificationSwipeState.startX);
+    const elapsed = Math.max(1, Date.now() - notificationSwipeState.startTime);
+    const velocity = dx / elapsed;
+    const shouldClose = notificationSwipeState.dragging && (dx > panel.offsetWidth * 0.24 || velocity > 0.55);
+
+    panel.style.transition = "";
+    panel.style.transform = "";
+    if (overlay) overlay.style.opacity = "";
+    notificationSwipeState = null;
+
+    if (shouldClose) closeNotifications();
+  }, { passive: true });
+
+  panel.addEventListener("touchcancel", () => {
+    panel.style.transition = "";
+    panel.style.transform = "";
+    if (overlay) overlay.style.opacity = "";
+    notificationSwipeState = null;
+  }, { passive: true });
+}
+
+function initNotificationUI() {
+  updateNotificationBadge(0);
+  bindNotificationSwipe();
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && isNotificationPanelOpen()) closeNotifications();
   });
-
-  updateNotificationDot(list);
+  document.addEventListener("pointerdown", ensureNotificationAudioContext, { once: true, passive: true });
 }
 
-/* RED DOT LOGIC */
-function updateNotificationDot(list) {
-  if (!list) return;
-  const hasUnread = list.some(n => !n.is_read);
-  document.querySelector(".badge").style.display = hasUnread ? "block" : "none";
-}
-
-/* REALTIME SUBSCRIPTION */
 function subscribeNotifications() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return;
+  const user = getLoggedInUser();
+  if (!user?.id) return;
 
-  db.channel('notifications')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'notifications',
+  if (notificationChannel) {
+    try { db.removeChannel(notificationChannel); } catch (_) {}
+  }
+
+  notificationChannel = db.channel(`notifications-${user.id}`)
+    .on("postgres_changes", {
+      event: "INSERT",
+      schema: "public",
+      table: "notifications",
       filter: `user_id=eq.${user.id}`
-    }, payload => {
-      console.log("New notification:", payload);
-      loadNotifications(); // refresh
+    }, () => {
+      loadNotifications({ markSeen: isNotificationPanelOpen(), announceNew: true });
     })
     .subscribe();
 }
@@ -6592,13 +6987,15 @@ function initSmoothHomePage() {
   setupModeSwitchScroll();
   loadRooms();
   subscribeFeedUpdates();
+  initNotificationUI();
 
-  const initialUserCheck = JSON.parse(localStorage.getItem("user"));
+  const initialUserCheck = getLoggedInUser();
   if (initialUserCheck) {
-    loadNotifications();
+    loadNotifications({ markSeen: false, announceNew: false });
     checkNewMessages();
     subscribeNotifications();
     syncOneSignalId(initialUserCheck);
+    maybeOpenNotificationsAfterLogin(initialUserCheck);
   }
 }
 
@@ -9684,6 +10081,421 @@ setInterval(() => {
   }
 })();
 </script>
+
+
+
+<!-- FINAL NOTIFICATION OVERLAY: must stay after every earlier style override -->
+<style id="tingo-notification-slider-final-style">
+.notification {
+  padding: 0 !important;
+  overflow: visible !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+
+#notificationBadge.badge {
+  position: absolute !important;
+  top: -5px !important;
+  right: -6px !important;
+  z-index: 3 !important;
+  min-width: 19px !important;
+  width: auto !important;
+  height: 19px !important;
+  padding: 0 5px !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  color: #FFFFFF !important;
+  background: #EF4444 !important;
+  border: 2px solid #FFFFFF !important;
+  box-shadow: 0 5px 14px rgba(239, 68, 68, 0.42) !important;
+  font-size: 9.5px !important;
+  line-height: 15px !important;
+  font-weight: 950 !important;
+  animation: pulse 1.7s infinite !important;
+}
+
+#notificationBadge.badge.has-unread {
+  display: inline-flex !important;
+}
+
+.notification-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000000;
+  display: block;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+
+.notification-overlay.open {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.notification-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 10000001;
+  width: min(92vw, 420px);
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #0F172A;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(99, 102, 241, 0.16), transparent 28%),
+    linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  border-left: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 28px 0 0 28px !important;
+  box-shadow: -24px 0 70px rgba(15, 23, 42, 0.28);
+  transform: translateX(105%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.32s ease;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+.notification-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+body.notification-open {
+  overflow: hidden !important;
+}
+
+.app-container.notification-open {
+  overflow: hidden !important;
+}
+
+.notification-drag-handle {
+  display: none;
+  width: 42px;
+  height: 5px;
+  margin: 9px auto 0;
+  border-radius: 999px;
+  background: #CBD5E1;
+}
+
+.notification-panel-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 16px 15px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.86);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+.notification-heading-wrap {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.notification-heading-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  box-shadow: 0 10px 22px var(--primary-glow);
+}
+
+.notification-heading-icon .material-symbols-rounded {
+  font-size: 23px;
+}
+
+.notification-heading {
+  font-size: 17px;
+  line-height: 1.15;
+  font-weight: 950;
+  letter-spacing: -0.03em;
+}
+
+.notification-subheading {
+  margin-top: 3px;
+  color: #64748B;
+  font-size: 11.5px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.notification-close-btn {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  background: #F1F5F9;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.notification-close-btn:active {
+  transform: scale(0.92);
+  background: #E2E8F0;
+}
+
+.notification-close-btn .material-symbols-rounded {
+  font-size: 21px;
+}
+
+.notification-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px 10px max(24px, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+#notificationList > div,
+#notificationList > article {
+  margin: 0 0 9px !important;
+  border-radius: 18px !important;
+}
+
+.notification-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px;
+  border: 1px solid rgba(226, 232, 240, 0.94);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.055);
+}
+
+.notification-card.unread {
+  border-color: rgba(129, 140, 248, 0.48);
+  background: linear-gradient(135deg, #EEF2FF 0%, #F8FAFF 100%);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.11);
+}
+
+.notification-card.welcome {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(6, 182, 212, 0.16), transparent 35%),
+    linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 72%);
+}
+
+.notification-card-icon {
+  width: 39px;
+  height: 39px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: #4F46E5;
+  background: #E0E7FF;
+}
+
+.notification-card.welcome .notification-card-icon {
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+}
+
+.notification-card-icon .material-symbols-rounded {
+  font-size: 21px;
+}
+
+.notification-card-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.notification-card-topline {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.notification-card-title {
+  min-width: 0;
+  flex: 1;
+  color: #0F172A;
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 900;
+}
+
+.notification-new-pill {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: #FFFFFF;
+  background: #EF4444;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+}
+
+.notification-card-message {
+  margin-top: 4px;
+  color: #64748B;
+  font-size: 11.5px;
+  line-height: 1.45;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.notification-card-time {
+  margin-top: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #94A3B8;
+  font-size: 9.5px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.notification-card-time .material-symbols-rounded {
+  font-size: 12px;
+}
+
+.notification-empty-state {
+  padding: 26px 18px !important;
+  text-align: center;
+  border: 1px dashed #CBD5E1 !important;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.notification-empty-state.compact {
+  padding: 18px !important;
+}
+
+.notification-empty-icon {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  color: #4F46E5;
+  background: #EEF2FF;
+}
+
+.notification-empty-icon.error {
+  color: #DC2626;
+  background: #FEF2F2;
+}
+
+.notification-empty-icon .material-symbols-rounded {
+  font-size: 29px;
+}
+
+.notification-empty-title {
+  color: #0F172A;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.notification-empty-message {
+  max-width: 250px;
+  margin: 5px auto 0;
+  color: #64748B;
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.notification-retry-btn {
+  margin-top: 13px;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.notification-loading-card {
+  min-height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #E2E8F0 !important;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.notification-loading-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6366F1;
+  animation: notificationLoadingBounce 0.9s ease-in-out infinite alternate;
+}
+
+.notification-loading-dot:nth-child(2) { animation-delay: 0.14s; }
+.notification-loading-dot:nth-child(3) { animation-delay: 0.28s; }
+
+@keyframes notificationLoadingBounce {
+  from { transform: translateY(0); opacity: 0.45; }
+  to { transform: translateY(-7px); opacity: 1; }
+}
+
+@media (max-width: 519px) {
+  .notification-panel {
+    width: min(94vw, 410px);
+    border-radius: 25px 0 0 25px !important;
+  }
+
+  .notification-drag-handle {
+    display: block;
+  }
+
+  .notification-panel-header {
+    padding-top: 10px;
+  }
+}
+
+@media (min-width: 900px) {
+  #notificationBadge.badge {
+    top: 1px !important;
+    right: 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notification-panel,
+  .notification-overlay {
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
 
 </body>
 </html>
