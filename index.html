@@ -10497,5 +10497,184 @@ body.notification-open {
 }
 </style>
 
+
+
+<!-- FINAL MOBILE COMPACT CARD SIZE UPDATE -->
+<style id="tingo-mobile-one-and-half-card-update">
+@media (max-width: 519px) {
+  /* Smaller feed spacing so the following card becomes visible sooner. */
+  .main-content,
+  .app-container.tingo-top-hidden .main-content {
+    gap: 10px !important;
+    padding-top: 6px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .card.ig-listing-card {
+    border-radius: 18px !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07) !important;
+  }
+
+  /* Reduce the main picture while keeping the complete photo fitted. */
+  .ig-image-box.card-img-wrapper,
+  .ig-requirement-image {
+    height: clamp(122px, 34vw, 146px) !important;
+    border-radius: 17px 17px 0 0 !important;
+  }
+
+  .ig-heart-btn {
+    top: 8px !important;
+    right: 8px !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .ig-heart-btn .material-symbols-rounded {
+    font-size: 21px !important;
+  }
+
+  .ig-count-badge {
+    right: 8px !important;
+    bottom: 8px !important;
+    min-width: 34px !important;
+    height: 22px !important;
+    padding: 0 7px !important;
+    font-size: 9px !important;
+  }
+
+  .ig-requirement-icon {
+    width: 58px !important;
+    height: 58px !important;
+    border-radius: 20px !important;
+  }
+
+  .ig-requirement-icon .material-symbols-rounded {
+    font-size: 34px !important;
+  }
+
+  /* Compact details without clipping important text. */
+  .ig-details {
+    padding: 7px 8px 8px !important;
+    gap: 5px !important;
+  }
+
+  .ig-meta-row {
+    grid-template-columns: 28px minmax(0, 1fr) auto !important;
+    gap: 6px !important;
+    margin-bottom: 5px !important;
+    align-items: start !important;
+  }
+
+  .ig-owner-avatar {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .ig-owner-name {
+    margin-bottom: 2px !important;
+    font-size: 10.2px !important;
+    line-height: 1.1 !important;
+  }
+
+  .ig-location {
+    margin-top: 0 !important;
+    font-size: 9.6px !important;
+    line-height: 1.13 !important;
+    align-items: flex-start !important;
+    overflow: visible !important;
+  }
+
+  .ig-location-text {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+
+  .ig-owner-name .material-symbols-rounded,
+  .ig-location .material-symbols-rounded {
+    font-size: 13px !important;
+  }
+
+  .ig-time {
+    padding-top: 1px !important;
+    font-size: 9px !important;
+  }
+
+  .ig-title {
+    margin: 0 0 5px !important;
+    font-size: 12.5px !important;
+    line-height: 1.13 !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  .ig-field-grid {
+    gap: 4px !important;
+  }
+
+  .ig-field {
+    min-height: 35px !important;
+    padding: 4px 6px !important;
+    border-radius: 10px !important;
+  }
+
+  .ig-field-label {
+    margin-bottom: 2px !important;
+    font-size: 7.5px !important;
+    line-height: 1 !important;
+  }
+
+  .ig-field-value,
+  .ig-field-value.price {
+    font-size: 10.7px !important;
+    line-height: 1.08 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+
+  .ig-field-value.price {
+    font-size: 11.5px !important;
+  }
+
+  .ig-actions {
+    gap: 5px !important;
+    margin-top: 6px !important;
+  }
+
+  .ig-action-btn {
+    height: 31px !important;
+    min-height: 31px !important;
+    padding: 0 4px !important;
+    border-radius: 10px !important;
+    gap: 3px !important;
+    font-size: 9.3px !important;
+  }
+
+  .ig-action-btn .material-symbols-rounded {
+    font-size: 14px !important;
+  }
+}
+
+@media (max-width: 374px) {
+  .ig-image-box.card-img-wrapper,
+  .ig-requirement-image {
+    height: clamp(112px, 33vw, 130px) !important;
+  }
+
+  .ig-details {
+    padding: 6px 7px 7px !important;
+  }
+
+  .ig-action-btn {
+    font-size: 8.6px !important;
+  }
+}
+</style>
+
 </body>
 </html>
