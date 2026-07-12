@@ -4115,7 +4115,7 @@ function checkLogin(page) {
       // open login in panel and include redirect target
       openPanel(`user.html?redirect=${encodeURIComponent(page)}`);
     } else {
-      window.location.href = `user.html?redirect=${page}`;
+      window.location.href = `user.html?redirect=${encodeURIComponent(page)}`;
     }
   } else {
     if (window.innerWidth >= 900) {
