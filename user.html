@@ -425,6 +425,79 @@ button.is-loading::after {
 @media (max-width: 374px) {
   .bottom-nav-frame { height: 108px; }
 }
+
+
+/* =====================================================
+   SMOOTH + LOW-POWER ACCOUNT PAGE
+   ===================================================== */
+html, body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+}
+
+.app-container {
+  height: 100vh;
+  height: 100dvh;
+  scroll-behavior: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+
+.header {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.card {
+  contain: layout paint style;
+}
+
+input,
+select {
+  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+button {
+  transition: transform 0.14s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.avatar,
+.avatar-wrapper {
+  backface-visibility: hidden;
+}
+
+@media (max-width: 899px) {
+  .header {
+    background: #F8FAFC;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .custom-alert-overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(15, 23, 42, 0.64);
+  }
+
+  .card {
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.055);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 </style>
 </head>
 
@@ -441,11 +514,11 @@ button.is-loading::after {
       
       <div class="input-group">
         <span class="material-symbols-rounded">mail</span>
-        <input id="loginEmail" placeholder="Email Address">
+        <input id="loginEmail" type="email" inputmode="email" autocomplete="username" placeholder="Email Address">
       </div>
       <div class="input-group">
         <span class="material-symbols-rounded">lock</span>
-        <input id="loginPassword" type="password" placeholder="Password">
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
       </div>
       
       <button onclick="login()">Login</button>
@@ -457,15 +530,15 @@ button.is-loading::after {
       
       <div class="input-group">
         <span class="material-symbols-rounded">person</span>
-        <input id="name" placeholder="Full Name">
+        <input id="name" autocomplete="name" placeholder="Full Name">
       </div>
       <div class="input-group">
         <span class="material-symbols-rounded">mail</span>
-        <input id="email" placeholder="Email Address">
+        <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="Email Address">
       </div>
       <div class="input-group">
         <span class="material-symbols-rounded">call</span>
-        <input id="mobile" placeholder="Mobile Number">
+        <input id="mobile" type="tel" inputmode="tel" autocomplete="tel" placeholder="Mobile Number">
       </div>
       <div class="input-group">
         <span class="material-symbols-rounded">wc</span>
@@ -477,7 +550,7 @@ button.is-loading::after {
       </div>
       <div class="input-group">
         <span class="material-symbols-rounded">lock</span>
-        <input id="password" type="password" placeholder="Create Password">
+        <input id="password" type="password" autocomplete="new-password" placeholder="Create Password">
       </div>
       
       <button onclick="signup()">Send OTP</button>
@@ -492,7 +565,7 @@ button.is-loading::after {
 
       <div class="input-group">
         <span class="material-symbols-rounded">pin</span>
-        <input id="otpInput" type="number" placeholder="Enter OTP">
+        <input id="otpInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="Enter OTP">
       </div>
 
       <div class="timer" id="timer">05:00</div>
@@ -544,6 +617,8 @@ const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0"; 
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+window.tingoDb = db;
+window.TINGO_AUTH_FUNCTION_NAME = "tingo-auth";
 const MIN_AUTH_PASSWORD_LENGTH = 6;
 
 const AUTH_FUNCTION_NAME = "tingo-auth";
@@ -840,6 +915,24 @@ async function fetchFreshUser(userId) {
 
 async function validateCurrentSession(options = {}) {
   const silent = options.silent === true;
+
+  // Use the shared Auth guard whenever it is available. It validates the real
+  // Supabase Auth JWT, the latest public.users row, account status and the
+  // latest-device session token before any protected navigation.
+  if (window.TingoAuthGuard) {
+    const result = await window.TingoAuthGuard.validate({
+      reason: options.reason || "user-page-check",
+      silent,
+      force: true
+    });
+    if (result && result.valid && result.user) {
+      storeUser(result.user);
+      showProfile(result.user);
+      return true;
+    }
+    return false;
+  }
+
   const localUser = getStoredUser();
   if (!localUser || !localUser.id) return false;
 
@@ -1047,16 +1140,25 @@ async function createLatestLoginSession(user) {
 }
 
 /* ---------------- INIT ---------------- */
-window.onload = async () => {
+async function initialiseUserPage() {
   updateReusableButtonsFrame();
   const user = getStoredUser();
-  if (user) {
-    await validateCurrentSession({ silent: false });
-    sessionCheckInterval = setInterval(() => {
-      validateCurrentSession({ silent: true });
-    }, 15000);
+
+  if (!user) {
+    showLogin();
+    return;
   }
-};
+
+  // The shared guard performs the startup validation and keeps listening in
+  // Realtime. This direct call only ensures the first profile paint is correct.
+  await validateCurrentSession({ silent: true, reason: "user-page-startup" });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initialiseUserPage, { once: true });
+} else {
+  initialiseUserPage();
+}
 
 /* ---------------- UI SWITCHES ---------------- */
 function showSignup() {
@@ -1454,6 +1556,45 @@ async function checkLoginNav(page) {
   if (valid) window.location.href = page;
 }
 </script>
+
+
+<script>
+/* Page UI bridge for the shared real-time Auth guard. */
+window.__tingoUserPageHadStoredSession = Boolean(getStoredUser());
+window.__tingoUserPageInvalidAlertShown = false;
+window.__tingoPushRegistrationUserId = null;
+
+document.addEventListener('tingo:auth-state', (event) => {
+  const detail = event.detail || {};
+
+  if (detail.valid && detail.user) {
+    storeUser(detail.user);
+    showProfile(detail.user);
+
+    if (!detail.user.onesignal_id && window.__tingoPushRegistrationUserId !== String(detail.user.id)) {
+      window.__tingoPushRegistrationUserId = String(detail.user.id);
+      registerOneSignalForUser(detail.user).catch((error) => {
+        console.warn('Push registration from auth state failed:', error);
+      });
+    }
+    return;
+  }
+
+  document.getElementById('profileBox')?.classList.add('hidden');
+  showLogin();
+
+  if (
+    window.__tingoUserPageHadStoredSession &&
+    detail.ready &&
+    detail.invalidated &&
+    !window.__tingoUserPageInvalidAlertShown
+  ) {
+    window.__tingoUserPageInvalidAlertShown = true;
+    showCustomAlert(detail.reason || 'Your session expired. Please login again.', 'error');
+  }
+});
+</script>
+<script src="tingo_auth_guard.js"></script>
 
 </body>
 </html>
