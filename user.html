@@ -7,20 +7,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  if (location.protocol !== "file:") {
-    OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({
-        appId: "86e4ee86-6134-42b0-ad76-4997d7ce02de",
-      });
-    });
-  } else {
-    console.warn("OneSignal disabled on file:// preview. Test push on HTTPS domain.");
-  }
-</script>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -426,78 +412,34 @@ button.is-loading::after {
   .bottom-nav-frame { height: 108px; }
 }
 
-
-/* =====================================================
-   SMOOTH + LOW-POWER ACCOUNT PAGE
-   ===================================================== */
-html, body {
-  width: 100%;
-  min-height: 100%;
-}
-
-body {
-  min-height: 100vh;
-  min-height: 100dvh;
-  overscroll-behavior: none;
-}
-
-.app-container {
-  height: 100vh;
-  height: 100dvh;
-  scroll-behavior: auto;
-  overscroll-behavior-y: contain;
-  scrollbar-gutter: stable;
-}
-
-.header {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-.card {
-  contain: layout paint style;
-}
-
-input,
-select {
-  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-button {
-  transition: transform 0.14s ease, box-shadow 0.18s ease, background-color 0.18s ease;
-}
-
-.avatar,
-.avatar-wrapper {
-  backface-visibility: hidden;
-}
-
+/* LOGIN + PROFILE PERFORMANCE FIX */
+html { height: 100%; }
+body { min-height: 100vh; min-height: 100dvh; }
+.app-container { height: 100vh; height: 100dvh; scroll-behavior: auto; overscroll-behavior-y: contain; }
+button { touch-action: manipulation; }
+button:disabled { opacity: .72; cursor: wait; }
 @media (max-width: 899px) {
   .header {
-    background: #F8FAFC;
+    background: rgba(248,250,252,.98);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
-
+  .card { box-shadow: 0 7px 20px rgba(15,23,42,.06); }
   .custom-alert-overlay {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: rgba(15, 23, 42, 0.64);
-  }
-
-  .card {
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.055);
+    background: rgba(15,23,42,.58);
   }
 }
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: .01ms !important;
     scroll-behavior: auto !important;
   }
 }
+
 </style>
 </head>
 
@@ -514,14 +456,14 @@ button {
       
       <div class="input-group">
         <span class="material-symbols-rounded">mail</span>
-        <input id="loginEmail" type="email" inputmode="email" autocomplete="username" placeholder="Email Address">
+        <input id="loginEmail" placeholder="Email Address">
       </div>
       <div class="input-group">
         <span class="material-symbols-rounded">lock</span>
-        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
+        <input id="loginPassword" type="password" placeholder="Password">
       </div>
       
-      <button onclick="login()">Login</button>
+      <button id="loginBtn" type="button" onclick="login()">Login</button>
       <div onclick="showSignup()" class="link-text">Don't have an account? Sign Up</div>
     </div>
 
@@ -530,15 +472,15 @@ button {
       
       <div class="input-group">
         <span class="material-symbols-rounded">person</span>
-        <input id="name" autocomplete="name" placeholder="Full Name">
+        <input id="name" placeholder="Full Name">
       </div>
       <div class="input-group">
         <span class="material-symbols-rounded">mail</span>
-        <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="Email Address">
+        <input id="email" placeholder="Email Address">
       </div>
       <div class="input-group">
         <span class="material-symbols-rounded">call</span>
-        <input id="mobile" type="tel" inputmode="tel" autocomplete="tel" placeholder="Mobile Number">
+        <input id="mobile" placeholder="Mobile Number">
       </div>
       <div class="input-group">
         <span class="material-symbols-rounded">wc</span>
@@ -550,10 +492,10 @@ button {
       </div>
       <div class="input-group">
         <span class="material-symbols-rounded">lock</span>
-        <input id="password" type="password" autocomplete="new-password" placeholder="Create Password">
+        <input id="password" type="password" placeholder="Create Password">
       </div>
       
-      <button onclick="signup()">Send OTP</button>
+      <button id="signupBtn" type="button" onclick="signup()">Send OTP</button>
       <div onclick="showLogin()" class="link-text">Already have an account? Login</div>
     </div>
 
@@ -565,12 +507,12 @@ button {
 
       <div class="input-group">
         <span class="material-symbols-rounded">pin</span>
-        <input id="otpInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" placeholder="Enter OTP">
+        <input id="otpInput" type="number" placeholder="Enter OTP">
       </div>
 
       <div class="timer" id="timer">05:00</div>
 
-      <button onclick="verifyOTP()">Verify & Complete</button>
+      <button id="verifyOtpBtn" type="button" onclick="verifyOTP()">Verify & Complete</button>
       <div class="link-text" onclick="resendOTP()">Resend OTP</div>
     </div>
 
@@ -584,7 +526,7 @@ button {
         <strong>Active session:</strong> This device is your latest login device.
       </div>
       
-      <button class="logout-btn" onclick="logout()">
+      <button id="logoutBtn" type="button" class="logout-btn" onclick="logout()">
         <span class="material-symbols-rounded" style="font-size: 20px;">logout</span>
         Logout
       </button>
@@ -596,7 +538,7 @@ button {
     <div class="custom-alert-box" id="customAlertBox">
       <span class="material-symbols-rounded custom-alert-icon" id="customAlertIcon">info</span>
       <div class="custom-alert-message" id="customAlertMessage">Alert message goes here</div>
-      <button class="custom-alert-btn" id="customAlertBtn" onclick="closeCustomAlert()">OK</button>
+      <button type="button" class="custom-alert-btn" id="customAlertBtn" onclick="closeCustomAlert()">OK</button>
     </div>
   </div>
 
@@ -618,44 +560,53 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 window.tingoDb = db;
-window.TINGO_AUTH_FUNCTION_NAME = "tingo-auth";
 const MIN_AUTH_PASSWORD_LENGTH = 6;
 
 const AUTH_FUNCTION_NAME = "tingo-auth";
 
 async function callTingoAuth(action, payload = {}, requireSession = false) {
-  const options = {
-    body: { action, ...payload }
-  };
+  const options = { body: { action, ...payload } };
 
   if (requireSession) {
     try {
       const { data: sessionData } = await db.auth.getSession();
-      const token = sessionData && sessionData.session ? sessionData.session.access_token : null;
-      if (token) {
-        options.headers = { Authorization: `Bearer ${token}` };
+      const token = sessionData?.session?.access_token || null;
+      if (!token) {
+        return { ok: false, message: "Your login session has expired. Please login again." };
       }
+      options.headers = { Authorization: `Bearer ${token}` };
     } catch (err) {
-      console.warn("Could not attach auth session to Edge Function call:", err);
+      console.warn("Could not attach auth session:", err);
+      return { ok: false, message: "Could not read the active login session." };
     }
   }
 
-  const { data, error } = await db.functions.invoke(AUTH_FUNCTION_NAME, options);
+  const timeoutMs = 18000;
+  let timeoutId;
+  try {
+    const invokePromise = db.functions.invoke(AUTH_FUNCTION_NAME, options);
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("Authentication server timed out. Check your internet connection and Edge Function deployment.")), timeoutMs);
+    });
 
-  if (error) {
-    console.error(`Edge Function ${action} error:`, error);
-    return {
-      ok: false,
-      message: error.message || "Server request failed. Please try again.",
-      raw_error: error
-    };
+    const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
+    if (error) {
+      console.error(`Edge Function ${action} error:`, error);
+      return {
+        ok: false,
+        message: error.context?.body?.message || error.message || "Server request failed. Please try again.",
+        raw_error: error
+      };
+    }
+
+    if (!data) return { ok: false, message: "The authentication server returned no response." };
+    return data;
+  } catch (error) {
+    console.error(`Authentication request ${action} failed:`, error);
+    return { ok: false, message: error?.message || "Authentication request failed." };
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  if (!data) {
-    return { ok: false, message: "No response from server. Please try again." };
-  }
-
-  return data;
 }
 
 function getPendingSignup() {
@@ -915,62 +866,107 @@ async function fetchFreshUser(userId) {
 
 async function validateCurrentSession(options = {}) {
   const silent = options.silent === true;
-
-  // Use the shared Auth guard whenever it is available. It validates the real
-  // Supabase Auth JWT, the latest public.users row, account status and the
-  // latest-device session token before any protected navigation.
-  if (window.TingoAuthGuard) {
-    const result = await window.TingoAuthGuard.validate({
-      reason: options.reason || "user-page-check",
-      silent,
-      force: true
-    });
-    if (result && result.valid && result.user) {
-      storeUser(result.user);
-      showProfile(result.user);
-      return true;
-    }
-    return false;
-  }
-
   const localUser = getStoredUser();
-  if (!localUser || !localUser.id) return false;
+  if (!localUser?.id) return false;
 
-  const freshUser = await fetchFreshUser(localUser.id);
-  if (!freshUser) {
-    if (!silent) logoutLocal("Session expired. Please login again.");
-    return false;
-  }
+  if (sessionValidationRunning) return sessionValidationRunning;
+  if (silent && Date.now() - lastSessionValidationAt < 2500) return true;
 
-  const blockMessage = isUserBlocked(freshUser);
-  if (blockMessage) {
-    logoutLocal(blockMessage);
-    return false;
-  }
+  sessionValidationRunning = (async () => {
+    try {
+      const { data: authData, error: authError } = await db.auth.getSession();
+      if (authError) throw authError;
+      if (!authData?.session?.access_token) {
+        logoutLocal('Session expired. Please login again.');
+        return false;
+      }
 
-  const dbToken = freshUser.active_session_token || "";
-  const localToken = localUser.active_session_token || "";
+      const freshUser = await fetchFreshUser(localUser.id);
+      if (!freshUser) {
+        if (!navigator.onLine) return true;
+        if (!silent) showCustomAlert('Could not verify your login. Please try again.');
+        return false;
+      }
 
-  if (dbToken && localToken && dbToken !== localToken) {
-    logoutLocal("Your account was logged in on another device. This device has been logged out.");
-    return false;
-  }
+      const blockMessage = isUserBlocked(freshUser);
+      if (blockMessage) {
+        logoutLocal(blockMessage);
+        return false;
+      }
 
-  if (dbToken && !localToken) {
-    logoutLocal("Session changed. Please login again.");
-    return false;
-  }
+      if (freshUser.auth_user_id && String(freshUser.auth_user_id) !== String(authData.session.user.id)) {
+        logoutLocal('This profile does not match the active Auth session.');
+        return false;
+      }
 
-  const merged = { ...localUser, ...freshUser };
-  storeUser(merged);
-  showProfile(merged);
-  if (!merged.onesignal_id) {
-    registerOneSignalForUser(merged).catch(err => console.warn("Push registration during session check failed:", err));
-  }
-  return true;
+      const dbToken = String(freshUser.active_session_token || '');
+      const localToken = String(localUser.active_session_token || '');
+      if (dbToken && localToken && dbToken !== localToken) {
+        logoutLocal('Your account was logged in on another device. This device has been logged out.');
+        return false;
+      }
+      if (dbToken && !localToken) {
+        logoutLocal('Session changed. Please login again.');
+        return false;
+      }
+
+      const merged = { ...localUser, ...freshUser };
+      storeUser(merged);
+      showProfile(merged);
+      subscribeToCurrentUser(merged);
+      lastSessionValidationAt = Date.now();
+
+      if (!merged.onesignal_id && window.__tingoPushRegistrationUserId !== String(merged.id)) {
+        window.__tingoPushRegistrationUserId = String(merged.id);
+        registerOneSignalForUser(merged).catch(err => console.warn('Push registration failed:', err));
+      }
+      return true;
+    } catch (error) {
+      console.warn('Session validation error:', error);
+      if (!navigator.onLine) return true;
+      if (!silent) showCustomAlert(error?.message || 'Could not verify the login session.');
+      return false;
+    } finally {
+      sessionValidationRunning = false;
+    }
+  })();
+
+  return sessionValidationRunning;
 }
 
 /* ---------------- ONESIGNAL V16 HELPERS ---------------- */
+let oneSignalLoadPromise = null;
+window.__tingoPushRegistrationUserId = null;
+
+function ensureOneSignalLoaded() {
+  if (window.OneSignalDeferred && document.querySelector('script[data-tingo-onesignal="1"]')) {
+    return oneSignalLoadPromise || Promise.resolve();
+  }
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+    return Promise.reject(new Error('Push notifications require HTTPS or localhost.'));
+  }
+  if (oneSignalLoadPromise) return oneSignalLoadPromise;
+
+  oneSignalLoadPromise = new Promise((resolve, reject) => {
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    const script = document.createElement('script');
+    script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+    script.defer = true;
+    script.dataset.tingoOnesignal = '1';
+    script.onload = () => {
+      window.OneSignalDeferred.push(async function(OneSignal) {
+        try {
+          await OneSignal.init({ appId: '86e4ee86-6134-42b0-ad76-4997d7ce02de' });
+          resolve();
+        } catch (error) { reject(error); }
+      });
+    };
+    script.onerror = () => reject(new Error('Could not load push notification service.'));
+    document.head.appendChild(script);
+  });
+  return oneSignalLoadPromise;
+}
+
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -1100,6 +1096,13 @@ async function registerOneSignalForUser(user) {
   try {
     if (!user || !user.id) return null;
 
+    try {
+      await ensureOneSignalLoaded();
+    } catch (loadError) {
+      console.warn('OneSignal was not loaded:', loadError?.message || loadError);
+      return null;
+    }
+
     const pushData = await getLatestOneSignalPushData(user);
     if (!pushData || !pushData.subscription_id) return null;
 
@@ -1139,23 +1142,94 @@ async function createLatestLoginSession(user) {
   return user;
 }
 
-/* ---------------- INIT ---------------- */
-async function initialiseUserPage() {
-  updateReusableButtonsFrame();
-  const user = getStoredUser();
+/* ---------------- REAL-TIME SESSION MONITOR ---------------- */
+let userRealtimeChannel = null;
+let authStateSubscription = null;
+let sessionValidationTimer = null;
+let sessionValidationRunning = false;
+let lastSessionValidationAt = 0;
 
-  if (!user) {
-    showLogin();
-    return;
+function stopUserRealtime() {
+  if (userRealtimeChannel) {
+    try { db.removeChannel(userRealtimeChannel); } catch (e) {}
+    userRealtimeChannel = null;
   }
-
-  // The shared guard performs the startup validation and keeps listening in
-  // Realtime. This direct call only ensures the first profile paint is correct.
-  await validateCurrentSession({ silent: true, reason: "user-page-startup" });
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initialiseUserPage, { once: true });
+function subscribeToCurrentUser(user) {
+  if (!user?.id) return;
+  stopUserRealtime();
+
+  userRealtimeChannel = db
+    .channel(`user-session-${user.id}-${Date.now()}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'users',
+      filter: `id=eq.${user.id}`
+    }, () => scheduleSessionValidation('realtime-user-update', 40))
+    .subscribe((status) => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn('Realtime account tracking unavailable; focus/visibility checks remain active.');
+      }
+    });
+}
+
+function scheduleSessionValidation(reason = 'lifecycle', delay = 80) {
+  clearTimeout(sessionValidationTimer);
+  sessionValidationTimer = setTimeout(() => {
+    validateCurrentSession({ silent: true, reason });
+  }, delay);
+}
+
+async function initialiseUserPage() {
+  updateReusableButtonsFrame();
+
+  const { data, error } = await db.auth.getSession();
+  if (error) console.warn('Initial Auth session check failed:', error);
+
+  const authSession = data?.session || null;
+  const localUser = getStoredUser();
+
+  if (authSession && localUser?.id) {
+    const valid = await validateCurrentSession({ silent: true, reason: 'startup' });
+    if (!valid) showLogin();
+  } else {
+    localStorage.removeItem('user');
+    showLogin();
+  }
+
+  const authResult = db.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || !session) {
+      stopUserRealtime();
+      localStorage.removeItem('user');
+      showLogin();
+      return;
+    }
+
+    if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED', 'INITIAL_SESSION'].includes(event)) {
+      scheduleSessionValidation(`auth-${event.toLowerCase()}`, 80);
+    }
+  });
+  authStateSubscription = authResult?.data?.subscription || null;
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && getStoredUser()) scheduleSessionValidation('page-visible', 0);
+}, { passive: true });
+window.addEventListener('focus', () => {
+  if (getStoredUser()) scheduleSessionValidation('window-focus', 0);
+}, { passive: true });
+window.addEventListener('online', () => {
+  if (getStoredUser()) scheduleSessionValidation('network-online', 0);
+}, { passive: true });
+window.addEventListener('pagehide', () => {
+  clearTimeout(sessionValidationTimer);
+  stopUserRealtime();
+}, { passive: true });
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initialiseUserPage, { once: true });
 } else {
   initialiseUserPage();
 }
@@ -1380,53 +1454,60 @@ async function verifyOTP() {
 
 /* ---------------- LOGIN ---------------- */
 async function login() {
-  const btn = document.querySelector("#loginBox button");
-  const email = normalizeEmail(document.getElementById("loginEmail").value);
-  const password = document.getElementById("loginPassword").value;
+  const btn = document.getElementById('loginBtn') || document.querySelector('#loginBox button');
+  const email = normalizeEmail(document.getElementById('loginEmail').value);
+  const password = document.getElementById('loginPassword').value;
 
   if (!email || !password) {
-    showCustomAlert("Please enter both email and password.");
+    showCustomAlert('Please enter both email and password.');
     return;
   }
-
   if (!isAuthPasswordValid(password)) {
     showCustomAlert(getAuthPasswordMessage());
     return;
   }
 
-  btn.classList.add("is-loading");
+  btn.classList.add('is-loading');
+  btn.disabled = true;
 
   try {
-    const result = await callTingoAuth("login", {
+    // Remove only a stale local browser session before starting a fresh login.
+    try { await db.auth.signOut({ scope: 'local' }); } catch (e) {}
+    localStorage.removeItem('user');
+    stopUserRealtime();
+
+    const result = await callTingoAuth('login', {
       email,
       password,
       device_name: getDeviceName()
     });
 
-    if (!result || !result.ok) {
-      showCustomAlert(result?.message || "Login failed. Please try again.");
+    if (!result?.ok || !result?.user) {
+      showCustomAlert(result?.message || 'Login failed. Please verify your email and password.');
       return;
     }
 
-    const { error: signInError } = await db.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (signInError) {
-      console.error("Supabase Auth sign-in error:", signInError);
-      showCustomAlert("Login details are correct, but Auth session could not start: " + signInError.message);
+    const { data: signInData, error: signInError } = await db.auth.signInWithPassword({ email, password });
+    if (signInError || !signInData?.session) {
+      console.error('Supabase Auth sign-in error:', signInError);
+      showCustomAlert('Login details were accepted, but the secure Auth session could not start: ' + (signInError?.message || 'No session returned.'));
       return;
     }
 
     storeUser(result.user);
-    registerOneSignalForUser(result.user).catch(err => console.warn("Push registration after login failed:", err));
+    showProfile(result.user);
+    subscribeToCurrentUser(result.user);
+    lastSessionValidationAt = Date.now();
+
+    // Push registration is deliberately non-blocking and starts only after login.
+    registerOneSignalForUser(result.user).catch(err => console.warn('Push registration after login failed:', err));
     handleRedirect();
   } catch (error) {
-    console.error("Login error:", error);
-    showCustomAlert("An error occurred during login. Please try again.");
+    console.error('Login error:', error);
+    showCustomAlert(error?.message || 'An error occurred during login. Please try again.');
   } finally {
-    btn.classList.remove("is-loading");
+    btn.classList.remove('is-loading');
+    btn.disabled = false;
   }
 }
 
@@ -1482,6 +1563,9 @@ function showProfile(user) {
 /* ---------------- LOGOUT ---------------- */
 async function logout() {
   const user = getStoredUser();
+  clearTimeout(sessionValidationTimer);
+  stopUserRealtime();
+  try { authStateSubscription?.unsubscribe(); } catch (e) {}
 
   try {
     await callTingoAuth("logout", {
@@ -1559,42 +1643,19 @@ async function checkLoginNav(page) {
 
 
 <script>
-/* Page UI bridge for the shared real-time Auth guard. */
-window.__tingoUserPageHadStoredSession = Boolean(getStoredUser());
-window.__tingoUserPageInvalidAlertShown = false;
-window.__tingoPushRegistrationUserId = null;
-
-document.addEventListener('tingo:auth-state', (event) => {
-  const detail = event.detail || {};
-
-  if (detail.valid && detail.user) {
-    storeUser(detail.user);
-    showProfile(detail.user);
-
-    if (!detail.user.onesignal_id && window.__tingoPushRegistrationUserId !== String(detail.user.id)) {
-      window.__tingoPushRegistrationUserId = String(detail.user.id);
-      registerOneSignalForUser(detail.user).catch((error) => {
-        console.warn('Push registration from auth state failed:', error);
-      });
-    }
-    return;
-  }
-
-  document.getElementById('profileBox')?.classList.add('hidden');
-  showLogin();
-
-  if (
-    window.__tingoUserPageHadStoredSession &&
-    detail.ready &&
-    detail.invalidated &&
-    !window.__tingoUserPageInvalidAlertShown
-  ) {
-    window.__tingoUserPageInvalidAlertShown = true;
-    showCustomAlert(detail.reason || 'Your session expired. Please login again.', 'error');
-  }
+document.addEventListener('DOMContentLoaded', () => {
+  const emailInput = document.getElementById('loginEmail');
+  const passwordInput = document.getElementById('loginPassword');
+  [emailInput, passwordInput].forEach((input) => {
+    input?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        login();
+      }
+    });
+  });
 });
 </script>
-<script src="tingo_auth_guard.js"></script>
 
 </body>
 </html>
