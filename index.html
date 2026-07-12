@@ -6565,9 +6565,53 @@ initCardSliders = function() {
   });
 };
 
+function tingoBuildFeedSignature(items, statusText = "") {
+  try {
+    const compactItems = (Array.isArray(items) ? items : []).map(item => {
+      const profile = item?.user || item?.users || item?.owner || {};
+      return {
+        id: item?.id || '',
+        updated_at: item?.updated_at || '',
+        created_at: item?.created_at || '',
+        status: item?.status || '',
+        title: item?.title || '',
+        location: item?.location || '',
+        type: item?.type || item?.category || '',
+        rent: item?.rent ?? '',
+        deposit: item?.deposit ?? '',
+        budget: item?.budget ?? item?.expected_rent ?? '',
+        brokerage_type: item?.brokerage_type || '',
+        images: item?.images || item?.image_urls || item?.image_url || '',
+        views: item?.views ?? item?.view_count ?? '',
+        distance: Number.isFinite(Number(item?._distanceKm)) ? Number(item._distanceKm).toFixed(3) : '',
+        owner_id: profile?.id || item?.user_id || '',
+        owner_name: profile?.name || profile?.full_name || '',
+        owner_avatar: profile?.avatar_url || ''
+      };
+    });
+    return JSON.stringify({ mode: activePostMode || 'available', statusText: statusText || '', items: compactItems });
+  } catch (_) {
+    return `${activePostMode || 'available'}|${statusText || ''}|${Array.isArray(items) ? items.length : 0}`;
+  }
+}
+
 const tingoOriginalRenderRooms = renderRooms;
 renderRooms = function(items, statusText = "") {
-  tingoOriginalRenderRooms(items, statusText);
+  const container = document.getElementById('roomList');
+  const signature = tingoBuildFeedSignature(items, statusText);
+  const sameFeedAlreadyVisible = Boolean(
+    container &&
+    container.dataset.feedSignature === signature &&
+    container.children.length
+  );
+
+  // Cache-first loading can return the exact same rows from Supabase a moment
+  // later. Keep the existing DOM and decoded images instead of clearing it.
+  if (!sameFeedAlreadyVisible) {
+    tingoOriginalRenderRooms(items, statusText);
+    if (container) container.dataset.feedSignature = signature;
+  }
+
   tingoInitialFeedPainted = true;
 
   if (!window.__tingoSkipNextFeedCacheWrite && tingoLastFeedKey && Array.isArray(items)) {
@@ -7049,8 +7093,10 @@ function initSmoothHomePage() {
   // room feeds continue loading normally for logged-out visitors.
 }
 
-/* INIT */
-initSmoothHomePage();
+/* INIT
+   Deferred until DOMContentLoaded so every final card renderer and filter override
+   is installed before the first cached/live feed paint. */
+window.__tingoHomeInitPending = true;
 
 /* =========================================
    LIGHT BACKGROUND REFRESH
@@ -7788,11 +7834,10 @@ setInterval(() => {
   };
 
   function finalRefreshVisibleFeed() {
+    // UI-only finalisation. The feed is started exactly once by the final boot
+    // script after all renderers are ready. Do not clear cache or rebuild here.
     updateModeSwitchCompact();
-    loadFilterOptions().finally(() => {
-      if (typeof tingoClearFeedCaches === 'function') tingoClearFeedCaches();
-      loadRooms(getCurrentSearchText(), selectedSearchPlace);
-    });
+    if (typeof updateFilterUI === 'function') updateFilterUI();
   }
 
   if (document.readyState === 'loading') {
@@ -9096,6 +9141,11 @@ setInterval(() => {
     const refreshOnlyWhenNeeded = () => {
       const card = list.querySelector('.card');
       if (!card) return false;
+
+      // Desktop intentionally keeps its original card renderer. Treat its first
+      // card as ready instead of starting a redundant compatibility refresh.
+      if (window.innerWidth >= 900) return true;
+
       if (!card.classList.contains('ig-listing-card') && !refreshTriggered && typeof loadRooms === 'function') {
         refreshTriggered = true;
         loadRooms(
@@ -10707,6 +10757,64 @@ html,
 })();
 </script>
 <script src="tingo_auth_guard.js"></script>
+
+<style id="tingo-home-no-blink-fix">
+/* Returning to Home should never fade cached content or animate browser scroll restoration. */
+.instant-cache-flash {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+html,
+.app-container {
+  scroll-behavior: auto !important;
+}
+
+/* Keep the feed surface stable while the first cache/network request resolves. */
+#roomList {
+  min-height: calc(100dvh - 210px);
+}
+</style>
+
+<script>
+/* =====================================================
+   SINGLE-PAINT HOME BOOT
+   Runs once, after every renderer/override in this file is installed.
+   ===================================================== */
+(function () {
+  'use strict';
+
+  function clearTransientNavigationState() {
+    document.querySelectorAll('.card.preparing-open').forEach(card => {
+      card.classList.remove('preparing-open');
+    });
+  }
+
+  function bootHomeOnce() {
+    if (window.__tingoHomeBooted) return;
+    window.__tingoHomeBooted = true;
+    clearTransientNavigationState();
+
+    if (typeof initSmoothHomePage === 'function') {
+      initSmoothHomePage();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootHomeOnce, { once: true });
+  } else {
+    bootHomeOnce();
+  }
+
+  // A browser back/forward-cache restore must reuse the already painted page,
+  // not replay click opacity or start a second feed request.
+  window.addEventListener('pageshow', () => {
+    clearTransientNavigationState();
+    bootHomeOnce();
+  }, { passive: true });
+})();
+</script>
 
 </body>
 </html>
