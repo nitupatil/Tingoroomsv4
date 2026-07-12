@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TingoRooms</title>
 
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://cdn.onesignal.com" crossorigin>
+<link rel="preconnect" href="https://slhbrakvprrxtqzodcyy.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -23,8 +26,8 @@ if (location.protocol !== "file:") {
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=optional" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0&display=block" rel="stylesheet" />
 
 <link rel="icon" href="https://i.ibb.co/N2ZhwrRn/Gemini-Generated-Image-h4mxnvh4mxnvh4mx-2.gif">
 
@@ -1526,6 +1529,10 @@ button {
 
 .filter-reset.visible {
   display: inline-flex !important;
+}
+
+#filterBrokerage.hidden-for-mode {
+  display: none !important;
 }
 
 
@@ -3280,10 +3287,10 @@ html {
 
   <div class="filter-bar" id="filterBar" aria-label="Type and property filters">
     <select id="filterType" class="filter-select" aria-label="Filter by type">
-      <option value="">All types</option>
+      <option value="">All room types</option>
     </select>
     <select id="filterBrokerage" class="filter-select" aria-label="Filter by brokerage">
-      <option value="">All brokerage</option>
+      <option value="">All brokerage options</option>
     </select>
     <button type="button" id="clearFilters" class="filter-reset">
       <span class="material-symbols-rounded">close</span>
@@ -3303,6 +3310,64 @@ html {
       </button>
     </div>
   </div>
+
+  <script id="tingo-home-prepaint-state">
+  (function () {
+    'use strict';
+    const STATE_KEY = 'tingo_home_ui_state_v2';
+    const OPTIONS_KEY = 'tingo_home_filter_options_v2';
+
+    function readJson(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    const saved = readJson(STATE_KEY, {}) || {};
+    const mode = saved.mode === 'needed' ? 'needed' : 'available';
+    window.__TINGO_HOME_PREPAINT_STATE = {
+      mode,
+      type: typeof saved.type === 'string' ? saved.type : '',
+      brokerage: typeof saved.brokerage === 'string' ? saved.brokerage : ''
+    };
+
+    const typeSelect = document.getElementById('filterType');
+    const brokerageSelect = document.getElementById('filterBrokerage');
+    const optionCache = readJson(OPTIONS_KEY, {}) || {};
+    const cachedTypes = Array.isArray(optionCache[mode]) ? optionCache[mode] : [];
+
+    if (typeSelect) {
+      const label = mode === 'needed' ? 'All required room types' : 'All room types';
+      typeSelect.innerHTML = '<option value="">' + label + '</option>' + cachedTypes.map(function (value) {
+        const escaped = String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        return '<option value="' + escaped + '">' + escaped + '</option>';
+      }).join('');
+      if (cachedTypes.includes(window.__TINGO_HOME_PREPAINT_STATE.type)) {
+        typeSelect.value = window.__TINGO_HOME_PREPAINT_STATE.type;
+      }
+    }
+
+    if (brokerageSelect) {
+      brokerageSelect.innerHTML = [
+        '<option value="">All brokerage options</option>',
+        '<option value="__brokerage_applicable__">Brokerage applicable</option>',
+        '<option value="__no_brokerage__">No brokerage</option>'
+      ].join('');
+      if (mode === 'needed') {
+        brokerageSelect.value = '';
+        brokerageSelect.classList.add('hidden-for-mode');
+      } else if (window.__TINGO_HOME_PREPAINT_STATE.brokerage === '__brokerage_applicable__' || window.__TINGO_HOME_PREPAINT_STATE.brokerage === '__no_brokerage__') {
+        brokerageSelect.value = window.__TINGO_HOME_PREPAINT_STATE.brokerage;
+      }
+    }
+
+    document.getElementById('modeAvailableBtn')?.classList.toggle('active', mode === 'available');
+    document.getElementById('modeNeededBtn')?.classList.toggle('active', mode === 'needed');
+  })();
+  </script>
 
 
   <div id="notificationOverlay" class="notification-overlay" onclick="closeNotifications()" aria-hidden="true"></div>
@@ -3381,7 +3446,7 @@ let selectedSearchPlace = null;
 let suggestionRequestId = 0;
 let searchTimeout;
 let suggestionTimeout;
-let activePostMode = "available";
+let activePostMode = window.__TINGO_HOME_PREPAINT_STATE?.mode === "needed" ? "needed" : "available";
 let modeSwitchLastScroll = 0;
 let modeSwitchExpandedUntil = 0;
 
@@ -10776,6 +10841,282 @@ html,
   min-height: calc(100dvh - 210px);
 }
 </style>
+
+<style id="tingo-home-stability-patch">
+/* Keep icon ligatures inside a fixed box while the Material Symbols font loads. */
+.material-symbols-rounded {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  max-width: 1em;
+  overflow: hidden;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
+/* Avoid expensive stacked backdrop compositing and intrinsic-size corrections on mobile. */
+@media (max-width: 899px) {
+  .header,
+  .filter-bar,
+  .mode-switch-wrap {
+    background: rgba(248, 250, 252, 0.985) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .card {
+    content-visibility: visible !important;
+    contain-intrinsic-size: none !important;
+    will-change: auto !important;
+  }
+}
+
+/* Stable width prevents the filter row from jumping as options are refreshed. */
+#filterType { min-width: 142px !important; }
+#filterBrokerage { min-width: 164px !important; }
+</style>
+
+<script id="tingo-home-filter-and-return-fix">
+(function () {
+  'use strict';
+
+  const STATE_KEY = 'tingo_home_ui_state_v2';
+  const OPTIONS_KEY = 'tingo_home_filter_options_v2';
+  const BROKERAGE_APPLICABLE = '__brokerage_applicable__';
+  const NO_BROKERAGE = '__no_brokerage__';
+
+  function safeRead(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function safeWrite(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+  }
+
+  function isNoBrokerageValue(value) {
+    const normalized = String(value || '').trim().toLowerCase().replace(/[_-]+/g, ' ');
+    return !normalized ||
+      normalized === 'no brokerage' ||
+      normalized === 'non brokerage' ||
+      normalized === 'without brokerage' ||
+      normalized.includes('no broker');
+  }
+
+  function saveHomeUiState() {
+    const type = document.getElementById('filterType')?.value || '';
+    const brokerage = activePostMode === 'available'
+      ? (document.getElementById('filterBrokerage')?.value || '')
+      : '';
+    safeWrite(STATE_KEY, { mode: activePostMode, type, brokerage });
+  }
+
+  function stableSetOptions(select, html, selectedValue) {
+    if (!select) return;
+    if (select.innerHTML !== html) select.innerHTML = html;
+    if (selectedValue && Array.from(select.options).some(option => option.value === selectedValue)) {
+      select.value = selectedValue;
+    } else if (!selectedValue) {
+      select.value = '';
+    }
+  }
+
+  function typeOptionsHtml(values, defaultLabel) {
+    const unique = [...new Set((values || []).map(normalizeOptionText).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
+    const html = `<option value="">${escapeHtml(defaultLabel)}</option>` + unique
+      .map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)
+      .join('');
+    return { unique, html };
+  }
+
+  function brokerageOptionsHtml() {
+    return [
+      '<option value="">All brokerage options</option>',
+      `<option value="${BROKERAGE_APPLICABLE}">Brokerage applicable</option>`,
+      `<option value="${NO_BROKERAGE}">No brokerage</option>`
+    ].join('');
+  }
+
+  async function fetchAvailableFilterRows() {
+    const active = await db.from('room_posts').select('type,brokerage_type,status').eq('status', 'active').limit(1000);
+    if (!active.error) return active;
+    return db.from('room_posts').select('type,brokerage_type,status').limit(1000);
+  }
+
+  async function fetchNeededFilterRows() {
+    const withStatus = await db.from('room_requirements').select('type,status').limit(1000);
+    if (!withStatus.error) return withStatus;
+    return db.from('room_requirements').select('type').limit(1000);
+  }
+
+  function isVisibleFilterRow(row) {
+    const status = String(row?.status || 'active').trim().toLowerCase();
+    return !status || status === 'active' || (!status.includes('inactive') && !status.includes('disabled') && !status.includes('rejected'));
+  }
+
+  /* Use meaningful brokerage categories while keeping the existing database query path. */
+  window.applyFiltersToQuery = function(query) {
+    const filters = getActiveFilters();
+    if (filters.type) query = query.ilike('type', `%${filters.type}%`);
+    return query;
+  };
+
+  window.roomMatchesActiveFilters = function(room) {
+    const filters = getActiveFilters();
+    if (filters.type && !includesText(room?.type, filters.type)) return false;
+    if (activePostMode !== 'available' || !filters.brokerage) return true;
+    const noBrokerage = isNoBrokerageValue(room?.brokerage_type);
+    if (filters.brokerage === NO_BROKERAGE) return noBrokerage;
+    if (filters.brokerage === BROKERAGE_APPLICABLE) return !noBrokerage;
+    return true;
+  };
+
+  const loadRowsBeforeStableBrokerageFilter = loadAllSearchRowsForMode;
+  window.loadAllSearchRowsForMode = async function() {
+    const rows = await loadRowsBeforeStableBrokerageFilter();
+    return (Array.isArray(rows) ? rows : []).filter(roomMatchesActiveFilters);
+  };
+
+  window.loadFilterOptions = async function() {
+    const typeSelect = document.getElementById('filterType');
+    const brokerageSelect = document.getElementById('filterBrokerage');
+    if (!typeSelect) return;
+
+    const selectedType = typeSelect.value || window.__TINGO_HOME_PREPAINT_STATE?.type || '';
+    const selectedBrokerage = brokerageSelect?.value || window.__TINGO_HOME_PREPAINT_STATE?.brokerage || '';
+    const optionsCache = safeRead(OPTIONS_KEY, {}) || {};
+    const cacheValues = Array.isArray(optionsCache[activePostMode]) ? optionsCache[activePostMode] : [];
+    const defaultLabel = activePostMode === 'needed' ? 'All required room types' : 'All room types';
+
+    if (cacheValues.length) {
+      const cached = typeOptionsHtml(cacheValues, defaultLabel);
+      stableSetOptions(typeSelect, cached.html, selectedType);
+    }
+    stableSetOptions(brokerageSelect, brokerageOptionsHtml(), activePostMode === 'available' ? selectedBrokerage : '');
+    updateFilterUI();
+
+    const requestedMode = activePostMode;
+    let result;
+    if (requestedMode === 'needed') {
+      result = await fetchNeededFilterRows();
+    } else {
+      result = await fetchAvailableFilterRows();
+    }
+
+    if (result.error) {
+      console.warn('Filter options could not be refreshed', result.error);
+      updateFilterUI();
+      return;
+    }
+
+    const rows = (result.data || []).filter(isVisibleFilterRow);
+    const built = typeOptionsHtml(rows.map(row => row.type), defaultLabel);
+
+    /* A tab may have changed while the request was in flight. Never paint stale options. */
+    if (requestedMode !== activePostMode) return;
+
+    stableSetOptions(typeSelect, built.html, selectedType);
+    stableSetOptions(brokerageSelect, brokerageOptionsHtml(), activePostMode === 'available' ? selectedBrokerage : '');
+
+    optionsCache[activePostMode] = built.unique;
+    safeWrite(OPTIONS_KEY, optionsCache);
+    updateFilterUI();
+    saveHomeUiState();
+  };
+
+  /* Bind only once. The previous implementation attached both legacy and final listeners. */
+  window.bindFilterEvents = function() {
+    ['filterType', 'filterBrokerage'].forEach(id => {
+      const element = document.getElementById(id);
+      if (!element || element.dataset.stableFilterBound === '1') return;
+      element.dataset.stableFilterBound = '1';
+      element.addEventListener('change', () => {
+        selectedSearchPlace = null;
+        hideSuggestionBox();
+        updateFilterUI();
+        saveHomeUiState();
+        loadRooms(getCurrentSearchText(), null);
+      });
+    });
+
+    const clearBtn = document.getElementById('clearFilters');
+    if (clearBtn && clearBtn.dataset.stableFilterBound !== '1') {
+      clearBtn.dataset.stableFilterBound = '1';
+      clearBtn.addEventListener('click', () => {
+        const type = document.getElementById('filterType');
+        const brokerage = document.getElementById('filterBrokerage');
+        if (type) type.value = '';
+        if (brokerage) brokerage.value = '';
+        selectedSearchPlace = null;
+        hideSuggestionBox();
+        updateFilterUI();
+        saveHomeUiState();
+        loadRooms(getCurrentSearchText(), null);
+      });
+    }
+  };
+
+  window.setPostMode = function(mode) {
+    const nextMode = mode === 'needed' ? 'needed' : 'available';
+    if (nextMode === activePostMode) return Promise.resolve();
+
+    activePostMode = nextMode;
+    if (typeof tingoModeAwareLoadSeq !== 'undefined') tingoModeAwareLoadSeq += 1;
+    if (typeof tingoLoadRoomsSeq !== 'undefined') tingoLoadRoomsSeq += 1;
+
+    document.getElementById('modeAvailableBtn')?.classList.toggle('active', activePostMode === 'available');
+    document.getElementById('modeNeededBtn')?.classList.toggle('active', activePostMode === 'needed');
+
+    const state = safeRead(STATE_KEY, {}) || {};
+    const typeFilter = document.getElementById('filterType');
+    const brokerageFilter = document.getElementById('filterBrokerage');
+    if (typeFilter) typeFilter.value = '';
+    if (brokerageFilter) brokerageFilter.value = '';
+
+    selectedSearchPlace = null;
+    hideSuggestionBox();
+    updateFilterUI();
+    safeWrite(STATE_KEY, { ...state, mode: activePostMode, type: '', brokerage: '' });
+
+    /* Keep mode-specific feed caches. loadRooms paints them immediately when present. */
+    if (typeof tingoInitialFeedPainted !== 'undefined') tingoInitialFeedPainted = false;
+    const roomList = document.getElementById('roomList');
+    if (roomList) {
+      roomList.removeAttribute('data-feed-signature');
+      roomList.innerHTML = '';
+    }
+
+    const feedPromise = Promise.resolve(loadRooms(getCurrentSearchText(), null));
+    const filterPromise = Promise.resolve(loadFilterOptions()).catch(error => {
+      console.warn('Filter options could not be refreshed after tab change', error);
+    });
+    return Promise.allSettled([feedPromise, filterPromise]);
+  };
+
+  /* Ensure the restored state is applied before the single home boot starts. */
+  const restored = window.__TINGO_HOME_PREPAINT_STATE || {};
+  activePostMode = restored.mode === 'needed' ? 'needed' : 'available';
+  document.getElementById('modeAvailableBtn')?.classList.toggle('active', activePostMode === 'available');
+  document.getElementById('modeNeededBtn')?.classList.toggle('active', activePostMode === 'needed');
+  updateFilterUI();
+
+  window.addEventListener('pagehide', saveHomeUiState, { passive: true });
+  window.addEventListener('pageshow', event => {
+    document.querySelectorAll('.card.preparing-open').forEach(card => card.classList.remove('preparing-open'));
+    if (event.persisted) {
+      updateFilterUI();
+      requestAnimationFrame(() => document.documentElement.classList.add('tingo-home-restored'));
+    }
+  }, { passive: true });
+})();
+</script>
 
 <script>
 /* =====================================================
