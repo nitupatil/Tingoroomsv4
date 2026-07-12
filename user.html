@@ -1624,26 +1624,65 @@ async function login() {
   }
 }
 
+function getSafeRedirectTarget(rawRedirect) {
+  const value = String(rawRedirect || "").trim();
+  if (!value) return "index.html";
+
+  // Named application actions are handled separately.
+  if (value === "chat" || value === "chatlist") return value;
+
+  try {
+    const target = new URL(value, window.location.href);
+
+    // Never allow redirecting to a different website.
+    if (target.origin !== window.location.origin) {
+      console.warn("Blocked external redirect:", value);
+      return "index.html";
+    }
+
+    const fileName = target.pathname.split("/").pop() || "index.html";
+
+    // Only allow real local HTML pages. Values such as A01 are IDs, not pages.
+    if (fileName !== "" && fileName !== "index.html" && !fileName.toLowerCase().endsWith(".html")) {
+      console.warn("Blocked invalid redirect target:", value);
+      return "index.html";
+    }
+
+    return `${fileName || "index.html"}${target.search}${target.hash}`;
+  } catch (error) {
+    console.warn("Invalid redirect value:", value, error);
+    return "index.html";
+  }
+}
+
 function handleRedirect() {
   const params = new URLSearchParams(window.location.search);
-  const redirect = params.get("redirect");
+  const redirect = getSafeRedirectTarget(params.get("redirect"));
 
-  if (redirect) {
-    if (redirect === "chat") {
-      const chatRedirect = JSON.parse(localStorage.getItem("chat_redirect"));
-      if (chatRedirect) {
-        window.location.href = `chat.html?room=${chatRedirect.roomId}&user=${chatRedirect.ownerId}&source=index`;
-      } else {
-        window.location.href = "chat.html";
-      }
-    } else if (redirect === "chatlist") {
-      window.location.href = "chat.html";
-    } else {
-      window.location.href = redirect;
+  if (redirect === "chat") {
+    let chatRedirect = null;
+    try {
+      chatRedirect = JSON.parse(localStorage.getItem("chat_redirect") || "null");
+    } catch (error) {
+      console.warn("Invalid chat_redirect data:", error);
     }
-  } else {
-    window.location.href = "index.html";
+
+    if (chatRedirect?.roomId && chatRedirect?.ownerId) {
+      const roomId = encodeURIComponent(String(chatRedirect.roomId));
+      const ownerId = encodeURIComponent(String(chatRedirect.ownerId));
+      window.location.href = `chat.html?room=${roomId}&user=${ownerId}&source=index`;
+    } else {
+      window.location.href = "chat.html";
+    }
+    return;
   }
+
+  if (redirect === "chatlist") {
+    window.location.href = "chat.html";
+    return;
+  }
+
+  window.location.href = redirect;
 }
 
 /* ---------------- PROFILE ---------------- */
