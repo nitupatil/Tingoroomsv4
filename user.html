@@ -5,6 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>User - TingoRooms</title>
 
+<script>
+/* First-paint auth hint: prevents the login card flashing before Supabase restores its session. */
+(function () {
+  try {
+    const raw = localStorage.getItem("user");
+    const cachedUser = raw ? JSON.parse(raw) : null;
+    if (cachedUser && cachedUser.id) {
+      window.__TINGO_BOOT_USER__ = cachedUser;
+      document.documentElement.classList.add("has-cached-user");
+    } else {
+      document.documentElement.classList.add("has-no-cached-user");
+    }
+  } catch (error) {
+    document.documentElement.classList.add("has-no-cached-user");
+  }
+})();
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -226,6 +244,22 @@ button.is-loading::after {
 
 .hidden { 
   display: none !important; 
+}
+
+/* Render the correct account state on the first browser paint.
+   Backend validation still runs immediately after Supabase restores the session. */
+html.has-cached-user #loginBox,
+html.has-cached-user #signupBox,
+html.has-cached-user #otpBox {
+  display: none !important;
+}
+
+html.has-cached-user #profileBox {
+  display: block !important;
+}
+
+html.has-cached-user #pageTitle {
+  min-height: 55px;
 }
 
 /* PROFILE SPECIFIC */
@@ -534,6 +568,48 @@ button:disabled { opacity: .72; cursor: wait; }
 
   </div>
 
+  <script>
+  /* Fill the cached profile before the first visual frame. */
+  (function () {
+    const user = window.__TINGO_BOOT_USER__;
+    if (!user || !user.id) return;
+
+    const byId = (id) => document.getElementById(id);
+    const title = byId("pageTitle");
+    const name = byId("profileName");
+    const email = byId("profileEmail");
+    const avatar = byId("profileAvatar");
+    const note = byId("sessionNote");
+
+    if (title) title.textContent = "My Profile";
+    if (name) name.textContent = user.name || "User";
+    if (email) email.textContent = user.email || "";
+
+    const gender = String(user.gender || "").toLowerCase();
+    const fallback = gender.includes("f")
+      ? "https://i.ibb.co/SXCj3b1q/femaleavt.png"
+      : "https://i.ibb.co/wZVNcCDt/maleavt.png";
+
+    if (avatar) {
+      avatar.onerror = function () {
+        avatar.onerror = null;
+        avatar.src = fallback;
+      };
+      avatar.src = user.avatar_url && String(user.avatar_url).trim() ? user.avatar_url : fallback;
+    }
+
+    if (note) {
+      const device = user.active_device_name || "This device";
+      let loginTime = "now";
+      if (user.last_login_at) {
+        const parsed = new Date(user.last_login_at);
+        if (!Number.isNaN(parsed.getTime())) loginTime = parsed.toLocaleString();
+      }
+      note.innerHTML = `<strong>Active session:</strong> ${device}<br><span>Latest login: ${loginTime}</span>`;
+    }
+  })();
+  </script>
+
   <div id="customAlertOverlay" class="custom-alert-overlay hidden">
     <div class="custom-alert-box" id="customAlertBox">
       <span class="material-symbols-rounded custom-alert-icon" id="customAlertIcon">info</span>
@@ -550,6 +626,8 @@ button:disabled { opacity: .72; cursor: wait; }
     title="TingoRooms bottom navigation"
     scrolling="no"
     loading="eager"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation-by-user-activation"
+    referrerpolicy="same-origin"
   ></iframe>
 
 </div>
@@ -1185,18 +1263,45 @@ function scheduleSessionValidation(reason = 'lifecycle', delay = 80) {
 async function initialiseUserPage() {
   updateReusableButtonsFrame();
 
-  const { data, error } = await db.auth.getSession();
-  if (error) console.warn('Initial Auth session check failed:', error);
-
-  const authSession = data?.session || null;
+  /* Never show the login form first when a cached user exists. */
   const localUser = getStoredUser();
+  if (localUser?.id) {
+    showProfile(localUser);
+  } else {
+    showLogin();
+  }
+
+  let authSession = null;
+  try {
+    const { data, error } = await db.auth.getSession();
+    if (error) throw error;
+    authSession = data?.session || null;
+  } catch (error) {
+    console.warn('Initial Auth session check failed:', error);
+    /* Do not flash back to login because of a temporary network/storage delay. */
+    if (!localUser?.id) showLogin();
+  }
 
   if (authSession && localUser?.id) {
-    const valid = await validateCurrentSession({ silent: true, reason: 'startup' });
-    if (!valid) showLogin();
-  } else {
-    localStorage.removeItem('user');
+    subscribeToCurrentUser(localUser);
+    /* Validate without blocking the already-rendered profile. */
+    scheduleSessionValidation('startup', 0);
+  } else if (!authSession) {
+    if (localUser?.id) {
+      localStorage.removeItem('user');
+    }
     showLogin();
+  } else if (authSession && !localUser?.id) {
+    /* Auth exists but the local profile is missing: retrieve it using the authenticated function. */
+    const result = await callTingoAuth('get_profile', {}, true);
+    if (result?.ok && result.user) {
+      storeUser(result.user);
+      showProfile(result.user);
+      subscribeToCurrentUser(result.user);
+    } else {
+      try { await db.auth.signOut(); } catch (error) {}
+      showLogin();
+    }
   }
 
   const authResult = db.auth.onAuthStateChange((event, session) => {
@@ -1208,11 +1313,14 @@ async function initialiseUserPage() {
     }
 
     if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED', 'INITIAL_SESSION'].includes(event)) {
+      const currentUser = getStoredUser();
+      if (currentUser?.id) showProfile(currentUser);
       scheduleSessionValidation(`auth-${event.toLowerCase()}`, 80);
     }
   });
   authStateSubscription = authResult?.data?.subscription || null;
 }
+
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && getStoredUser()) scheduleSessionValidation('page-visible', 0);
@@ -1236,14 +1344,19 @@ if (document.readyState === 'loading') {
 
 /* ---------------- UI SWITCHES ---------------- */
 function showSignup() {
+  document.documentElement.classList.remove('has-cached-user');
   document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("profileBox").classList.add("hidden");
+  document.getElementById("otpBox").classList.add("hidden");
   document.getElementById("signupBox").classList.remove("hidden");
   document.getElementById("pageTitle").innerText = "Sign Up";
 }
 
 function showLogin() {
+  document.documentElement.classList.remove('has-cached-user');
   document.getElementById("signupBox").classList.add("hidden");
   document.getElementById("otpBox").classList.add("hidden");
+  document.getElementById("profileBox").classList.add("hidden");
   document.getElementById("loginBox").classList.remove("hidden");
   document.getElementById("pageTitle").innerText = "My Account";
 }
@@ -1535,6 +1648,8 @@ function handleRedirect() {
 
 /* ---------------- PROFILE ---------------- */
 function showProfile(user) {
+  if (!user) return;
+  document.documentElement.classList.add('has-cached-user');
   document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("signupBox").classList.add("hidden");
   document.getElementById("otpBox").classList.add("hidden");
@@ -1548,9 +1663,12 @@ function showProfile(user) {
   const fallback = getDefaultAvatar(user.gender);
   avatarEl.onerror = () => {
     avatarEl.onerror = null;
-    avatarEl.src = fallback;
+    if (avatarEl.src !== fallback) avatarEl.src = fallback;
   };
-  avatarEl.src = user.avatar_url && user.avatar_url.trim() !== "" ? user.avatar_url : fallback;
+  const nextAvatar = user.avatar_url && String(user.avatar_url).trim() !== "" ? user.avatar_url : fallback;
+  if (avatarEl.getAttribute('src') !== nextAvatar && avatarEl.src !== nextAvatar) {
+    avatarEl.src = nextAvatar;
+  }
 
   const sessionNote = document.getElementById("sessionNote");
   if (sessionNote) {
@@ -1595,6 +1713,7 @@ async function logout() {
   }
 
   localStorage.removeItem("user");
+  document.documentElement.classList.remove('has-cached-user');
   location.reload();
 }
 
