@@ -332,8 +332,8 @@ button {
   background: rgba(255, 255, 255, 0.92);
   color: #0F172A;
   border: 1px solid rgba(255,255,255,0.7);
-  backdrop-filter: blur(8px); /* PERF FIX: was 14px - this repeats on every card in the feed */
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
   font-size: 13px;
   font-weight: 800;
@@ -3362,6 +3362,8 @@ const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0"; 
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+window.tingoDb = db;
+window.TINGO_AUTH_FUNCTION_NAME = "tingo-auth";
 
 /* Default avatar helper (gender-aware) */
 function getDefaultAvatar(gender) {
@@ -3970,53 +3972,48 @@ function renderRooms(rooms, statusText = "") {
   });
 }
 
-/* Initialize card sliders (auto-advance)
-   PERF FIX: the old version created one setInterval PER CARD, and since
-   renderRooms() rebuilds the feed with container.innerHTML on every search,
-   filter change and the 45s background refresh, the old wrappers were thrown
-   away but their intervals kept running forever in the background (they were
-   never cleared). Every refresh silently added a whole new batch on top of
-   the old ones, so the longer the app stayed open the more zombie timers
-   piled up fighting for the main thread every second - this was the main
-   cause of the page getting progressively jankier the longer it was left open.
-   Fix: exactly ONE shared interval drives every card, and it drops any
-   wrapper that is no longer in the DOM (wrapper.isConnected) so nothing
-   can accumulate. */
-let tingoSliderTimer = null;
-
+/* Initialize card sliders (auto-advance) */
 function initCardSliders() {
-  if (tingoSliderTimer) {
-    clearInterval(tingoSliderTimer);
-    tingoSliderTimer = null;
-  }
-
+  // horizontal right-to-left sliding, autoplay every 1s
   document.querySelectorAll('.card-img-wrapper').forEach(wrapper => {
+    // clear existing interval if present
+    if (wrapper._sliderInterval) {
+      clearInterval(wrapper._sliderInterval);
+      wrapper._sliderInterval = null;
+    }
+
     const track = wrapper.querySelector('.slides-track');
     if (!track) return;
-    if (!wrapper.dataset.slideIdx) wrapper.dataset.slideIdx = '0';
-    track.style.transform = `translateX(-${Number(wrapper.dataset.slideIdx) * 100}%)`;
+    const slides = track.querySelectorAll('img.slide');
+    const len = slides.length;
+    if (!len || len <= 1) return;
 
-    if (!wrapper._sliderHoverBound) {
-      wrapper._sliderHoverBound = true;
-      wrapper.addEventListener('mouseenter', () => { wrapper._sliderPaused = true; });
-      wrapper.addEventListener('mouseleave', () => { wrapper._sliderPaused = false; });
-    }
-  });
+    let idx = 0;
+    // ensure starting position
+    track.style.transform = `translateX(-${idx * 100}%)`;
 
-  tingoSliderTimer = setInterval(() => {
-    document.querySelectorAll('.card-img-wrapper').forEach(wrapper => {
-      if (!wrapper.isConnected || wrapper._sliderPaused) return;
-      const track = wrapper.querySelector('.slides-track');
-      if (!track) return;
-      const slides = track.querySelectorAll('img.slide');
-      const len = slides.length;
-      if (!len || len <= 1) return;
-      let idx = Number(wrapper.dataset.slideIdx || 0);
+    // autoplay every 1s (1000ms)
+    wrapper._sliderInterval = setInterval(() => {
       idx = (idx + 1) % len;
-      wrapper.dataset.slideIdx = String(idx);
       track.style.transform = `translateX(-${idx * 100}%)`;
+    }, 1000);
+
+    // pause on hover (desktop)
+    wrapper.addEventListener('mouseenter', () => {
+      if (wrapper._sliderInterval) {
+        clearInterval(wrapper._sliderInterval);
+        wrapper._sliderInterval = null;
+      }
     });
-  }, 1000);
+
+    wrapper.addEventListener('mouseleave', () => {
+      if (wrapper._sliderInterval) return;
+      wrapper._sliderInterval = setInterval(() => {
+        idx = (idx + 1) % len;
+        track.style.transform = `translateX(-${idx * 100}%)`;
+      }, 1000);
+    });
+  });
 }
 
 // Re-init sliders after rendering rooms
@@ -4890,19 +4887,55 @@ function updateModeSwitchCompact() {
 }
 
 function setupModeSwitchScroll() {
-  // PERF FIX: this used to attach a raw, un-throttled scroll listener that
-  // fired updateModeSwitchCompact() on every single scroll event. Three later
-  // patch scripts further down the page (tingo-scroll-direction-polish-update,
-  // tingo-auto-hide-top-full-address-script, tingo-final-mode-tabs-hide-script)
-  // each ALSO added their own rAF-throttled scroll listener that toggles the
-  // very same classes on the very same #modeSwitchWrap / .app-container
-  // elements, using slightly different thresholds. With all of them active at
-  // once, every scroll frame had multiple handlers fighting over the same
-  // classes - that fight is what produced the flickery/jerky feel while
-  // scrolling. Only the final, most complete script
-  // (tingo-final-mode-tabs-hide-script) is kept active now, so this legacy
-  // binding is intentionally left as a no-op.
-  modeSwitchLastScroll = getCurrentScrollTop();
+  const app = document.querySelector('.app-container');
+  const root = window.innerWidth >= 900 ? window : app;
+  const wrap = document.getElementById('modeSwitchWrap');
+  if (!root || !wrap || wrap.dataset.smoothScrollBound === '1') return;
+
+  wrap.dataset.smoothScrollBound = '1';
+  let lastTop = getCurrentScrollTop();
+  let frameId = 0;
+  let hidden = false;
+
+  const setVisible = (visible) => {
+    const shouldHide = !visible && window.innerWidth < 900;
+    if (hidden === shouldHide) return;
+    hidden = shouldHide;
+    wrap.classList.toggle('tingo-mode-tabs-hidden', shouldHide);
+    wrap.classList.remove('compact', 'switch-hidden');
+    document.querySelector('.app-container')?.classList.remove('tingo-top-hidden');
+    if (shouldHide) hideSuggestionBox();
+  };
+
+  const update = () => {
+    frameId = 0;
+    const currentTop = getCurrentScrollTop();
+    const delta = currentTop - lastTop;
+
+    if (window.innerWidth >= 900 || currentTop <= 14) {
+      setVisible(true);
+    } else if (delta > 5 && currentTop > 64) {
+      setVisible(false);
+    } else if (delta < -3) {
+      setVisible(true);
+    }
+
+    lastTop = Math.max(0, currentTop);
+  };
+
+  const requestUpdate = () => {
+    if (frameId) return;
+    frameId = requestAnimationFrame(update);
+  };
+
+  root.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('resize', () => {
+    lastTop = getCurrentScrollTop();
+    setVisible(true);
+  }, { passive: true });
+
+  window.updateModeSwitchCompact = requestUpdate;
+  setVisible(true);
 }
 
 async function fetchDatabaseSuggestions(searchText) {
@@ -5350,11 +5383,17 @@ async function getTargetFromSearch(searchText, selectedPlace = null) {
   return geo;
 }
 
+let tingoModeAwareLoadSeq = 0;
+
 async function loadRooms(search = "", selectedPlace = null) {
   const cleanSearch = cleanSearchTerm(search);
+  const requestedMode = activePostMode;
+  const requestSeq = ++tingoModeAwareLoadSeq;
+  const requestIsStale = () => requestSeq !== tingoModeAwareLoadSeq || requestedMode !== activePostMode;
 
   try {
     const allRows = await loadAllSearchRowsForMode();
+    if (requestIsStale()) return;
 
     if (!cleanSearch) {
       renderRooms(allRows);
@@ -5362,6 +5401,7 @@ async function loadRooms(search = "", selectedPlace = null) {
     }
 
     const target = await getTargetFromSearch(cleanSearch, selectedPlace || selectedSearchPlace);
+    if (requestIsStale()) return;
     const exactRows = textSearchRows(allRows, cleanSearch);
     let finalRows = [];
     let statusText = "";
@@ -5384,6 +5424,7 @@ async function loadRooms(search = "", selectedPlace = null) {
       }
 
       const distanceSorted = await sortRowsByTarget(allRows, target);
+      if (requestIsStale()) return;
       const distanceMap = new Map(distanceSorted.map(row => [rowKey(row), row]));
       const exactWithDistance = exactRows.map(row => distanceMap.get(rowKey(row)) || row);
       const nearbyRows = distanceSorted.filter(row => {
@@ -5425,8 +5466,11 @@ async function loadRooms(search = "", selectedPlace = null) {
         : `No exact match found for “${cleanSearch}”. Try selecting one of the location suggestions.`;
     }
 
-    renderRooms(await attachOwnerProfiles(finalRows.slice(0, 36)), statusText);
+    const finalItems = await attachOwnerProfiles(finalRows.slice(0, 36));
+    if (requestIsStale()) return;
+    renderRooms(finalItems, statusText);
   } catch (error) {
+    if (requestIsStale()) return;
     console.error(error);
     showAppPopup(error.message || "Something went wrong while loading posts.", "Search error");
   }
@@ -6479,14 +6523,15 @@ function tingoEnsureSliderObserver() {
       }
 
       function startSlider() {
-        if (wrapper._sliderInterval) return;
+        // Mobile scrolling remains smoother when large listing photos do not autoplay.
+        if (window.innerWidth < 900 || wrapper._sliderInterval) return;
         let idx = Number(wrapper.dataset.sliderIndex || 0);
         wrapper._sliderInterval = setInterval(() => {
-          if (document.hidden) return;
+          if (document.hidden || !entry.isIntersecting) return;
           idx = (idx + 1) % slides.length;
           wrapper.dataset.sliderIndex = String(idx);
           track.style.transform = `translateX(-${idx * 100}%)`;
-        }, 2400);
+        }, 5000);
       }
 
       if (entry.isIntersecting) startSlider();
@@ -6498,27 +6543,6 @@ function tingoEnsureSliderObserver() {
 
 initCardSliders = function() {
   const observer = tingoEnsureSliderObserver();
-
-  // PERF FIX: sweep out any previously-tracked cards that are no longer in
-  // the DOM (removed by the last feed refresh/search) and make sure their
-  // interval + observer registration are actually released. Some browsers
-  // stop delivering IntersectionObserver callbacks for elements the instant
-  // they're disconnected, which meant a card's slider interval could be left
-  // running forever in the background if that card happened to be on-screen
-  // at the moment it was replaced - this accumulates over a long session
-  // with the 45s auto-refresh.
-  window.__tingoTrackedSliderWrappers = window.__tingoTrackedSliderWrappers || new Set();
-  window.__tingoTrackedSliderWrappers.forEach(wrapper => {
-    if (!wrapper.isConnected) {
-      if (wrapper._sliderInterval) {
-        clearInterval(wrapper._sliderInterval);
-        wrapper._sliderInterval = null;
-      }
-      observer.unobserve(wrapper);
-      window.__tingoTrackedSliderWrappers.delete(wrapper);
-    }
-  });
-
   document.querySelectorAll('.card-img-wrapper').forEach(wrapper => {
     if (wrapper.dataset.sliderBound === '1') return;
     wrapper.dataset.sliderBound = '1';
@@ -6526,7 +6550,6 @@ initCardSliders = function() {
     const track = wrapper.querySelector('.slides-track');
     if (track) track.style.transform = 'translateX(0)';
     observer.observe(wrapper);
-    window.__tingoTrackedSliderWrappers.add(wrapper);
 
     wrapper.addEventListener('mouseenter', () => {
       if (wrapper._sliderInterval) {
@@ -7021,14 +7044,9 @@ function initSmoothHomePage() {
   subscribeFeedUpdates();
   initNotificationUI();
 
-  const initialUserCheck = getLoggedInUser();
-  if (initialUserCheck) {
-    loadNotifications({ markSeen: false, announceNew: false });
-    checkNewMessages();
-    subscribeNotifications();
-    syncOneSignalId(initialUserCheck);
-    maybeOpenNotificationsAfterLogin(initialUserCheck);
-  }
+  // Private notification/message queries start only after the shared Auth guard
+  // verifies the real Supabase session and the latest account status. Public
+  // room feeds continue loading normally for logged-out visitors.
 }
 
 /* INIT */
@@ -7712,8 +7730,15 @@ setInterval(() => {
     updateFilterUI();
   };
 
-  window.setPostMode = async function(mode) {
-    activePostMode = mode === 'needed' ? 'needed' : 'available';
+  window.setPostMode = function(mode) {
+    const nextMode = mode === 'needed' ? 'needed' : 'available';
+    activePostMode = nextMode;
+
+    // Invalidate every older in-flight feed request immediately. This prevents
+    // an Available response from painting after the user has opened Required.
+    if (typeof tingoModeAwareLoadSeq !== 'undefined') tingoModeAwareLoadSeq += 1;
+    if (typeof tingoLoadRoomsSeq !== 'undefined') tingoLoadRoomsSeq += 1;
+
     document.getElementById('modeAvailableBtn')?.classList.toggle('active', activePostMode === 'available');
     document.getElementById('modeNeededBtn')?.classList.toggle('active', activePostMode === 'needed');
 
@@ -7726,8 +7751,20 @@ setInterval(() => {
     hideSuggestionBox();
     if (typeof tingoClearFeedCaches === 'function') tingoClearFeedCaches();
     try { localStorage.removeItem('tingo_filter_html_v3'); } catch (e) {}
-    await loadFilterOptions();
-    loadRooms(getCurrentSearchText());
+
+    // Remove the previous tab's cards before any network or filter work begins.
+    const roomList = document.getElementById('roomList');
+    if (roomList) roomList.innerHTML = '';
+    if (typeof tingoInitialFeedPainted !== 'undefined') tingoInitialFeedPainted = false;
+    if (typeof tingoShowFeedSkeleton === 'function') tingoShowFeedSkeleton();
+
+    // Feed and filter options load together; the user never sees stale cards.
+    const feedPromise = Promise.resolve(loadRooms(getCurrentSearchText(), null));
+    const filterPromise = Promise.resolve(loadFilterOptions()).catch(error => {
+      console.warn('Filter options could not be refreshed after tab change', error);
+    });
+
+    return Promise.allSettled([feedPromise, filterPromise]);
   };
 
   const originalBindFilterEvents = window.bindFilterEvents;
@@ -7995,99 +8032,6 @@ setInterval(() => {
   }
 }
 </style>
-
-<script id="tingo-scroll-direction-polish-update">
-(function() {
-  let lastScrollTop = 0;
-  let ticking = false;
-  let revealUntil = 0;
-
-  function scrollRoot() {
-    if (window.innerWidth >= 900) return document.scrollingElement || document.documentElement;
-    return document.querySelector('.app-container') || document.scrollingElement || document.documentElement;
-  }
-
-  function currentScrollTop() {
-    const root = scrollRoot();
-    if (root === document.scrollingElement || root === document.documentElement || root === document.body) {
-      return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-    }
-    return root.scrollTop || 0;
-  }
-
-  function applyModeSwitchVisibility(forceShow) {
-    const wrap = document.getElementById('modeSwitchWrap');
-    if (!wrap) return;
-
-    if (window.innerWidth >= 900) {
-      wrap.classList.remove('compact', 'switch-hidden');
-      return;
-    }
-
-    const now = Date.now();
-    const top = currentScrollTop();
-    const diff = top - lastScrollTop;
-
-    if (forceShow || top <= 24 || diff < -1) {
-      wrap.classList.remove('compact', 'switch-hidden');
-      revealUntil = now + 420;
-    } else if (top > 92 && diff > 2 && now > revealUntil) {
-      wrap.classList.add('switch-hidden');
-      wrap.classList.add('compact');
-    }
-
-    lastScrollTop = Math.max(0, top);
-  }
-
-  function requestUpdate(forceShow) {
-    if (forceShow) {
-      applyModeSwitchVisibility(true);
-      return;
-    }
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      ticking = false;
-      applyModeSwitchVisibility(false);
-    });
-  }
-
-  window.updateModeSwitchCompact = function() {
-    requestUpdate(false);
-  };
-
-  function bindScrollWatch() {
-    const app = document.querySelector('.app-container');
-    lastScrollTop = currentScrollTop();
-    if (app && app.dataset.tingoScrollPolishBound !== '1') {
-      app.dataset.tingoScrollPolishBound = '1';
-      app.addEventListener('scroll', () => requestUpdate(false), { passive: true });
-      app.addEventListener('touchstart', () => requestUpdate(true), { passive: true });
-    }
-    if (document.body.dataset.tingoScrollPolishWindowBound !== '1') {
-      document.body.dataset.tingoScrollPolishWindowBound = '1';
-      window.addEventListener('scroll', () => requestUpdate(false), { passive: true });
-      window.addEventListener('resize', () => requestUpdate(true), { passive: true });
-    }
-    requestUpdate(true);
-  }
-
-  // PERF FIX: this scroll watcher was superseded by the later
-  // tingo-final-mode-tabs-hide-script, which handles the same show/hide
-  // behaviour in a more complete way. Leaving both active meant two
-  // independent rAF loops toggled the same classes on the same element with
-  // different thresholds every time the user scrolled, causing visible
-  // flicker. Binding is disabled here; the functions above are left in place
-  // but unused so nothing else in the file needs to change.
-  // if (document.readyState === 'loading') {
-  //   document.addEventListener('DOMContentLoaded', bindScrollWatch, { once: true });
-  // } else {
-  //   bindScrollWatch();
-  // }
-})();
-</script>
-
-
 <!-- TingoRooms Instagram-style portrait-safe UI update -->
 <style id="tingo-instagram-portrait-ui-final">
 @media (max-width: 899px) {
@@ -9140,24 +9084,49 @@ setInterval(() => {
     if (wrap) wrap.classList.remove('compact');
   };
 
-  function refreshFeedSoon() {
+  function prepareInstagramRenderer() {
     addBrandTitle();
     const wrap = document.getElementById('modeSwitchWrap');
-    if (wrap) wrap.classList.remove('compact');
-    if (typeof loadRooms === 'function') {
-      setTimeout(() => loadRooms(typeof getCurrentSearchText === 'function' ? getCurrentSearchText() : '', typeof selectedSearchPlace !== 'undefined' ? selectedSearchPlace : null), 120);
-    }
+    if (wrap) wrap.classList.remove('compact', 'switch-hidden');
+
+    const list = document.getElementById('roomList');
+    if (!list) return;
+
+    let refreshTriggered = false;
+    const refreshOnlyWhenNeeded = () => {
+      const card = list.querySelector('.card');
+      if (!card) return false;
+      if (!card.classList.contains('ig-listing-card') && !refreshTriggered && typeof loadRooms === 'function') {
+        refreshTriggered = true;
+        loadRooms(
+          typeof getCurrentSearchText === 'function' ? getCurrentSearchText() : '',
+          typeof selectedSearchPlace !== 'undefined' ? selectedSearchPlace : null
+        );
+      }
+      return true;
+    };
+
+    if (refreshOnlyWhenNeeded()) return;
+
+    const observer = new MutationObserver(() => {
+      if (refreshOnlyWhenNeeded()) observer.disconnect();
+    });
+    observer.observe(list, { childList: true });
+    setTimeout(() => observer.disconnect(), 3500);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', refreshFeedSoon, { once: true });
+    document.addEventListener('DOMContentLoaded', prepareInstagramRenderer, { once: true });
   } else {
-    refreshFeedSoon();
+    prepareInstagramRenderer();
   }
 
   window.addEventListener('resize', () => {
     clearTimeout(window.__tingoInstagramUiResizeTimer);
-    window.__tingoInstagramUiResizeTimer = setTimeout(refreshFeedSoon, 180);
+    window.__tingoInstagramUiResizeTimer = setTimeout(() => {
+      addBrandTitle();
+      document.getElementById('modeSwitchWrap')?.classList.remove('compact', 'switch-hidden');
+    }, 180);
   }, { passive: true });
 })();
 </script>
@@ -9283,116 +9252,6 @@ setInterval(() => {
   }
 }
 </style>
-
-<script id="tingo-auto-hide-top-full-address-script">
-(function() {
-  let lastTop = 0;
-  let ticking = false;
-  let revealUntil = 0;
-  let touchStartY = null;
-
-  function root() {
-    if (window.innerWidth >= 900) return document.scrollingElement || document.documentElement;
-    return document.querySelector('.app-container') || document.scrollingElement || document.documentElement;
-  }
-
-  function topValue() {
-    const r = root();
-    if (r === document.scrollingElement || r === document.documentElement || r === document.body) {
-      return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-    }
-    return r.scrollTop || 0;
-  }
-
-  function setTopVisible(visible) {
-    const app = document.querySelector('.app-container');
-    if (!app) return;
-    app.classList.toggle('tingo-top-hidden', !visible);
-    const suggestionBox = document.getElementById('searchSuggestions');
-    if (!visible && suggestionBox) suggestionBox.classList.remove('show');
-  }
-
-  function update(forceShow) {
-    const app = document.querySelector('.app-container');
-    if (!app) return;
-
-    if (window.innerWidth >= 900) {
-      app.classList.remove('tingo-top-hidden');
-      lastTop = topValue();
-      return;
-    }
-
-    const now = Date.now();
-    const top = topValue();
-    const diff = top - lastTop;
-
-    /*
-      Finger slide up => page scrolls down => diff positive => hide top controls.
-      Finger slide down even slightly => page scrolls up => diff negative => show immediately.
-    */
-    if (forceShow || top <= 8 || diff < -1) {
-      setTopVisible(true);
-      revealUntil = now + 900;
-    } else if (top > 38 && diff > 3 && now > revealUntil) {
-      setTopVisible(false);
-    }
-
-    lastTop = Math.max(0, top);
-  }
-
-  function request(forceShow) {
-    if (forceShow) {
-      update(true);
-      return;
-    }
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      ticking = false;
-      update(false);
-    });
-  }
-
-  function bind() {
-    const r = root();
-    lastTop = topValue();
-
-    if (r && r.dataset.tingoAutoHideTopBound !== '1') {
-      r.dataset.tingoAutoHideTopBound = '1';
-      r.addEventListener('scroll', () => request(false), { passive: true });
-      r.addEventListener('touchstart', (e) => {
-        touchStartY = e.touches && e.touches.length ? e.touches[0].clientY : null;
-      }, { passive: true });
-      r.addEventListener('touchmove', (e) => {
-        if (touchStartY == null || !e.touches || !e.touches.length) return;
-        const y = e.touches[0].clientY;
-        if (y - touchStartY > 3) request(true); // even a minor downward pull reveals search/filter
-      }, { passive: true });
-    }
-
-    if (document.body.dataset.tingoAutoHideTopWindowBound !== '1') {
-      document.body.dataset.tingoAutoHideTopWindowBound = '1';
-      window.addEventListener('resize', () => request(true), { passive: true });
-      window.addEventListener('orientationchange', () => setTimeout(() => request(true), 120), { passive: true });
-    }
-
-    request(true);
-  }
-
-  // PERF FIX: also superseded by tingo-final-mode-tabs-hide-script further
-  // down the page, which toggles the same .tingo-top-hidden class. Disabled
-  // for the same reason as the scroll-direction-polish-update script above -
-  // two handlers toggling the same class on scroll caused visible flicker.
-  // if (document.readyState === 'loading') {
-  //   document.addEventListener('DOMContentLoaded', bind, { once: true });
-  // } else {
-  //   bind();
-  // }
-})();
-</script>
-
-
-
 <!-- TingoRooms Amazon-style compact sticky top update -->
 <style id="tingo-amazon-compact-sticky-update">
 @media (max-width: 899px) {
@@ -9813,30 +9672,6 @@ setInterval(() => {
   }
 }
 </style>
-
-<script id="tingo-amazon-compact-sticky-script">
-(function() {
-  function keepOnlyModeAutoHidden() {
-    const app = document.querySelector('.app-container');
-    if (!app || window.innerWidth >= 900) return;
-    /* Existing scroll script uses .tingo-top-hidden. CSS above converts that behavior
-       into hiding only the Available/Required switch, while header + filters stay sticky. */
-    const wrap = document.getElementById('modeSwitchWrap');
-    if (wrap) wrap.classList.remove('compact');
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', keepOnlyModeAutoHidden, { once: true });
-  } else {
-    keepOnlyModeAutoHidden();
-  }
-  window.addEventListener('resize', keepOnlyModeAutoHidden, { passive: true });
-  window.addEventListener('orientationchange', () => setTimeout(keepOnlyModeAutoHidden, 120), { passive: true });
-})();
-</script>
-
-
-
 <!-- TingoRooms final mode-tabs hide + colorful rent/deposit polish -->
 <style id="tingo-final-mode-hide-color-fields-update">
 @media (max-width: 899px) {
@@ -9997,136 +9832,6 @@ setInterval(() => {
   }
 }
 </style>
-
-<script id="tingo-final-mode-tabs-hide-script">
-(function() {
-  let lastTop = 0;
-  let ticking = false;
-  let touchY = null;
-  let lastActionAt = 0;
-
-  function mobileRoot() {
-    if (window.innerWidth >= 900) return document.scrollingElement || document.documentElement;
-    return document.querySelector('.app-container') || document.scrollingElement || document.documentElement;
-  }
-
-  function scrollTop() {
-    const r = mobileRoot();
-    if (r === document.scrollingElement || r === document.documentElement || r === document.body) {
-      return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-    }
-    return r.scrollTop || 0;
-  }
-
-  function setModeTabsVisible(visible) {
-    const app = document.querySelector('.app-container');
-    const wrap = document.getElementById('modeSwitchWrap');
-    if (!app || !wrap) return;
-
-    if (window.innerWidth >= 900) {
-      app.classList.remove('tingo-top-hidden');
-      wrap.classList.remove('tingo-mode-tabs-hidden', 'switch-hidden', 'compact');
-      return;
-    }
-
-    if (visible) {
-      app.classList.remove('tingo-top-hidden');
-      wrap.classList.remove('tingo-mode-tabs-hidden', 'switch-hidden', 'compact');
-    } else {
-      app.classList.add('tingo-top-hidden');
-      wrap.classList.add('tingo-mode-tabs-hidden', 'switch-hidden');
-      wrap.classList.remove('compact');
-      const suggestions = document.getElementById('searchSuggestions');
-      if (suggestions) suggestions.classList.remove('show');
-    }
-  }
-
-  function update(forceShow) {
-    const top = scrollTop();
-    const diff = top - lastTop;
-
-    if (window.innerWidth >= 900) {
-      setModeTabsVisible(true);
-      lastTop = top;
-      return;
-    }
-
-    if (forceShow || top <= 12 || diff < -0.5) {
-      setModeTabsVisible(true);
-      lastActionAt = Date.now();
-    } else if (top > 42 && diff > 0.8 && Date.now() - lastActionAt > 80) {
-      setModeTabsVisible(false);
-      lastActionAt = Date.now();
-    }
-
-    lastTop = Math.max(0, top);
-  }
-
-  function request(forceShow) {
-    if (forceShow) {
-      update(true);
-      return;
-    }
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(function() {
-      ticking = false;
-      update(false);
-    });
-  }
-
-  window.tingoShowModeTabs = function() { request(true); };
-  window.tingoHideModeTabs = function() { setModeTabsVisible(false); };
-  window.updateModeSwitchCompact = function() { request(false); };
-
-  function bind() {
-    const r = mobileRoot();
-    lastTop = scrollTop();
-    setModeTabsVisible(true);
-
-    if (r && r.dataset.tingoFinalModeHideBound !== '1') {
-      r.dataset.tingoFinalModeHideBound = '1';
-      r.addEventListener('scroll', function() { request(false); }, { passive: true });
-      r.addEventListener('touchstart', function(e) {
-        touchY = e.touches && e.touches.length ? e.touches[0].clientY : null;
-      }, { passive: true });
-      r.addEventListener('touchmove', function(e) {
-        if (touchY == null || !e.touches || !e.touches.length) return;
-        const y = e.touches[0].clientY;
-        const delta = y - touchY;
-        if (delta > 2) {
-          // Finger moving down => user wants controls back instantly.
-          request(true);
-        } else if (delta < -2 && scrollTop() > 30) {
-          // Finger moving up => hide the Available/Required switch while sliding.
-          setModeTabsVisible(false);
-        }
-      }, { passive: true });
-      r.addEventListener('touchend', function() { touchY = null; }, { passive: true });
-    }
-
-    if (document.body.dataset.tingoFinalModeHideWindowBound !== '1') {
-      document.body.dataset.tingoFinalModeHideWindowBound = '1';
-      window.addEventListener('wheel', function(e) {
-        if (window.innerWidth >= 900) return;
-        if (e.deltaY < 0) request(true);
-        if (e.deltaY > 0 && scrollTop() > 30) setModeTabsVisible(false);
-      }, { passive: true });
-      window.addEventListener('resize', function() { request(true); }, { passive: true });
-      window.addEventListener('orientationchange', function() { setTimeout(function() { request(true); }, 120); }, { passive: true });
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bind, { once: true });
-  } else {
-    bind();
-  }
-})();
-</script>
-
-
-
 <!-- FINAL NOTIFICATION OVERLAY: must stay after every earlier style override -->
 <style id="tingo-notification-slider-final-style">
 .notification {
@@ -10719,6 +10424,289 @@ body.notification-open {
 }
 </style>
 
+
+
+<!-- Performance patch: same visual design, fewer repaints and no competing layout animations -->
+<style id="tingo-performance-smooth-patch">
+html,
+.app-container {
+  scroll-behavior: auto !important;
+}
+
+.card,
+.ig-listing-card,
+.card-img-wrapper img,
+.card-img-wrapper img.slide,
+.owner-avatar,
+.ig-owner-avatar,
+.logo {
+  will-change: auto !important;
+  backface-visibility: visible !important;
+}
+
+.card,
+.ig-listing-card {
+  content-visibility: visible !important;
+  contain: layout paint !important;
+  transform: none;
+}
+
+.card:active,
+.ig-listing-card:active {
+  transform: scale(0.99) !important;
+}
+
+.ig-slide-frame::before {
+  content: none !important;
+  display: none !important;
+  filter: none !important;
+  background-image: none !important;
+}
+
+.ig-slide-frame {
+  background: #EEF2F7 !important;
+}
+
+.ig-slide-frame img,
+.ig-image-box img.slide {
+  transform: none !important;
+  filter: none !important;
+}
+
+.main-content,
+.header,
+.filter-bar,
+.mode-switch-wrap,
+#modeSwitchWrap {
+  will-change: auto !important;
+}
+
+@media (max-width: 899px) {
+  .header,
+  .filter-bar,
+  .mode-switch-wrap,
+  .mode-switch-wrap.compact,
+  .app-container.tingo-top-hidden .header,
+  .app-container.tingo-top-hidden .filter-bar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: #F8FAFC !important;
+  }
+
+  #modeSwitchWrap,
+  .mode-switch-wrap,
+  .mode-switch-wrap.compact {
+    transition: opacity 0.14s ease, transform 0.14s ease !important;
+  }
+
+  #modeSwitchWrap.tingo-mode-tabs-hidden,
+  #modeSwitchWrap.switch-hidden,
+  .app-container.tingo-top-hidden #modeSwitchWrap,
+  .app-container.tingo-top-hidden #modeSwitchWrap.compact {
+    transition: opacity 0.12s ease, transform 0.12s ease !important;
+  }
+
+  .main-content {
+    transition: none !important;
+  }
+
+  .slides-track {
+    transition: none !important;
+    will-change: auto !important;
+  }
+
+  .ig-image-box,
+  .ig-requirement-image,
+  .ig-listing-card {
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.055) !important;
+  }
+
+  .ig-slide-frame img,
+  .ig-slide-frame img.slide,
+  .ig-image-box img.slide {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    background: #EEF2F7 !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .slides-track {
+    transition: transform 0.38s ease-out !important;
+    will-change: transform !important;
+  }
+}
+</style>
+
+
+<script>
+/* =====================================================
+   INDEX AUTH + REALTIME SESSION BRIDGE
+   Public listings remain readable. Every private action first validates the
+   Supabase Auth session and current account state through tingo-auth.
+   ===================================================== */
+(function () {
+  'use strict';
+
+  let activeAuthUserId = null;
+  let privilegedStarted = false;
+
+  function clearPrivateUi() {
+    try {
+      if (notificationChannel) db.removeChannel(notificationChannel);
+    } catch (_) {}
+    notificationChannel = null;
+    notificationItems = [];
+    notificationKnownIds = new Set();
+    notificationsInitialised = false;
+    updateNotificationBadge(0);
+    closeNotifications();
+
+    const navFrame = document.getElementById('bottomNavFrame');
+    try {
+      navFrame?.contentWindow?.postMessage({ type: 'TINGO_MSG_BADGE', count: 0 }, '*');
+    } catch (_) {}
+  }
+
+  async function getVerifiedIndexUser(reason = 'index-protected-action') {
+    if (window.TingoAuthGuard) {
+      const result = await window.TingoAuthGuard.validate({ reason, force: true, silent: true });
+      return result?.valid ? result.user : null;
+    }
+
+    // Conservative fallback while the shared guard is still loading.
+    try {
+      const { data } = await db.auth.getSession();
+      if (!data?.session) return null;
+      return getLoggedInUser();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function sendToLogin(redirectBack) {
+    const target = redirectBack || 'index.html';
+    if (window.innerWidth >= 900 && typeof openPanel === 'function') {
+      openPanel(`user.html?redirect=${encodeURIComponent(target)}`);
+    } else {
+      window.location.href = `user.html?redirect=${encodeURIComponent(target)}`;
+    }
+  }
+
+  const legacyLoadNotifications = window.loadNotifications;
+  const legacyCheckNewMessages = window.checkNewMessages;
+  const legacyMarkAllNotificationsSeen = window.markAllNotificationsSeen;
+
+  window.loadNotifications = async function secureLoadNotifications(options = {}) {
+    const user = await getVerifiedIndexUser('load-notifications');
+    if (!user) {
+      clearPrivateUi();
+      return;
+    }
+    return legacyLoadNotifications.call(this, options);
+  };
+
+  window.checkNewMessages = async function secureCheckNewMessages() {
+    const user = await getVerifiedIndexUser('check-new-messages');
+    if (!user) {
+      const navFrame = document.getElementById('bottomNavFrame');
+      try { navFrame?.contentWindow?.postMessage({ type: 'TINGO_MSG_BADGE', count: 0 }, '*'); } catch (_) {}
+      return;
+    }
+    return legacyCheckNewMessages.call(this);
+  };
+
+  window.markAllNotificationsSeen = async function secureMarkAllNotificationsSeen() {
+    const user = await getVerifiedIndexUser('mark-notifications-read');
+    if (!user) return;
+    return legacyMarkAllNotificationsSeen.call(this, user);
+  };
+
+  window.checkLogin = async function secureCheckLogin(page) {
+    const user = await getVerifiedIndexUser(`open-${page}`);
+    if (!user) {
+      showAppPopup('Please login to continue.', 'Login required');
+      sendToLogin(page);
+      return;
+    }
+
+    if (window.innerWidth >= 900) openPanel(page);
+    else window.location.href = page;
+  };
+
+  window.checkLoginForChat = async function secureCheckLoginForChat(roomId, ownerId) {
+    const target = `chat.html?room=${encodeURIComponent(roomId)}&user=${encodeURIComponent(ownerId)}&source=index`;
+    const user = await getVerifiedIndexUser('start-chat');
+    if (!user) {
+      localStorage.setItem('chat_redirect', JSON.stringify({ roomId, ownerId }));
+      sendToLogin('chat');
+      return;
+    }
+
+    if (window.innerWidth >= 900) openPanel(target);
+    else window.location.href = target;
+  };
+
+  window.openChatList = async function secureOpenChatList() {
+    const user = await getVerifiedIndexUser('open-chat-list');
+    if (!user) {
+      sendToLogin('chatlist');
+      return;
+    }
+
+    if (window.innerWidth >= 900) openPanel('chat.html');
+    else window.location.href = 'chat.html';
+  };
+
+  window.openNotifications = async function secureOpenNotifications() {
+    ensureNotificationAudioContext();
+
+    if (isNotificationPanelOpen()) {
+      closeNotifications();
+      return;
+    }
+
+    const user = await getVerifiedIndexUser('open-notifications');
+    if (!user) {
+      try {
+        localStorage.setItem('tingo_open_notifications_after_login', '1');
+        localStorage.setItem('tingo_post_login_redirect', 'index.html?openNotifications=1');
+      } catch (_) {}
+      sendToLogin('index.html?openNotifications=1');
+      return;
+    }
+
+    showNotificationsPanel();
+  };
+
+  document.addEventListener('tingo:auth-state', (event) => {
+    const detail = event.detail || {};
+
+    if (!detail.valid || !detail.user?.id) {
+      activeAuthUserId = null;
+      privilegedStarted = false;
+      clearPrivateUi();
+      return;
+    }
+
+    const nextUserId = String(detail.user.id);
+    const changedUser = activeAuthUserId !== nextUserId;
+    activeAuthUserId = nextUserId;
+
+    if (!privilegedStarted || changedUser) {
+      privilegedStarted = true;
+      subscribeNotifications();
+      loadNotifications({ markSeen: false, announceNew: false });
+      checkNewMessages();
+      syncOneSignalId(detail.user);
+      maybeOpenNotificationsAfterLogin(detail.user);
+    }
+  });
+})();
+</script>
+<script src="tingo_auth_guard.js"></script>
+
 </body>
 </html>
-
