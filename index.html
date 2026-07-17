@@ -3260,6 +3260,42 @@ html {
   }
 }
 
+
+/* SMOOTH PAGE / PANEL TRANSITIONS */
+.app-container,
+.header,
+.main-content,
+.bottom-nav,
+.side-panel,
+.notification-panel,
+.notification-overlay {
+  will-change: transform, opacity;
+}
+
+.side-panel {
+  opacity: 0;
+  transform: translate3d(18px, 0, 0);
+  transition: opacity .22s ease, transform .28s cubic-bezier(.22,.61,.36,1);
+  pointer-events: none;
+}
+
+.panel-open .side-panel {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  pointer-events: auto;
+}
+
+.panel-open .main-content,
+.panel-open .header {
+  transition: width .28s cubic-bezier(.22,.61,.36,1), margin .28s cubic-bezier(.22,.61,.36,1);
+}
+
+.notification-panel,
+.notification-overlay {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
 </style>
 </head>
 
@@ -4117,17 +4153,31 @@ document.addEventListener("click", (event) => {
 });
 
 /* NAVIGATION */
+let __tingoNavigationLock = false;
+
+function prepareForNavigation() {
+  // Always close notifications before changing page/panel.
+  // This prevents the notification panel from flashing first during navigation.
+  try { closeNotifications(); } catch (e) {}
+  document.body.classList.remove('notification-open');
+  document.querySelector('.app-container')?.classList.remove('notification-open');
+}
+
 function go(page) {
-  // Desktop: open in left side panel (30%) and keep index content (70%). Mobile: navigate.
+  if (__tingoNavigationLock) return;
+  __tingoNavigationLock = true;
+  prepareForNavigation();
+
   if (window.innerWidth >= 900) {
-    // If navigating to index, just close panel
     if (page.endsWith('index.html') || page === 'index.html') {
       closePanel();
+      __tingoNavigationLock = false;
       return;
     }
     openPanel(page);
+    requestAnimationFrame(() => { __tingoNavigationLock = false; });
   } else {
-    window.location.href = page;
+    requestAnimationFrame(() => window.location.replace(page));
   }
 }
 
@@ -4136,13 +4186,13 @@ function openPanel(page) {
     const panel = document.getElementById('sidePanel');
     const frame = document.getElementById('panelFrame');
     const app = document.querySelector('.app-container');
-    // remove nav-left when panel opens
+    closeNotifications();
     app.classList.remove('nav-left');
     app.classList.add('panel-open');
     panel.setAttribute('aria-hidden', 'false');
-    // Ensure full absolute URL for relative pages
-    frame.src = page;
-  } catch (e) { console.error(e); window.location.href = page; }
+    // Set the iframe source after the layout state is applied.
+    requestAnimationFrame(() => { frame.src = page; });
+  } catch (e) { console.error(e); window.location.replace(page); }
 }
 
 function closePanel() {
