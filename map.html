@@ -554,6 +554,30 @@ button { -webkit-tap-highlight-color: transparent; }
   .map-tab { font-size: 10px; }
   .info-panel { bottom: calc(108px + 8px); }
 }
+
+/* SMOOTH NAVIGATION / MAP PERFORMANCE */
+.map-tab,
+.map-card,
+.bottom-nav-frame,
+.header,
+.info-panel,
+.map-status,
+.app-toast {
+  will-change: transform, opacity;
+}
+
+#map {
+  transform: translateZ(0);
+  contain: layout paint;
+}
+
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-pane,
+.leaflet-map-pane {
+  will-change: transform;
+}
+
 </style>
 </head>
 
@@ -1580,24 +1604,44 @@ function highlightCard(id) {
 }
 
 function setMode(mode) {
+  if (activeMode === mode) return;
   activeMode = mode;
   document.querySelectorAll(".map-tab").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.mode === mode);
   });
-  renderMap();
+  // Do not animate the whole page when changing map filters.
+  // Only update the marker/list layer.
+  renderMap({ filterChange: true });
 }
 
 function useMyLocation() {
   requestLoggedDeviceLocation({ silent: false, pan: true, openPopup: true, zoom: 16 });
 }
 
-function go(page) {
-  const isHome = page.endsWith("index.html") || page === "index.html" || page === "index";
+let __tingoNavigationLock = false;
 
-  if (isHome) {
-    window.location.href = page;
-    return;
-  }
+function prepareForNavigation() {
+  // Prevent a notification overlay/panel from appearing before the destination.
+  try {
+    if (typeof closeNotifications === "function") closeNotifications();
+  } catch (e) {}
+
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent.closeNotifications === "function") {
+      window.parent.closeNotifications();
+    }
+  } catch (e) {}
+
+  hideSuggestionBox();
+  document.querySelectorAll(".app-toast.show, .map-status.show").forEach(el => el.classList.remove("show"));
+}
+
+function go(page) {
+  if (__tingoNavigationLock) return;
+  __tingoNavigationLock = true;
+  prepareForNavigation();
+
+  const isHome = page.endsWith("index.html") || page === "index.html" || page === "index";
 
   if (window.self !== window.top) {
     try {
@@ -1608,7 +1652,10 @@ function go(page) {
     } catch (e) {}
   }
 
-  window.location.href = page;
+  // Let the current frame finish closing overlays before replacing the document.
+  requestAnimationFrame(() => {
+    window.location.replace(page);
+  });
 }
 
 function checkLogin(page) {
