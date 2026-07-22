@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#F4F5F7">
 <title>TingoRooms</title>
+
+<!-- Critical: paints immediately, before any other resource loads, so navigating
+     between pages shows the app's tone instead of a blank white flash. -->
+<style>html,body{background:#F4F5F7;margin:0;}</style>
 
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://cdn.onesignal.com" crossorigin>
@@ -34,21 +39,23 @@ if (location.protocol !== "file:") {
 <style>
 
 :root {
-  --primary: #4F46E5;
-  --primary-dark: #3730A3;
-  --primary-gradient: linear-gradient(135deg, #7C3AED 0%, #4F46E5 55%, #06B6D4 100%);
-  --primary-light: #EEF2FF;
-  --primary-glow: rgba(79, 70, 229, 0.28);
-  --accent: #F97316;
-  --accent-soft: #FFF7ED;
-  --success: #16A34A;
-  --success-soft: #DCFCE7;
-  --bg: #F8FAFC;
+  --primary: #2F5FE0;
+  --primary-dark: #1E3FA6;
+  --primary-gradient: linear-gradient(135deg, #3B6BEA 0%, #2F5FE0 100%);
+  --primary-light: #EEF3FF;
+  --primary-glow: rgba(47, 95, 224, 0.22);
+  --accent: #E08A2F;
+  --accent-soft: #FBF1E6;
+  --success: #15966A;
+  --success-soft: #E4F6EF;
+  --bg: #F4F5F7;
   --surface: #FFFFFF;
-  --text-main: #0F172A;
-  --text-muted: #64748B;
-  --border: #E2E8F0;
-  --radius: 22px;
+  --text-main: #16181D;
+  --text-muted: #6B7280;
+  --border: #E7E8EC;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --radius-lg: 24px;
   --safe-bottom: 96px;
 }
 
@@ -67,11 +74,7 @@ body {
   min-height: 100dvh;
   font-family: 'Inter', sans-serif;
   color: var(--text-main);
-  background:
-    radial-gradient(circle at 10% 8%, rgba(124, 58, 237, 0.18), transparent 28%),
-    radial-gradient(circle at 92% 18%, rgba(14, 165, 233, 0.16), transparent 25%),
-    radial-gradient(circle at 50% 95%, rgba(249, 115, 22, 0.14), transparent 32%),
-    #E2E8F0;
+  background: var(--bg);
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
 }
@@ -96,38 +99,10 @@ button {
   isolation: isolate;
   overflow-x: hidden;
   overflow-y: auto;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(248,250,252,0.98) 44%, #F8FAFC 100%);
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.16);
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.10);
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-}
-
-.app-container::before,
-.app-container::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  pointer-events: none;
-  filter: blur(0.2px);
-}
-
-.app-container::before {
-  width: 180px;
-  height: 180px;
-  top: -74px;
-  right: -66px;
-  border-radius: 46% 54% 60% 40%;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.14));
-}
-
-.app-container::after {
-  width: 130px;
-  height: 130px;
-  left: -62px;
-  top: 156px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.16), rgba(250, 204, 21, 0.10));
 }
 
 @media (min-width: 520px) {
@@ -168,7 +143,7 @@ button {
   height: 42px;
   object-fit: cover;
   border-radius: 14px;
-  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.14);
+  box-shadow: 0 8px 20px rgba(47, 95, 224, 0.14);
   border: 2px solid rgba(255,255,255,0.8);
 }
 
@@ -198,9 +173,9 @@ button {
 }
 
 .search-box input:focus {
-  border-color: rgba(79, 70, 229, 0.42);
+  border-color: rgba(47, 95, 224, 0.42);
   background: #FFFFFF;
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.08), 0 10px 20px rgba(79, 70, 229, 0.08);
+  box-shadow: 0 0 0 4px rgba(47, 95, 224, 0.08), 0 10px 20px rgba(47, 95, 224, 0.08);
 }
 
 .search-box .material-symbols-rounded {
@@ -273,16 +248,16 @@ button {
   min-width: 0;
   overflow: hidden;
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(226, 232, 240, 0.84);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.05);
   cursor: pointer;
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .card:active {
-  transform: scale(0.97);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
 }
 
 /* Decreased image height to make cards compact vertically */
@@ -291,9 +266,7 @@ button {
   width: 100%;
   height: clamp(110px, 32vw, 130px);
   overflow: hidden;
-  background:
-    linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(14, 165, 233, 0.10)),
-    #E2E8F0;
+  background: #EAECEF;
 }
 
 .card-img-wrapper img,
@@ -696,7 +669,7 @@ button {
   padding: 10px 12px;
   border-radius: 16px;
   background: #EEF2FF;
-  color: #3730A3;
+  color: #1E3FA6;
   font-size: 12px;
   font-weight: 700;
   line-height: 1.35;
@@ -765,9 +738,9 @@ button {
 
 .filter-select:focus,
 .filter-reset:active {
-  border-color: rgba(79, 70, 229, 0.42);
+  border-color: rgba(47, 95, 224, 0.42);
   background: #FFFFFF;
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.08);
+  box-shadow: 0 0 0 4px rgba(47, 95, 224, 0.08);
 }
 
 @media (min-width: 900px) {
@@ -1120,7 +1093,7 @@ button {
 
 /* UPDATED: sticky type filter + Available/Needed switch + complete image fit */
 .card-img-wrapper {
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(14, 165, 233, 0.08)), #F8FAFC;
+  background: linear-gradient(135deg, rgba(47, 95, 224, 0.08), rgba(14, 165, 233, 0.08)), #F8FAFC;
 }
 
 .card-img-wrapper img,
@@ -1253,7 +1226,7 @@ button {
 .requirement-card {
   position: relative;
   border: 1px solid rgba(165, 180, 252, 0.60);
-  background: radial-gradient(circle at 18% 0%, rgba(79, 70, 229, 0.13), transparent 34%), radial-gradient(circle at 92% 18%, rgba(249, 115, 22, 0.12), transparent 30%), rgba(255, 255, 255, 0.96);
+  background: radial-gradient(circle at 18% 0%, rgba(47, 95, 224, 0.13), transparent 34%), radial-gradient(circle at 92% 18%, rgba(224, 138, 47, 0.12), transparent 30%), rgba(255, 255, 255, 0.96);
 }
 
 .requirement-hero {
@@ -1261,7 +1234,7 @@ button {
   min-height: 118px;
   padding: 14px;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(6, 182, 212, 0.10));
+  background: linear-gradient(135deg, rgba(47, 95, 224, 0.12), rgba(47, 95, 224, 0.10));
 }
 
 .requirement-hero::after {
@@ -1272,7 +1245,7 @@ button {
   width: 120px;
   height: 120px;
   border-radius: 38% 62% 48% 52%;
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.34), rgba(236, 72, 153, 0.18));
+  background: linear-gradient(135deg, rgba(224, 138, 47, 0.34), rgba(236, 72, 153, 0.18));
 }
 
 .requirement-vector {
@@ -1287,7 +1260,7 @@ button {
   justify-content: center;
   color: #FFFFFF;
   background: var(--primary-gradient);
-  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 14px 28px rgba(47, 95, 224, 0.25);
   z-index: 1;
 }
 
@@ -1302,7 +1275,7 @@ button {
   padding: 6px 10px;
   border-radius: 999px;
   color: #7C2D12;
-  background: #FFEDD5;
+  background: #F7E3CB;
   font-size: 11px;
   font-weight: 900;
   margin-bottom: 10px;
@@ -1654,7 +1627,7 @@ button {
 }
 
 .search-status {
-  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.08);
+  box-shadow: 0 10px 22px rgba(47, 95, 224, 0.08);
 }
 
 .app-popup {
@@ -1742,7 +1715,7 @@ button {
 }
 
 .distance-meta {
-  color: #3730A3;
+  color: #1E3FA6;
   background: #EEF2FF;
   border: 1px solid rgba(165, 180, 252, 0.72);
 }
@@ -2191,7 +2164,7 @@ html {
 
 .listing-location .material-symbols-rounded {
   flex: 0 0 auto !important;
-  color: #F97316 !important;
+  color: #E08A2F !important;
   font-size: 17px !important;
 }
 
@@ -2296,7 +2269,7 @@ html {
   border-radius: 14px 0 0 14px !important;
   background:
     radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.32), transparent 22%),
-    linear-gradient(135deg, #6366F1 0%, #06B6D4 100%) !important;
+    linear-gradient(135deg, #2F5FE0 0%, #2F5FE0 100%) !important;
   overflow: hidden !important;
 }
 
@@ -2629,7 +2602,7 @@ html {
   .mobile-address-line .material-symbols-rounded {
     flex: 0 0 auto !important;
     font-size: 15px !important;
-    color: #F97316 !important;
+    color: #E08A2F !important;
     vertical-align: -3px !important;
   }
 
@@ -2748,7 +2721,7 @@ html {
     gap: 5px !important;
     color: #FFFFFF !important;
     background: var(--primary-gradient) !important;
-    box-shadow: 0 7px 14px rgba(79, 70, 229, 0.18) !important;
+    box-shadow: 0 7px 14px rgba(47, 95, 224, 0.18) !important;
     font-size: 11px !important;
     font-weight: 900 !important;
     cursor: pointer !important;
@@ -2773,7 +2746,7 @@ html {
   .mobile-requirement-thumb {
     background:
       radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.32), transparent 24%),
-      linear-gradient(135deg, #6366F1 0%, #06B6D4 100%) !important;
+      linear-gradient(135deg, #2F5FE0 0%, #2F5FE0 100%) !important;
   }
 
   .mobile-requirement-icon {
@@ -3264,6 +3237,39 @@ html {
 </head>
 
 <body>
+
+<script>
+/* Notification-flash guard — runs before anything else paints.
+   Forces the notification panel/overlay closed with transitions disabled,
+   so a stale bfcache/localStorage state can never visibly flash open
+   when arriving at or returning to this page. */
+(function () {
+  'use strict';
+  function forceClosedInstantly() {
+    var panel = document.getElementById('notificationPanel');
+    var overlay = document.getElementById('notificationOverlay');
+    var app = document.querySelector('.app-container');
+    [panel, overlay, app, document.body].forEach(function (el) {
+      if (el) el.classList.add('tingo-no-transition');
+    });
+    if (panel) { panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true'); }
+    if (overlay) { overlay.classList.remove('open'); overlay.setAttribute('aria-hidden', 'true'); }
+    document.body.classList.remove('notification-open');
+    if (app) app.classList.remove('notification-open');
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        [panel, overlay, app, document.body].forEach(function (el) {
+          if (el) el.classList.remove('tingo-no-transition');
+        });
+      });
+    });
+  }
+  forceClosedInstantly();
+  document.addEventListener('DOMContentLoaded', forceClosedInstantly);
+  window.addEventListener('pageshow', forceClosedInstantly);
+})();
+</script>
+<style>.tingo-no-transition, .tingo-no-transition * { transition: none !important; animation: none !important; }</style>
 
 <div class="app-container">
   
@@ -4147,10 +4153,24 @@ function go(page) {
       setTimeout(() => { __tingoNavigationLocked = false; }, 260);
     } else {
       // Use one direct navigation. No notification/panel transition is allowed
-      // to run before the new page starts loading.
-      window.location.replace(isMap ? 'map.html' : target);
+      // to run before the new page starts loading. A short themed fade masks
+      // the moment between unload and the next page's first paint so it reads
+      // as an intentional transition rather than a blank flash.
+      tingoFadeThenNavigate(isMap ? 'map.html' : target);
     }
   });
+}
+
+function tingoFadeThenNavigate(destination) {
+  let overlay = document.getElementById('tingoNavFade');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'tingoNavFade';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#F4F5F7;opacity:0;pointer-events:none;transition:opacity 90ms ease;';
+    document.body.appendChild(overlay);
+  }
+  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+  setTimeout(() => { window.location.replace(destination); }, 90);
 }
 
 // Some versions of button.html communicate navigation through postMessage.
@@ -7444,7 +7464,7 @@ setInterval(() => {
   .mobile-address-line .material-symbols-rounded {
     flex: 0 0 auto !important;
     font-size: 13px !important;
-    color: #F97316 !important;
+    color: #E08A2F !important;
   }
 
   .mobile-owner-line span:last-child,
@@ -7577,7 +7597,7 @@ setInterval(() => {
   .mobile-requirement-thumb {
     background:
       radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.36), transparent 26%),
-      linear-gradient(135deg, #6366F1 0%, #06B6D4 100%) !important;
+      linear-gradient(135deg, #2F5FE0 0%, #2F5FE0 100%) !important;
   }
 
   .mobile-requirement-icon {
@@ -7990,7 +8010,7 @@ setInterval(() => {
     width: 28px !important;
     height: 28px !important;
     right: 5px !important;
-    box-shadow: 0 6px 12px rgba(79, 70, 229, 0.22) !important;
+    box-shadow: 0 6px 12px rgba(47, 95, 224, 0.22) !important;
   }
 
   .search-action-btn .material-symbols-rounded {
@@ -8070,7 +8090,7 @@ setInterval(() => {
   .mobile-field.field-rent,
   .mobile-field.field-budget,
   .mobile-field.price-field {
-    background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%) !important;
+    background: linear-gradient(135deg, #FBF1E6 0%, #F7E3CB 100%) !important;
     border-color: rgba(251, 146, 60, 0.42) !important;
   }
 
@@ -8161,7 +8181,7 @@ setInterval(() => {
   }
 
   .mobile-action-btn.message {
-    background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 55%, #06B6D4 100%) !important;
+    background: linear-gradient(135deg, #3B6BEA 0%, #2F5FE0 55%, #2F5FE0 100%) !important;
   }
 }
 
@@ -8657,7 +8677,7 @@ setInterval(() => {
   .ig-location .material-symbols-rounded {
     flex: 0 0 auto !important;
     font-size: 16px !important;
-    color: #F97316 !important;
+    color: #E08A2F !important;
   }
 
   .ig-time {
@@ -8750,7 +8770,7 @@ setInterval(() => {
     justify-content: center !important;
     gap: 6px !important;
     cursor: pointer !important;
-    color: #4F46E5 !important;
+    color: #2F5FE0 !important;
     background: #F0EDFF !important;
     font-size: 12px !important;
     font-weight: 950 !important;
@@ -9441,7 +9461,7 @@ setInterval(() => {
     height: 29px !important;
     border-radius: 10px !important;
     border-width: 1px !important;
-    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.12) !important;
+    box-shadow: 0 4px 10px rgba(47, 95, 224, 0.12) !important;
   }
 
   .tingo-brand-title {
@@ -9495,7 +9515,7 @@ setInterval(() => {
     right: 4px !important;
     width: 28px !important;
     height: 28px !important;
-    box-shadow: 0 5px 13px rgba(79, 70, 229, 0.22) !important;
+    box-shadow: 0 5px 13px rgba(47, 95, 224, 0.22) !important;
   }
 
   .search-action-btn .material-symbols-rounded {
@@ -9898,7 +9918,7 @@ setInterval(() => {
   .mobile-field.field-rent,
   .mobile-field.field-budget,
   .mobile-field.price-field {
-    background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 52%, #FFE4E6 100%) !important;
+    background: linear-gradient(135deg, #FBF1E6 0%, #F7E3CB 52%, #FBF1E6 100%) !important;
     border-color: rgba(251, 146, 60, 0.46) !important;
   }
 
@@ -9963,7 +9983,7 @@ setInterval(() => {
 
   .ig-field.full,
   .mobile-field.field-distance {
-    background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 52%, #FFE4E6 100%) !important;
+    background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 52%, #FBF1E6 100%) !important;
     border-color: rgba(244, 114, 182, 0.42) !important;
   }
 
@@ -10197,12 +10217,12 @@ body.notification-open {
 .notification-card.unread {
   border-color: rgba(129, 140, 248, 0.48);
   background: linear-gradient(135deg, #EEF2FF 0%, #F8FAFF 100%);
-  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.11);
+  box-shadow: 0 10px 24px rgba(47, 95, 224, 0.11);
 }
 
 .notification-card.welcome {
   background:
-    radial-gradient(circle at 100% 0%, rgba(6, 182, 212, 0.16), transparent 35%),
+    radial-gradient(circle at 100% 0%, rgba(47, 95, 224, 0.16), transparent 35%),
     linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 72%);
 }
 
@@ -10214,7 +10234,7 @@ body.notification-open {
   align-items: center;
   justify-content: center;
   border-radius: 14px;
-  color: #4F46E5;
+  color: #2F5FE0;
   background: #E0E7FF;
 }
 
@@ -10302,7 +10322,7 @@ body.notification-open {
   align-items: center;
   justify-content: center;
   border-radius: 20px;
-  color: #4F46E5;
+  color: #2F5FE0;
   background: #EEF2FF;
 }
 
@@ -10357,7 +10377,7 @@ body.notification-open {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #6366F1;
+  background: #2F5FE0;
   animation: notificationLoadingBounce 0.9s ease-in-out infinite alternate;
 }
 
