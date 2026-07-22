@@ -2699,6 +2699,28 @@
         .search-suggestions {
             max-height: min(360px, 62vh);
         }
+
+        /* ─── LOADING SHIMMER FOR REFRESH ─── */
+        .feed-updating .card {
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .feed-updating .card:after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 1.2s infinite;
+            pointer-events: none;
+        }
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
     </style>
 </head>
 
@@ -2985,7 +3007,7 @@
             if (!select) return;
             const current = select.value;
             const unique = [...new Set((values || []).map(cleanSearchTerm).filter(Boolean))].sort((a, b) => a.localeCompare(
-            b));
+                b));
             select.innerHTML = '<option value="">' + escapeHtml(defaultLabel) + '</option>' + unique.map(v =>
                 '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>').join('');
             if (current && unique.includes(current)) select.value = current;
@@ -3019,11 +3041,12 @@
         let tingoLoadRoomsSeq = 0;
         let tingoModeAwareLoadSeq = 0;
         let tingoLastFeedKey = '';
-        const TINGO_FEED_CACHE_PREFIX = 'tingo_home_feed_v6';
-        const TINGO_RAW_CACHE_PREFIX = 'tingo_home_rows_v6';
-        const TINGO_PROFILE_CACHE_KEY = 'tingo_public_profiles_v4';
-        const TINGO_FILTER_CACHE_KEY = 'tingo_filter_html_v4';
-        const TINGO_SUGGESTION_CACHE_PREFIX = 'tingo_suggestions_v5';
+        let tingoFeedUpdateInProgress = false;
+        const TINGO_FEED_CACHE_PREFIX = 'tingo_home_feed_v7';
+        const TINGO_RAW_CACHE_PREFIX = 'tingo_home_rows_v7';
+        const TINGO_PROFILE_CACHE_KEY = 'tingo_public_profiles_v5';
+        const TINGO_FILTER_CACHE_KEY = 'tingo_filter_html_v5';
+        const TINGO_SUGGESTION_CACHE_PREFIX = 'tingo_suggestions_v6';
         const TINGO_CACHE_TTL = 120 * 1000;
         const TINGO_FILTER_CACHE_TTL = 10 * 60 * 1000;
 
@@ -3138,6 +3161,9 @@
                     items: items.slice(0, 48)
                 });
             }
+            // Remove updating class after render
+            if (container) container.classList.remove('feed-updating');
+            tingoFeedUpdateInProgress = false;
         };
 
         // ─── attachOwnerProfiles with cache ───
@@ -3377,7 +3403,7 @@
                 return await geocodeLocation(search);
             };
 
-            // ─── loadRooms (main) ───
+            // ─── loadRooms (main) with background refresh ───
             window.loadRooms = async function(search, selectedPlace) {
                 var cleanSearch = cleanSearchTerm(search || '');
                 var requestedMode = activePostMode;
@@ -3385,17 +3411,31 @@
 
                 function isStale() { return requestSeq !== tingoModeAwareLoadSeq || requestedMode !== activePostMode; }
 
+                // If we already have a feed update in progress, don't start another
+                if (tingoFeedUpdateInProgress && !search && !selectedPlace) return;
+                tingoFeedUpdateInProgress = true;
+
+                // Show updating shimmer on existing cards if we have any
+                var container = document.getElementById('roomList');
+                if (container && container.children.length > 0) {
+                    container.classList.add('feed-updating');
+                }
+
                 try {
                     var allRows = await window.loadAllSearchRowsForMode();
-                    if (isStale()) return;
+                    if (isStale()) { tingoFeedUpdateInProgress = false; if (container) container.classList.remove(
+                            'feed-updating'); return; }
 
                     if (!cleanSearch) {
                         renderRooms(allRows);
+                        tingoFeedUpdateInProgress = false;
+                        if (container) container.classList.remove('feed-updating');
                         return;
                     }
 
                     var target = await window.getTargetFromSearch(cleanSearch, selectedPlace || selectedSearchPlace);
-                    if (isStale()) return;
+                    if (isStale()) { tingoFeedUpdateInProgress = false; if (container) container.classList.remove(
+                            'feed-updating'); return; }
 
                     var exactRows = window.textSearchRows(allRows, cleanSearch);
                     var finalRows = [];
@@ -3412,7 +3452,8 @@
 
                     if (target) {
                         var distanceSorted = await window.sortRowsByTarget(allRows, target);
-                        if (isStale()) return;
+                        if (isStale()) { tingoFeedUpdateInProgress = false; if (container) container.classList
+                                .remove('feed-updating'); return; }
                         var distMap = {};
                         distanceSorted.forEach(function(row) {
                             var key = String(row?.id || row?.title + '|' + row?.location || '');
@@ -3445,7 +3486,8 @@
                     }
 
                     var finalItems = await window.attachOwnerProfiles(finalRows.slice(0, 36));
-                    if (isStale()) return;
+                    if (isStale()) { tingoFeedUpdateInProgress = false; if (container) container.classList.remove(
+                            'feed-updating'); return; }
                     var statusText = '';
                     var noun = activePostMode === 'needed' ? 'requirements' : 'rooms';
                     if (target && finalItems.length) {
@@ -3457,9 +3499,12 @@
                     }
                     renderRooms(finalItems, statusText);
                 } catch (error) {
-                    if (isStale()) return;
+                    if (isStale()) { tingoFeedUpdateInProgress = false; if (container) container.classList.remove(
+                            'feed-updating'); return; }
                     console.error(error);
                     showAppPopup(error.message || 'Unable to load posts right now.', 'Network issue');
+                    tingoFeedUpdateInProgress = false;
+                    if (container) container.classList.remove('feed-updating');
                 }
             };
 
@@ -3513,6 +3558,10 @@
                 if (isDesktop) {
                     setTimeout(initCardSliders, 60);
                 }
+
+                // Remove updating class after render
+                container.classList.remove('feed-updating');
+                tingoFeedUpdateInProgress = false;
             };
 
             // ─── Card renderers ───
@@ -4418,7 +4467,7 @@
                 // Immediate cache render before network
                 var hasCache = tingoRenderCachedFeed(getCurrentSearchText(), selectedSearchPlace);
                 if (!hasCache) tingoShowFeedSkeleton();
-                // Then load fresh
+                // Then load fresh in background
                 loadRooms(getCurrentSearchText(), selectedSearchPlace);
                 subscribeNotifications();
                 initNotificationUI();
