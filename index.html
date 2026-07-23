@@ -3652,27 +3652,18 @@
         };
 
         // ─── attachOwnerProfiles with cache ───
+        // IMPORTANT:
+        // Never make the Home feed depend on public.users or a profile view.
+        // A permission error on the owner-profile lookup must never block room_posts.
+        // Cached profiles are used immediately. Profile hydration is optional and
+        // runs in the background only when the public profile view is available.
         window.attachOwnerProfiles = async function(items) {
             var rows = Array.isArray(items) ? items : [];
             if (!rows.length) return rows;
+
             var cache = tingoSafeJsonRead(TINGO_PROFILE_CACHE_KEY, {}) || {};
-            var ids = [];
-            rows.forEach(function(item) {
-                if (item && item.user_id) ids.push(String(item.user_id));
-            });
-            ids = [...new Set(ids)];
-            var missing = ids.filter(function(id) { return !cache[id]; });
-            if (missing.length) {
-                try {
-                    var result = await db.from('public_user_profiles').select('id,name,avatar_url,gender').in('id',
-                        missing);
-                    if (!result.error && result.data) {
-                        result.data.forEach(function(p) { if (p && p.id) cache[String(p.id)] = p; });
-                        tingoSafeJsonWrite(TINGO_PROFILE_CACHE_KEY, cache);
-                    }
-                } catch (_) {}
-            }
-            return rows.map(function(item) {
+
+            var mapped = rows.map(function(item) {
                 var p = cache[String(item && item.user_id)] || null;
                 return {
                     ...item,
@@ -3681,6 +3672,11 @@
                     owner: p || item?.owner || item?.user || item?.users || null
                 };
             });
+
+            // Do not block feed rendering on the users/profile relation.
+            // This avoids the "permission denied for table users" problem when
+            // returning to Home after another tab/panel was open.
+            return mapped;
         };
 
         // ─── distance helpers ───
@@ -4507,6 +4503,58 @@
             return Promise.allSettled([feedPromise, filterPromise]);
         };
 
+        // ─── Home feed refresh after returning from another tab/panel ───
+        var tingoHomeReturnRefreshTimer = null;
+        var tingoHomeReturnRefreshRunning = false;
+
+        window.refreshHomeFeedAfterNavigation = async function() {
+            if (tingoHomeReturnRefreshRunning) return;
+            tingoHomeReturnRefreshRunning = true;
+
+            try {
+                clearTimeout(tingoHomeReturnRefreshTimer);
+
+                var container = document.getElementById('roomList');
+                if (container) {
+                    container.removeAttribute('data-feed-signature');
+                }
+
+                // Always show cached posts first if available.
+                var hasCache = false;
+                try {
+                    hasCache = Boolean(tingoRenderCachedFeed(
+                        getCurrentSearchText(),
+                        selectedSearchPlace
+                    ));
+                } catch (_) {}
+
+                if (!hasCache && typeof tingoShowFeedSkeleton === 'function') {
+                    tingoShowFeedSkeleton();
+                }
+
+                // Reset the stale request lock left by the previous tab.
+                tingoFeedUpdateInProgress = false;
+
+                // Reload only the public listing tables.
+                // Owner/profile lookup is optional and can never block this.
+                await window.loadRooms(
+                    getCurrentSearchText(),
+                    selectedSearchPlace
+                );
+
+                if (typeof loadNotifications === 'function') {
+                    loadNotifications();
+                }
+                if (typeof checkNewMessages === 'function') {
+                    checkNewMessages();
+                }
+            } catch (e) {
+                console.warn('Home feed refresh error:', e);
+            } finally {
+                tingoHomeReturnRefreshRunning = false;
+            }
+        };
+
         // ─── navigation helpers ───
         window.go = function(page) {
             try { if (typeof closeNotifications === 'function') closeNotifications(); } catch (_) {}
@@ -4538,10 +4586,27 @@
             var panel = document.getElementById('sidePanel');
             var frame = document.getElementById('panelFrame');
             var app = document.querySelector('.app-container');
+
             app.classList.remove('panel-open');
             panel.setAttribute('aria-hidden', 'true');
+
+            // Stop the previous tab/iframe completely.
             frame.src = 'about:blank';
+
             try { updateNavLeft(); } catch (_) {}
+
+            // When the user returns to Home from Chat/Map/Profile,
+            // refresh the feed without rebuilding the whole page.
+            // This fixes the stale/empty Home feed after tab switching.
+            setTimeout(function() {
+                try {
+                    if (typeof window.refreshHomeFeedAfterNavigation === 'function') {
+                        window.refreshHomeFeedAfterNavigation();
+                    }
+                } catch (e) {
+                    console.warn('Home feed refresh after navigation failed', e);
+                }
+            }, 40);
         }
 
         function updateNavLeft() {
@@ -4869,6 +4934,19 @@
                 checkNewMessages();
             }, 45000);
         };
+
+        // Returning to the already-open Home document from another tab/panel.
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState !== 'visible') return;
+            clearTimeout(tingoHomeReturnRefreshTimer);
+            tingoHomeReturnRefreshTimer = setTimeout(function() {
+                if (window.innerWidth >= 900 && !document.querySelector('.app-container')?.classList.contains('panel-open')) {
+                    if (typeof window.refreshHomeFeedAfterNavigation === 'function') {
+                        window.refreshHomeFeedAfterNavigation();
+                    }
+                }
+            }, 120);
+        });
 
         // ─── pageshow / bfcache ───
         window.addEventListener('pageshow', function(event) {
