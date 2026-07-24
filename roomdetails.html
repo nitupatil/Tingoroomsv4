@@ -1,790 +1,1252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Room Details - TingoRooms</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Details — TingoRooms</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+    </script>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js">
+    </script>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
 
-<style>
-:root {
-  --primary: #4F46E5;
-  --primary-gradient: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
-  --primary-light: #EEF2FF;
-  --primary-glow: rgba(79, 70, 229, 0.3);
-  --bg: #F8FAFC;
-  --surface: #FFFFFF;
-  --text-main: #0F172A;
-  --text-muted: #64748B;
-  --border: #E2E8F0;
-  --radius: 28px;
-  --safe-bottom: 90px;
-}
+    <style>
+        /* ============================================================
+                   ROOT VARIABLES — Minimalist Professional Palette
+                   ============================================================ */
+        :root {
+            --color-primary: #1E293B;
+            --color-primary-light: #334155;
+            --color-accent: #2563EB;
+            --color-accent-hover: #1D4ED8;
+            --color-accent-light: #EFF6FF;
+            --color-accent-glow: rgba(37, 99, 235, 0.25);
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+            --color-bg: #F1F5F9;
+            --color-surface: #FFFFFF;
+            --color-surface-soft: #F8FAFC;
 
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: #E2E8F0;
-  color: var(--text-main);
-  -webkit-tap-highlight-color: transparent;
-  height: 100vh;
-  overflow: hidden;
-}
+            --color-text: #0F172A;
+            --color-text-secondary: #475569;
+            --color-text-muted: #94A3B8;
 
-/* MOBILE APP WRAPPER */
-.app-container {
-  max-width: 480px;
-  margin: 0 auto;
-  background: var(--bg);
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  position: relative;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  transition: all 0.3s ease;
-}
+            --color-border: #E2E8F0;
+            --color-border-light: #F1F5F9;
 
-/* HEADER */
-.header {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  background: rgba(248, 250, 252, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  position: sticky;
-  top: 0;
-  z-index: 2000;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
-  border-bottom: 1px solid rgba(0,0,0,0.03);
-}
+            --color-success: #059669;
+            --color-success-light: #ECFDF5;
 
-.back-btn {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-  padding: 4px;
-  border-radius: 50%;
-  transition: background 0.2s;
-}
+            --color-call: #2563EB;
+            --color-wa: #25D366;
+            --color-chat: #6C5CE7;
 
-.back-btn:active { background: #F3F4F6; }
-.header-title { font-weight: 600; font-size: 18px; flex: 1; }
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
 
-/* IMAGE SLIDER (SWIPE GALLERY) */
-.slider-wrapper {
-  position: relative;
-  width: 100%;
-  background: #111827; 
-}
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
+            --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.10);
 
-.slider {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none; 
-  -webkit-overflow-scrolling: touch;
-}
-.slider::-webkit-scrollbar { display: none; } 
+            --safe-bottom: 88px;
+            --header-height: 64px;
 
-.slide {
-  min-width: 100%;
-  height: 280px;
-  scroll-snap-align: center;
-  object-fit: contain; 
-}
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-.slider-counter {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  backdrop-filter: blur(4px);
-}
+        /* ============================================================
+                   RESET & BASE
+                   ============================================================ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-/* MAIN CONTENT */
-.main-content {
-  padding: 16px;
-  padding-bottom: calc(var(--safe-bottom) + 20px);
-  flex: 1;
-}
+        html {
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-/* CARDS */
-.card {
-  background: var(--surface);
-  padding: 20px;
-  border-radius: var(--radius);
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-  margin-bottom: 16px;
-}
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #CBD5E1;
+            color: var(--color-text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-.title-row { margin-bottom: 12px; }
-.room-title { font-size: 22px; font-weight: 700; color: var(--text-main); margin-bottom: 6px; line-height: 1.3;}
-.room-location { display: flex; align-items: center; gap: 4px; color: var(--text-muted); font-size: 14px; }
+        /* ============================================================
+                   APP CONTAINER — Mobile-first, centered on desktop
+                   ============================================================ */
+        .app-container {
+            max-width: 480px;
+            width: 100%;
+            height: 100vh;
+            background: var(--color-bg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            transition: all var(--transition);
+        }
 
-.price-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
-}
-.rent-price { font-size: 24px; font-weight: 700; color: #059669; }
-.rent-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
-.deposit-box { text-align: right; }
-.deposit-price { font-size: 16px; font-weight: 600; color: var(--text-main); }
+        /* ============================================================
+                   HEADER
+                   ============================================================ */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            height: var(--header-height);
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(16px) saturate(1.4);
+            -webkit-backdrop-filter: blur(16px) saturate(1.4);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            flex-shrink: 0;
+            z-index: 100;
+            position: sticky;
+            top: 0;
+        }
 
-.tags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.tag {
-  background: var(--primary-light);
-  color: var(--primary);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background var(--transition);
+            color: var(--color-text);
+            flex-shrink: 0;
+            border: none;
+            background: transparent;
+        }
+        .back-btn:hover {
+            background: var(--color-border-light);
+        }
+        .back-btn:active {
+            transform: scale(0.92);
+        }
+        .back-btn .material-symbols-rounded {
+            font-size: 24px;
+        }
 
-.section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
-.description-text { font-size: 15px; color: var(--text-muted); line-height: 1.6; white-space: pre-wrap; }
+        .header-title {
+            font-weight: 600;
+            font-size: 17px;
+            letter-spacing: -0.01em;
+            color: var(--color-text);
+            margin-left: 4px;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-#map { height: 200px; border-radius: 12px; border: 1px solid var(--border); z-index: 10; }
+        /* ============================================================
+                   LOADING STATE
+                   ============================================================ */
+        .loading-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: var(--color-text-muted);
+            padding: 40px;
+        }
+        .loading-state .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid var(--color-border);
+            border-top-color: var(--color-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .loading-state p {
+            font-size: 14px;
+            font-weight: 500;
+        }
 
-/* FIXED BOTTOM ACTION BAR */
-.bottom-action-bar {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  display: flex;
-  padding: 12px 16px 24px 16px;
-  gap: 12px;
-  box-shadow: 0 -10px 25px rgba(0,0,0,0.04);
-  border-top: 1px solid rgba(0,0,0,0.03);
-  z-index: 2000;
-}
+        .hidden {
+            display: none !important;
+        }
 
-.btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 14px 8px;
-  border: none;
-  border-radius: 16px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  color: white;
-}
+        /* ============================================================
+                   IMAGE SLIDER
+                   ============================================================ */
+        .slider-wrapper {
+            position: relative;
+            width: 100%;
+            background: var(--color-primary);
+            flex-shrink: 0;
+            overflow: hidden;
+            min-height: 200px;
+            max-height: 340px;
+        }
 
-.btn:active { transform: scale(0.96); }
+        .slider {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            height: 100%;
+            width: 100%;
+        }
+        .slider::-webkit-scrollbar {
+            display: none;
+        }
 
-.btn-call { background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); }
-.btn-whatsapp { background: linear-gradient(135deg, #4ADE80 0%, #22C55E 100%); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
-.btn-chat { background: var(--primary-gradient); box-shadow: 0 4px 12px var(--primary-glow); }
+        .slide {
+            min-width: 100%;
+            height: 100%;
+            object-fit: cover;
+            scroll-snap-align: center;
+            background: var(--color-primary);
+            display: block;
+        }
 
-.loading-state { text-align: center; padding: 40px; color: var(--text-muted); }
-.hidden { display: none !important; }
+        /* dots */
+        .slider-dots {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            z-index: 5;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .slider-dots .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.45);
+            transition: all var(--transition);
+            cursor: pointer;
+            border: none;
+            padding: 0;
+        }
+        .slider-dots .dot.active {
+            background: #fff;
+            transform: scale(1.25);
+        }
 
-/* ========================================================================= */
-/* DESKTOP UI OVERRIDES */
-/* ========================================================================= */
-@media (min-width: 900px) {
-  body {
-    background-color: #CBD5E1; 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+        .slider-counter {
+            position: absolute;
+            bottom: 14px;
+            right: 16px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #fff;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            z-index: 5;
+        }
 
-  .app-container {
-    max-width: 1100px;
-    width: 95%;
-    height: 90vh;
-    margin: auto;
-    border-radius: 32px;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-    
-    display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    grid-template-rows: auto 1fr auto;
-    grid-template-areas:
-      "header header"
-      "slider content"
-      "slider action";
-    overflow: hidden;
-    background: var(--bg);
-  }
+        /* ============================================================
+                   MAIN CONTENT — Scrollable
+                   ============================================================ */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 16px calc(var(--safe-bottom) + 20px);
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
 
-  /* NO IMAGES LAYOUT: Shifts to a readable center column */
-  .app-container.no-images {
-    max-width: 800px;
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "header"
-      "content"
-      "action";
-  }
+        .main-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .main-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .main-content::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 10px;
+        }
 
-  .header {
-    grid-area: header;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-bottom: 1px solid var(--border);
-    padding: 20px 32px;
-    z-index: 10;
-  }
+        /* ============================================================
+                   CARDS
+                   ============================================================ */
+        .card {
+            background: var(--color-surface);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-border-light);
+            transition: box-shadow var(--transition);
+        }
 
-  .header-title {
-    font-size: 20px;
-  }
+        .card:last-of-type {
+            margin-bottom: 0;
+        }
 
-  #loadingState {
-    grid-column: 1 / -1;
-  }
+        /* --- Title Row --- */
+        .title-row {
+            margin-bottom: 14px;
+        }
+        .room-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.25;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+        .room-location {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--color-text-secondary);
+            font-size: 14px;
+            font-weight: 450;
+        }
+        .room-location .material-symbols-rounded {
+            font-size: 18px;
+            color: var(--color-text-muted);
+        }
 
-  .slider-wrapper {
-    grid-area: slider;
-    height: 100%;
-    background: #0F172A;
-    border-right: 1px solid var(--border);
-    
-    /* CRITICAL FIX: PREVENTS CSS GRID BLOWOUT SO TEXT IS ALWAYS VISIBLE */
-    min-width: 0;
-    min-height: 0;
-  }
+        /* --- Price Row --- */
+        .price-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-top: 1px solid var(--color-border-light);
+            border-bottom: 1px solid var(--color-border-light);
+            margin-bottom: 14px;
+        }
+        .rent-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .rent-price {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--color-success);
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+        .rent-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--color-text-muted);
+            letter-spacing: 0.3px;
+            margin-top: 2px;
+        }
+        .deposit-box {
+            text-align: right;
+        }
+        .deposit-price {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+        .deposit-box .rent-label {
+            margin-top: 2px;
+        }
 
-  .slider {
-    height: 100%;
-  }
+        /* --- Tags --- */
+        .tags-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 2px;
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--color-accent-light);
+            color: var(--color-accent);
+            padding: 5px 12px 5px 10px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            border: 1px solid rgba(37, 99, 235, 0.08);
+        }
+        .tag .material-symbols-rounded {
+            font-size: 16px;
+        }
+        .tag.tag-status {
+            background: #FEF3C7;
+            color: #D97706;
+            border-color: rgba(217, 119, 6, 0.12);
+        }
 
-  .slide {
-    height: 100%;
-    object-fit: cover; 
-  }
+        /* --- Description --- */
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .section-title .material-symbols-rounded {
+            font-size: 20px;
+            color: var(--color-text-muted);
+        }
+        .description-text {
+            font-size: 14.5px;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
 
-  .slider-counter {
-    bottom: 24px;
-    right: 24px;
-    font-size: 15px;
-    padding: 8px 18px;
-  }
+        /* --- Map --- */
+        #map {
+            height: 200px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--color-border);
+            overflow: hidden;
+            background: var(--color-surface-soft);
+        }
+        .map-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--color-text-muted);
+            font-size: 14px;
+            background: var(--color-surface-soft);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--color-border);
+            flex-direction: column;
+            gap: 6px;
+        }
+        .map-placeholder .material-symbols-rounded {
+            font-size: 32px;
+            color: var(--color-border);
+        }
 
-  .main-content {
-    grid-area: content;
-    padding: 32px 32px 16px 32px;
-    overflow-y: auto;
-    
-    /* CRITICAL FIX: PREVENTS CSS GRID BLOWOUT */
-    min-width: 0;
-    min-height: 0;
-    
-    scrollbar-width: thin;
-    scrollbar-color: #CBD5E1 transparent;
-  }
+        /* ============================================================
+                   BOTTOM ACTION BAR — Fixed
+                   ============================================================ */
+        .bottom-action-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px) saturate(1.4);
+            -webkit-backdrop-filter: blur(20px) saturate(1.4);
+            display: flex;
+            padding: 12px 16px 20px 16px;
+            gap: 10px;
+            border-top: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.04);
+            z-index: 200;
+            flex-shrink: 0;
+        }
 
-  .main-content::-webkit-scrollbar { width: 8px; }
-  .main-content::-webkit-scrollbar-track { background: transparent; }
-  .main-content::-webkit-scrollbar-thumb { background-color: #CBD5E1; border-radius: 10px; }
+        .btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 13px 10px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+            color: #fff;
+            letter-spacing: 0.2px;
+            min-height: 50px;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn .material-symbols-rounded {
+            font-size: 20px;
+        }
 
-  .card {
-    padding: 28px;
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.03);
-    border: 1px solid rgba(0,0,0,0.03);
-    border-radius: 24px;
-    margin-bottom: 24px;
-  }
+        .btn-call {
+            background: var(--color-call);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.30);
+        }
+        .btn-call:hover {
+            background: #1D4ED8;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+        }
 
-  #map {
-    height: 280px; 
-  }
+        .btn-whatsapp {
+            background: var(--color-wa);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.30);
+        }
+        .btn-whatsapp:hover {
+            background: #1DA851;
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35);
+        }
 
-  .bottom-action-bar {
-    grid-area: action;
-    position: static;
-    transform: none;
-    width: 100%;
-    max-width: none;
-    padding: 20px 32px 28px 32px;
-    background: var(--bg);
-    box-shadow: none;
-    border-top: 1px solid var(--border);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    z-index: 10;
-  }
+        .btn-chat {
+            background: var(--color-chat);
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.30);
+        }
+        .btn-chat:hover {
+            background: #5A4BD1;
+            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.35);
+        }
 
-  .bottom-action-bar.hidden { display: none !important; }
-  .bottom-action-bar:not(.hidden) { display: grid; }
+        .btn-back {
+            background: var(--color-text-secondary);
+            box-shadow: 0 4px 12px rgba(71, 85, 105, 0.20);
+        }
+        .btn-back:hover {
+            background: var(--color-primary-light);
+        }
 
-  .btn {
-    padding: 16px;
-    font-size: 16px;
-    border-radius: 20px;
-  }
+        /* ============================================================
+                   DESKTOP — Two-column layout
+                   ============================================================ */
+        @media (min-width: 820px) {
+            body {
+                background: #E2E8F0;
+                padding: 20px;
+            }
 
-  .btn-chat {
-    grid-column: 1 / -1;
-  }
-}
-</style>
+            .app-container {
+                max-width: 1120px;
+                width: 100%;
+                height: 92vh;
+                max-height: 820px;
+                border-radius: var(--radius-xl);
+                box-shadow: var(--shadow-xl);
+                background: var(--color-surface);
+                display: grid;
+                grid-template-columns: 1fr 1.1fr;
+                grid-template-rows: auto 1fr auto;
+                grid-template-areas:
+                    "header header"
+                    "slider content"
+                    "slider action";
+                overflow: hidden;
+                position: relative;
+            }
+
+            /* no-images variant: single column */
+            .app-container.no-images {
+                max-width: 720px;
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "content"
+                    "action";
+            }
+
+            .header {
+                grid-area: header;
+                background: var(--color-surface);
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                border-bottom: 1px solid var(--color-border);
+                padding: 0 28px;
+                height: 68px;
+                position: relative;
+                z-index: 10;
+            }
+            .header-title {
+                font-size: 19px;
+            }
+
+            .slider-wrapper {
+                grid-area: slider;
+                height: 100%;
+                min-height: 0;
+                max-height: none;
+                border-right: 1px solid var(--color-border);
+                background: var(--color-primary);
+                border-radius: 0 0 0 var(--radius-xl);
+                overflow: hidden;
+            }
+            .slider {
+                height: 100%;
+            }
+            .slide {
+                height: 100%;
+                object-fit: cover;
+            }
+            .slider-dots {
+                bottom: 20px;
+            }
+            .slider-counter {
+                bottom: 20px;
+                right: 20px;
+                font-size: 13px;
+                padding: 4px 16px;
+            }
+
+            .main-content {
+                grid-area: content;
+                padding: 28px 28px 16px 28px;
+                overflow-y: auto;
+                background: var(--color-surface-soft);
+                min-height: 0;
+            }
+            .main-content::-webkit-scrollbar {
+                width: 5px;
+            }
+            .main-content::-webkit-scrollbar-thumb {
+                background: var(--color-border);
+                border-radius: 10px;
+            }
+
+            .card {
+                padding: 24px;
+                border-radius: var(--radius-md);
+                margin-bottom: 16px;
+                background: var(--color-surface);
+                border: 1px solid var(--color-border-light);
+                box-shadow: var(--shadow-sm);
+            }
+            .card:last-of-type {
+                margin-bottom: 0;
+            }
+
+            .room-title {
+                font-size: 24px;
+            }
+            .rent-price {
+                font-size: 28px;
+            }
+
+            #map {
+                height: 180px;
+            }
+
+            .bottom-action-bar {
+                grid-area: action;
+                position: static;
+                transform: none;
+                max-width: none;
+                width: 100%;
+                padding: 16px 28px 24px 28px;
+                background: var(--color-surface);
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                border-top: 1px solid var(--color-border);
+                box-shadow: none;
+                gap: 12px;
+                border-radius: 0 0 var(--radius-xl) 0;
+                z-index: 10;
+            }
+            .bottom-action-bar .btn {
+                min-height: 52px;
+                font-size: 15px;
+                border-radius: var(--radius-sm);
+            }
+
+            /* If no images, make action bar full width */
+            .app-container.no-images .bottom-action-bar {
+                border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+            }
+            .app-container.no-images .slider-wrapper {
+                display: none;
+            }
+            .app-container.no-images .main-content {
+                padding-bottom: 16px;
+            }
+        }
+
+        /* ============================================================
+                   SMALL SCREEN TWEAKS
+                   ============================================================ */
+        @media (max-width: 420px) {
+            .room-title {
+                font-size: 19px;
+            }
+            .rent-price {
+                font-size: 22px;
+            }
+            .card {
+                padding: 16px;
+            }
+            .btn {
+                font-size: 13px;
+                padding: 11px 8px;
+                min-height: 44px;
+            }
+            .btn .material-symbols-rounded {
+                font-size: 18px;
+            }
+            .bottom-action-bar {
+                padding: 10px 12px 16px 12px;
+                gap: 8px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="app-container" id="appWrapper">
+    <div class="app-container" id="appWrapper">
 
-  <div class="header">
-    <div class="back-btn" onclick="history.back()">
-      <span class="material-symbols-rounded">arrow_back</span>
-    </div>
-    <div class="header-title">Property Details</div>
-  </div>
+        <!-- ===== HEADER ===== -->
+        <header class="header">
+            <button class="back-btn" onclick="history.back()" aria-label="Go back">
+                <span class="material-symbols-rounded">arrow_back</span>
+            </button>
+            <span class="header-title" id="headerTitle">Property Details</span>
+        </header>
 
-  <div id="loadingState" class="loading-state">
-    <span class="material-symbols-rounded" style="font-size: 40px; animation: spin 1s linear infinite;">sync</span>
-    <p style="margin-top: 10px;">Loading details...</p>
-  </div>
-
-  <div class="slider-wrapper hidden" id="sliderWrapper">
-    <div class="slider" id="imageSlider" onscroll="updateSliderCounter()"></div>
-    <div class="slider-counter" id="sliderCounter">1 / 1</div>
-  </div>
-
-  <div class="main-content hidden" id="mainContent">
-    
-    <div class="card">
-      <div class="title-row">
-        <div class="room-title" id="roomTitle">Loading...</div>
-        <div class="room-location">
-          <span class="material-symbols-rounded" style="font-size: 18px;">location_on</span>
-          <span id="roomLocation">Location</span>
+        <!-- ===== LOADING ===== -->
+        <div class="loading-state" id="loadingState">
+            <div class="spinner"></div>
+            <p>Loading details…</p>
         </div>
-      </div>
 
-      <div class="price-row">
-        <div>
-          <div class="rent-price" id="roomRent">₹ 0</div>
-          <div class="rent-label">Per Month</div>
+        <!-- ===== IMAGE SLIDER ===== -->
+        <div class="slider-wrapper hidden" id="sliderWrapper">
+            <div class="slider" id="imageSlider"></div>
+            <div class="slider-dots" id="sliderDots"></div>
+            <div class="slider-counter" id="sliderCounter">1 / 1</div>
         </div>
-        <div class="deposit-box">
-          <div class="deposit-price" id="roomDeposit">₹ 0</div>
-          <div class="rent-label">Security Deposit</div>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <div class="main-content hidden" id="mainContent">
+
+            <!-- Card: Title + Price + Tags -->
+            <div class="card">
+                <div class="title-row">
+                    <h1 class="room-title" id="roomTitle">Loading…</h1>
+                    <div class="room-location">
+                        <span class="material-symbols-rounded">location_on</span>
+                        <span id="roomLocation">Location</span>
+                    </div>
+                </div>
+
+                <div class="price-row">
+                    <div class="rent-group">
+                        <span class="rent-price" id="roomRent">₹ 0</span>
+                        <span class="rent-label" id="rentLabel">Per Month</span>
+                    </div>
+                    <div class="deposit-box">
+                        <span class="deposit-price" id="roomDeposit">₹ 0</span>
+                        <span class="rent-label" id="depositLabel">Security Deposit</span>
+                    </div>
+                </div>
+
+                <div class="tags-row" id="roomTags"></div>
+            </div>
+
+            <!-- Card: Description -->
+            <div class="card">
+                <div class="section-title">
+                    <span class="material-symbols-rounded">description</span>
+                    <span id="descTitle">About Property</span>
+                </div>
+                <div class="description-text" id="roomDesc">No description provided.</div>
+            </div>
+
+            <!-- Card: Map -->
+            <div class="card" style="margin-bottom:0;">
+                <div class="section-title">
+                    <span class="material-symbols-rounded">map</span>
+                    Map View
+                </div>
+                <div id="map"></div>
+            </div>
+
         </div>
-      </div>
 
-      <div class="tags-row" id="roomTags">
-        </div>
+        <!-- ===== BOTTOM ACTION BAR ===== -->
+        <div class="bottom-action-bar hidden" id="actionBar"></div>
+
     </div>
 
-    <div class="card">
-      <div class="section-title">
-        <span class="material-symbols-rounded">description</span> About Property
-      </div>
-      <div class="description-text" id="roomDesc">No description provided.</div>
-    </div>
+    <script>
+        // ================================================================
+        //  SUPABASE CONFIG
+        // ================================================================
+        const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
+        const SUPABASE_KEY =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0";
 
-    <div class="card">
-      <div class="section-title">
-        <span class="material-symbols-rounded">map</span> Map View
-      </div>
-      <div id="map"></div>
-    </div>
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  </div>
+        // ================================================================
+        //  STATE
+        // ================================================================
+        let totalImages = 0;
 
-  <div class="bottom-action-bar hidden" id="actionBar">
-  </div>
+        // ================================================================
+        //  GET POST ID FROM URL
+        // ================================================================
+        const params = new URLSearchParams(window.location.search);
+        const roomId =
+            params.get("id") ||
+            params.get("room") ||
+            params.get("post_id") ||
+            params.get("requirement_id");
 
-</div>
+        const requestedType = String(
+            params.get("type") ||
+            params.get("post_type") ||
+            params.get("listing_type") ||
+            ""
+        ).toLowerCase();
 
-<script>
-const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0";
+        if (!roomId || roomId === "null" || roomId === "undefined") {
+            alert("Invalid post ID. Returning to home.");
+            window.location.href = "index.html";
+        } else {
+            loadRoom();
+        }
 
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // ================================================================
+        //  HELPERS
+        // ================================================================
+        function isTruthy(value) {
+            if (value === true || value === 1) return true;
+            const v = String(value || "").trim().toLowerCase();
+            return v === "true" || v === "1" || v === "yes" || v === "y";
+        }
 
-let totalImages = 0;
+        function firstValue(obj, keys, fallback = "") {
+            for (const key of keys) {
+                if (obj && obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== "") {
+                    return obj[key];
+                }
+            }
+            return fallback;
+        }
 
-/* GET ID FROM URL */
-const params = new URLSearchParams(window.location.search);
-const roomId =
-  params.get("id") ||
-  params.get("room") ||
-  params.get("post_id") ||
-  params.get("requirement_id");
+        function money(value, fallback = "Not mentioned") {
+            if (value === undefined || value === null || String(value).trim() === "") return fallback;
+            const num = Number(value);
+            if (!isNaN(num)) return "₹ " + num.toLocaleString("en-IN");
+            return "₹ " + value;
+        }
 
-const requestedType = String(
-  params.get("type") ||
-  params.get("post_type") ||
-  params.get("listing_type") ||
-  ""
-).toLowerCase();
+        function cleanPhone(number) {
+            return String(number || "").replace(/[^\d]/g, "");
+        }
 
-if (!roomId || roomId === "null" || roomId === "undefined") {
-  alert("Invalid post ID. Returning to home.");
-  window.location.href = "index.html";
-} else {
-  loadRoom();
-}
+        function escapeHtml(value) {
+            return String(value || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
-/* ---------------- HELPERS ---------------- */
-function isTruthy(value) {
-  if (value === true || value === 1) return true;
-  const v = String(value || "").trim().toLowerCase();
-  return v === "true" || v === "1" || v === "yes" || v === "y";
-}
+        function getTableCandidates() {
+            const available = [{ table: "room_posts", kind: "available" }];
+            const needed = [
+                { table: "room_requirements", kind: "needed" },
+                { table: "room_requirement", kind: "needed" },
+                { table: "rooms_needed", kind: "needed" },
+                { table: "room_needed", kind: "needed" },
+                { table: "room_needs", kind: "needed" },
+                { table: "needed_rooms", kind: "needed" },
+                { table: "requirement_posts", kind: "needed" },
+                { table: "requirements", kind: "needed" }
+            ];
+            if (
+                requestedType.includes("need") ||
+                requestedType.includes("require") ||
+                requestedType.includes("wanted")
+            ) {
+                return [...needed, ...available];
+            }
+            return [...available, ...needed];
+        }
 
-function firstValue(obj, keys, fallback = "") {
-  for (const key of keys) {
-    if (obj && obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== "") {
-      return obj[key];
-    }
-  }
-  return fallback;
-}
+        function normalizeRoom(raw, kind, sourceTable) {
+            const detectedKind = String(firstValue(raw, ["post_type", "listing_type", "category_type"], kind))
+            .toLowerCase();
+            const isNeeded =
+                kind === "needed" ||
+                detectedKind.includes("need") ||
+                detectedKind.includes("require") ||
+                detectedKind.includes("wanted");
 
-function money(value, fallback = "Not mentioned") {
-  if (value === undefined || value === null || String(value).trim() === "") return fallback;
-  const num = Number(value);
-  if (!isNaN(num)) return "₹ " + num.toLocaleString("en-IN");
-  return "₹ " + value;
-}
+            return {
+                raw,
+                id: firstValue(raw, ["id", "post_id", "requirement_id"]),
+                sourceTable,
+                postKind: isNeeded ? "needed" : "available",
+                user_id: firstValue(raw, ["user_id", "posted_by", "owner_id", "created_by", "seeker_id"]),
+                title: firstValue(raw, ["title", "post_title", "requirement_title", "room_title"], isNeeded ?
+                    "Room Requirement" : "Room Details"),
+                location: firstValue(raw, ["location", "preferred_location", "area", "locality", "address", "city"],
+                    "Location not provided"),
+                rent: firstValue(raw, ["rent", "budget", "max_budget", "monthly_budget", "expected_rent", "price",
+                    "amount"
+                ]),
+                deposit: firstValue(raw, ["deposit", "security_deposit", "max_deposit", "expected_deposit"]),
+                description: firstValue(raw, ["description", "details", "requirement", "requirements", "notes",
+                    "about"
+                ], "No additional details provided."),
+                type: firstValue(raw, ["type", "room_type", "property_type", "preferred_type", "category"],
+                    isNeeded ? "Room Needed" : "Property"),
+                images: firstValue(raw, ["images", "image_urls", "photos", "photo_urls"], ""),
+                latitude: firstValue(raw, ["latitude", "lat"]),
+                longitude: firstValue(raw, ["longitude", "lng", "lon"]),
+                contact_number: firstValue(raw, ["contact_number", "contact", "phone", "mobile"]),
+                show_contact: raw.show_contact !== undefined ? raw.show_contact : raw.show_phone !== undefined ? raw
+                    .show_phone : true,
+                whatsapp_number: firstValue(raw, ["whatsapp_number", "whatsapp", "whatsapp_no"]),
+                show_whatsapp: raw.show_whatsapp !== undefined ? raw.show_whatsapp : true,
+                brokerage_type: firstValue(raw, ["brokerage_type", "brokerage"], ""),
+                brokerage_amount: firstValue(raw, ["brokerage_amount", "brokerage_fee"], ""),
+                status: firstValue(raw, ["status"], "active")
+            };
+        }
 
-function cleanPhone(number) {
-  return String(number || "").replace(/[^\d]/g, "");
-}
+        // ================================================================
+        //  LOAD ROOM FROM SUPABASE
+        // ================================================================
+        async function loadRoom() {
+            const candidates = getTableCandidates();
 
-function escapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+            for (const item of candidates) {
+                try {
+                    const { data, error } = await db
+                        .from(item.table)
+                        .select("*")
+                        .eq("id", roomId)
+                        .maybeSingle();
 
-function getTableCandidates() {
-  const available = [{ table: "room_posts", kind: "available" }];
+                    if (data) {
+                        renderRoom(normalizeRoom(data, item.kind, item.table));
+                        return;
+                    }
+                    if (error) {
+                        console.warn(`Could not load from ${item.table}:`, error.message || error);
+                    }
+                } catch (err) {
+                    console.warn(`Skipped ${item.table}:`, err.message || err);
+                }
+            }
 
-  const needed = [
-    { table: "room_requirements", kind: "needed" },
-    { table: "room_requirement", kind: "needed" },
-    { table: "rooms_needed", kind: "needed" },
-    { table: "room_needed", kind: "needed" },
-    { table: "room_needs", kind: "needed" },
-    { table: "needed_rooms", kind: "needed" },
-    { table: "requirement_posts", kind: "needed" },
-    { table: "requirements", kind: "needed" }
-  ];
+            alert("Post not found or has been removed.");
+            window.location.href = "index.html";
+        }
 
-  if (
-    requestedType.includes("need") ||
-    requestedType.includes("require") ||
-    requestedType.includes("wanted")
-  ) {
-    return [...needed, ...available];
-  }
+        // ================================================================
+        //  RENDER
+        // ================================================================
+        function renderRoom(room) {
+            const isNeeded = room.postKind === "needed";
 
-  return [...available, ...needed];
-}
+            // Hide loading
+            document.getElementById("loadingState").classList.add("hidden");
 
-function normalizeRoom(raw, kind, sourceTable) {
-  const detectedKind = String(firstValue(raw, ["post_type", "listing_type", "category_type"], kind)).toLowerCase();
-  const isNeeded =
-    kind === "needed" ||
-    detectedKind.includes("need") ||
-    detectedKind.includes("require") ||
-    detectedKind.includes("wanted");
+            // Show main blocks
+            document.getElementById("mainContent").classList.remove("hidden");
+            document.getElementById("actionBar").classList.remove("hidden");
 
-  return {
-    raw,
-    id: firstValue(raw, ["id", "post_id", "requirement_id"]),
-    sourceTable,
-    postKind: isNeeded ? "needed" : "available",
-    user_id: firstValue(raw, ["user_id", "posted_by", "owner_id", "created_by", "seeker_id"]),
-    title: firstValue(raw, ["title", "post_title", "requirement_title", "room_title"], isNeeded ? "Room Requirement" : "Room Details"),
-    location: firstValue(raw, ["location", "preferred_location", "area", "locality", "address", "city"], "Location not provided"),
-    rent: firstValue(raw, ["rent", "budget", "max_budget", "monthly_budget", "expected_rent", "price", "amount"]),
-    deposit: firstValue(raw, ["deposit", "security_deposit", "max_deposit", "expected_deposit"]),
-    description: firstValue(raw, ["description", "details", "requirement", "requirements", "notes", "about"], "No additional details provided."),
-    type: firstValue(raw, ["type", "room_type", "property_type", "preferred_type", "category"], isNeeded ? "Room Needed" : "Property"),
-    images: firstValue(raw, ["images", "image_urls", "photos", "photo_urls"], ""),
-    latitude: firstValue(raw, ["latitude", "lat"]),
-    longitude: firstValue(raw, ["longitude", "lng", "lon"]),
-    contact_number: firstValue(raw, ["contact_number", "contact", "phone", "mobile"]),
-    show_contact: raw.show_contact !== undefined ? raw.show_contact : raw.show_phone !== undefined ? raw.show_phone : true,
-    whatsapp_number: firstValue(raw, ["whatsapp_number", "whatsapp", "whatsapp_no"]),
-    show_whatsapp: raw.show_whatsapp !== undefined ? raw.show_whatsapp : true,
-    brokerage_type: firstValue(raw, ["brokerage_type", "brokerage"], ""),
-    brokerage_amount: firstValue(raw, ["brokerage_amount", "brokerage_fee"], ""),
-    status: firstValue(raw, ["status"], "active")
-  };
-}
+            // Header
+            document.getElementById("headerTitle").innerText = isNeeded ? "Requirement Details" : "Property Details";
+            document.getElementById("descTitle").innerText = isNeeded ? "About Requirement" : "About Property";
 
-async function loadRoom() {
-  const candidates = getTableCandidates();
+            // Store last
+            localStorage.setItem("last_roomdetails_post", JSON.stringify({
+                id: room.id,
+                type: room.postKind,
+                table: room.sourceTable
+            }));
 
-  for (const item of candidates) {
-    try {
-      const { data, error } = await db
-        .from(item.table)
-        .select("*")
-        .eq("id", roomId)
-        .maybeSingle();
+            // ---- IMAGES ----
+            const slider = document.getElementById("imageSlider");
+            const sliderWrapper = document.getElementById("sliderWrapper");
+            const appWrapper = document.getElementById("appWrapper");
+            const dotsContainer = document.getElementById("sliderDots");
 
-      if (data) {
-        renderRoom(normalizeRoom(data, item.kind, item.table));
-        return;
-      }
+            const images = (room.images && String(room.images).trim() !== "")
+                ? String(room.images).split(",").map(x => x.trim()).filter(Boolean)
+                : [];
 
-      if (error) {
-        console.warn(`Could not load from ${item.table}:`, error.message || error);
-      }
-    } catch (err) {
-      console.warn(`Skipped ${item.table}:`, err.message || err);
-    }
-  }
+            if (images.length === 0) {
+                sliderWrapper.classList.add("hidden");
+                appWrapper.classList.add("no-images");
+                totalImages = 0;
+            } else {
+                sliderWrapper.classList.remove("hidden");
+                appWrapper.classList.remove("no-images");
+                totalImages = images.length;
 
-  alert("Post not found or has been removed.");
-  window.location.href = "index.html";
-}
+                // Build slides
+                slider.innerHTML = images.map(imgUrl =>
+                    `<img src="${escapeHtml(imgUrl)}" class="slide" loading="lazy" alt="Room image">`
+                ).join("");
 
-function renderRoom(room) {
-  const isNeeded = room.postKind === "needed";
+                // Build dots
+                dotsContainer.innerHTML = Array.from({ length: totalImages }, (_, i) =>
+                    `<button class="dot ${i === 0 ? 'active' : ''}" data-index="${i}" aria-label="Go to image ${i+1}"></button>`
+                ).join("");
 
-  document.getElementById("loadingState").classList.add("hidden");
-  
-  // Unhide individual grid blocks instead of a wrapper
-  document.getElementById("mainContent").classList.remove("hidden");
-  document.getElementById("actionBar").classList.remove("hidden");
+                // Dot click: scroll to image
+                dotsContainer.querySelectorAll(".dot").forEach(dot => {
+                    dot.addEventListener("click", function() {
+                        const index = parseInt(this.dataset.index);
+                        const slideWidth = slider.clientWidth || slider.scrollWidth / totalImages;
+                        slider.scrollTo({ left: index * slideWidth, behavior: "smooth" });
+                    });
+                });
 
-  document.querySelector(".header-title").innerText = isNeeded ? "Requirement Details" : "Property Details";
-  document.querySelector(".section-title").innerHTML = `<span class="material-symbols-rounded">description</span> ${isNeeded ? "About Requirement" : "About Property"}`;
+                // Update dots on scroll
+                slider.addEventListener("scroll", updateSliderDots);
+                slider.addEventListener("scroll", updateSliderCounter);
 
-  localStorage.setItem("last_roomdetails_post", JSON.stringify({
-    id: room.id,
-    type: room.postKind,
-    table: room.sourceTable
-  }));
+                document.getElementById("sliderCounter").innerText = `1 / ${totalImages}`;
+            }
 
-  const slider = document.getElementById("imageSlider");
-  const sliderWrapper = document.getElementById("sliderWrapper");
-  const appWrapper = document.getElementById("appWrapper");
+            // ---- TEXT ----
+            document.getElementById("roomTitle").innerText = room.title || "Untitled";
+            document.getElementById("roomLocation").innerText = room.location || "Location not provided";
 
-  const images = (room.images && String(room.images).trim() !== "")
-    ? String(room.images).split(",").map(x => x.trim()).filter(Boolean)
-    : [];
+            if (isNeeded) {
+                document.getElementById("roomRent").innerText = money(room.rent, "Budget not mentioned");
+                document.getElementById("rentLabel").innerText = "Budget / Month";
+                document.getElementById("roomDeposit").innerText = money(room.deposit, "Not mentioned");
+                document.getElementById("depositLabel").innerText = "Deposit";
+            } else {
+                document.getElementById("roomRent").innerText = money(room.rent, "₹ 0");
+                document.getElementById("rentLabel").innerText = "Per Month";
+                document.getElementById("roomDeposit").innerText = money(room.deposit, "₹ 0");
+                document.getElementById("depositLabel").innerText = "Security Deposit";
+            }
 
-  if (images.length === 0) {
-    sliderWrapper.classList.add("hidden");
-    appWrapper.classList.add("no-images");
-  } else {
-    sliderWrapper.classList.remove("hidden");
-    appWrapper.classList.remove("no-images");
-    totalImages = images.length;
-    slider.innerHTML = images.map(imgUrl => `<img src="${escapeHtml(imgUrl)}" class="slide">`).join("");
-    document.getElementById("sliderCounter").innerText = `1 / ${totalImages}`;
-  }
+            document.getElementById("roomDesc").innerText = room.description || "No additional details provided.";
 
-  // 2. Text Details
-  document.getElementById("roomTitle").innerText = room.title;
-  document.getElementById("roomLocation").innerText = room.location;
+            // ---- TAGS ----
+            let tagsHtml = `
+                        <span class="tag">
+                            <span class="material-symbols-rounded">${isNeeded ? "person_search" : "apartment"}</span>
+                            ${escapeHtml(isNeeded ? "Room Needed" : room.type)}
+                        </span>
+                    `;
 
-  if (isNeeded) {
-    document.getElementById("roomRent").innerText = money(room.rent, "Budget not mentioned");
-    document.querySelector(".rent-label").innerText = "Budget / Month";
-    document.getElementById("roomDeposit").innerText = money(room.deposit, "Not mentioned");
-    document.querySelector(".deposit-box .rent-label").innerText = "Deposit";
-  } else {
-    document.getElementById("roomRent").innerText = money(room.rent, "₹ 0");
-    document.querySelector(".rent-label").innerText = "Per Month";
-    document.getElementById("roomDeposit").innerText = money(room.deposit, "₹ 0");
-    document.querySelector(".deposit-box .rent-label").innerText = "Security Deposit";
-  }
+            if (isNeeded && room.type && room.type !== "Room Needed") {
+                tagsHtml += `
+                            <span class="tag">
+                                <span class="material-symbols-rounded">category</span>
+                                ${escapeHtml(room.type)}
+                            </span>
+                        `;
+            }
 
-  document.getElementById("roomDesc").innerText = room.description || "No additional details provided.";
+            if (!isNeeded && room.brokerage_type) {
+                let bDisplay = room.brokerage_type;
+                if ((room.brokerage_type === "Applicable" || room.brokerage_type === "Negotiable") && room
+                    .brokerage_amount) {
+                    bDisplay += ` (${money(room.brokerage_amount)})`;
+                }
+                tagsHtml += `
+                            <span class="tag">
+                                <span class="material-symbols-rounded">handshake</span>
+                                ${escapeHtml(bDisplay)}
+                            </span>
+                        `;
+            }
 
-  // 3. Tags
-  let tagsHtml = `
-    <div class="tag">
-      <span class="material-symbols-rounded" style="font-size:16px;">${isNeeded ? "person_search" : "apartment"}</span>
-      ${escapeHtml(isNeeded ? "Room Needed" : room.type)}
-    </div>
-  `;
+            if (room.status && room.status !== "active" && room.status !== "approved") {
+                tagsHtml += `
+                            <span class="tag tag-status">
+                                <span class="material-symbols-rounded">info</span>
+                                ${escapeHtml(room.status)}
+                            </span>
+                        `;
+            }
 
-  if (isNeeded && room.type && room.type !== "Room Needed") {
-    tagsHtml += `
-      <div class="tag">
-        <span class="material-symbols-rounded" style="font-size:16px;">category</span>
-        ${escapeHtml(room.type)}
-      </div>
-    `;
-  }
+            document.getElementById("roomTags").innerHTML = tagsHtml;
 
-  if (!isNeeded && room.brokerage_type) {
-    let brokerageDisplay = room.brokerage_type;
+            // ---- MAP ----
+            const lat = parseFloat(room.latitude);
+            const lng = parseFloat(room.longitude);
+            const mapContainer = document.getElementById("map");
 
-    if ((room.brokerage_type === "Applicable" || room.brokerage_type === "Negotiable") && room.brokerage_amount) {
-      brokerageDisplay += ` (${money(room.brokerage_amount)})`;
-    }
+            if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                initMap(lat, lng);
+            } else {
+                mapContainer.innerHTML = `
+                            <div class="map-placeholder">
+                                <span class="material-symbols-rounded">location_off</span>
+                                <span>Map location not provided</span>
+                            </div>
+                        `;
+            }
 
-    tagsHtml += `
-      <div class="tag">
-        <span class="material-symbols-rounded" style="font-size:16px;">handshake</span>
-        ${escapeHtml(brokerageDisplay)}
-      </div>
-    `;
-  }
+            // ---- ACTIONS ----
+            renderActions(room);
+        }
 
-  if (room.status && room.status !== "active" && room.status !== "approved") {
-    tagsHtml += `
-      <div class="tag" style="background:#FEF3C7; color:#D97706;">
-        <span class="material-symbols-rounded" style="font-size:16px;">info</span>
-        ${escapeHtml(room.status)}
-      </div>
-    `;
-  }
+        // ================================================================
+        //  SLIDER HELPERS
+        // ================================================================
+        function updateSliderDots() {
+            const slider = document.getElementById("imageSlider");
+            const dots = document.querySelectorAll(".dot");
+            if (!dots.length || !slider) return;
+            const slideWidth = slider.clientWidth || 1;
+            const index = Math.round(slider.scrollLeft / slideWidth);
+            dots.forEach((dot, i) => {
+                dot.classList.toggle("active", i === index);
+            });
+        }
 
-  document.getElementById("roomTags").innerHTML = tagsHtml;
+        function updateSliderCounter() {
+            const slider = document.getElementById("imageSlider");
+            const slideWidth = slider.clientWidth || 1;
+            const index = Math.round(slider.scrollLeft / slideWidth) + 1;
+            document.getElementById("sliderCounter").innerText = `${index} / ${totalImages}`;
+        }
 
-  // 4. Map Init
-  const lat = parseFloat(room.latitude);
-  const lng = parseFloat(room.longitude);
+        // ================================================================
+        //  MAP
+        // ================================================================
+        function initMap(lat, lng) {
+            const mapContainer = document.getElementById("map");
+            mapContainer.innerHTML = "";
 
-  if (!isNaN(lat) && !isNaN(lng)) {
-    initMap(lat, lng);
-  } else {
-    document.getElementById("map").innerHTML = "<div style='padding:20px; text-align:center; color:gray;'>Map location not provided</div>";
-  }
+            const map = L.map(mapContainer, { zoomControl: false }).setView([lat, lng], 14);
+            L.control.zoom({ position: "bottomright" }).addTo(map);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+            L.marker([lat, lng]).addTo(map);
+        }
 
-  // 5. Action Buttons
-  renderActions(room);
-}
+        // ================================================================
+        //  ACTION BUTTONS
+        // ================================================================
+        function renderActions(room) {
+            const actionBar = document.getElementById("actionBar");
+            let html = "";
+            const phone = cleanPhone(room.contact_number);
+            const whatsapp = cleanPhone(room.whatsapp_number || room.contact_number);
 
-function updateSliderCounter() {
-  const slider = document.getElementById("imageSlider");
-  const slideWidth = slider.clientWidth;
-  const currentSlideIndex = Math.round(slider.scrollLeft / slideWidth) + 1;
-  document.getElementById("sliderCounter").innerText = `${currentSlideIndex} / ${totalImages}`;
-}
+            if (isTruthy(room.show_contact) && phone) {
+                html += `
+                            <button class="btn btn-call" onclick="window.location.href='tel:${phone}'">
+                                <span class="material-symbols-rounded">call</span> Call
+                            </button>
+                        `;
+            }
 
-function initMap(lat, lng) {
-  const map = L.map("map", { zoomControl: false }).setView([lat, lng], 14);
-  L.control.zoom({ position: "bottomright" }).addTo(map);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-  L.marker([lat, lng]).addTo(map);
-}
+            if (isTruthy(room.show_whatsapp) && whatsapp) {
+                html += `
+                            <button class="btn btn-whatsapp" onclick="window.open('https://wa.me/${whatsapp}', '_blank')">
+                                <span class="material-symbols-rounded">chat</span> WA
+                            </button>
+                        `;
+            }
 
-function renderActions(room) {
-  const actionBar = document.getElementById("actionBar");
-  let html = "";
-  const phone = cleanPhone(room.contact_number);
-  const whatsapp = cleanPhone(room.whatsapp_number || room.contact_number);
+            if (room.user_id) {
+                html += `
+                            <button class="btn btn-chat" onclick="startChat('${escapeHtml(room.user_id)}', '${escapeHtml(room.id)}', '${room.postKind}')">
+                                <span class="material-symbols-rounded">forum</span> Chat
+                            </button>
+                        `;
+            } else {
+                html += `
+                            <button class="btn btn-chat" onclick="alert('Chat is not available for this post.')">
+                                <span class="material-symbols-rounded">forum</span> Chat
+                            </button>
+                        `;
+            }
 
-  if (isTruthy(room.show_contact) && phone) {
-    html += `
-      <button class="btn btn-call" onclick="window.location.href='tel:${phone}'">
-        <span class="material-symbols-rounded">call</span> Call
-      </button>
-    `;
-  }
+            actionBar.innerHTML = html || `
+                        <button class="btn btn-back" onclick="history.back()">
+                            <span class="material-symbols-rounded">arrow_back</span> Back
+                        </button>
+                    `;
 
-  if (isTruthy(room.show_whatsapp) && whatsapp) {
-    html += `
-      <button class="btn btn-whatsapp" onclick="window.open('https://wa.me/${whatsapp}', '_blank')">
-        <span class="material-symbols-rounded">chat</span> WA
-      </button>
-    `;
-  }
+            // Auto-action from URL
+            const autoAction = params.get("auto");
+            const autoInfo = cleanPhone(params.get("info"));
+            if (autoAction === "call" && autoInfo && isTruthy(room.show_contact)) {
+                setTimeout(() => { window.location.href = `tel:${autoInfo}`; }, 400);
+            } else if (autoAction === "wa" && autoInfo && isTruthy(room.show_whatsapp)) {
+                setTimeout(() => { window.open(`https://wa.me/${autoInfo}`, "_blank"); }, 400);
+            }
+        }
 
-  if (room.user_id) {
-    html += `
-      <button class="btn btn-chat" onclick="startChat('${escapeHtml(room.user_id)}', '${escapeHtml(room.id)}', '${room.postKind}')">
-        <span class="material-symbols-rounded">forum</span> Chat
-      </button>
-    `;
-  } else {
-    html += `
-      <button class="btn btn-chat" onclick="alert('Chat is not available for this post.')">
-        <span class="material-symbols-rounded">forum</span> Chat
-      </button>
-    `;
-  }
+        // ================================================================
+        //  CHAT
+        // ================================================================
+        function startChat(userId, postId, postKind) {
+            const user = JSON.parse(localStorage.getItem("user"));
 
-  actionBar.innerHTML = html || `
-    <button class="btn btn-chat" onclick="history.back()">
-      <span class="material-symbols-rounded">arrow_back</span> Back
-    </button>
-  `;
+            if (user && user.id === userId) {
+                alert(postKind === "needed" ? "This is your own requirement post!" : "This is your own property!");
+                return;
+            }
 
-  const autoAction = params.get("auto");
-  const autoInfo = cleanPhone(params.get("info"));
+            if (!user) {
+                localStorage.setItem("chat_redirect", JSON.stringify({ userId, roomId: postId, type: postKind }));
+                alert("Please log in to chat.");
+                window.location.href = "user.html";
+                return;
+            }
 
-  if (autoAction === "call" && autoInfo && isTruthy(room.show_contact)) {
-    setTimeout(() => { window.location.href = `tel:${autoInfo}`; }, 300);
-  } else if (autoAction === "wa" && autoInfo && isTruthy(room.show_whatsapp)) {
-    setTimeout(() => { window.open(`https://wa.me/${autoInfo}`, "_blank"); }, 300);
-  }
-}
+            window.location.href =
+                `chat.html?user=${encodeURIComponent(userId)}&room=${encodeURIComponent(postId)}&source=roomdetails&type=${encodeURIComponent(postKind)}`;
+        }
 
-function startChat(userId, postId, postKind) {
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  if (user && user.id === userId) {
-    alert(postKind === "needed" ? "This is your own requirement post!" : "This is your own property!");
-    return;
-  }
-
-  if (!user) {
-    localStorage.setItem("chat_redirect", JSON.stringify({ userId, roomId: postId, type: postKind }));
-    alert("Please log in to chat.");
-    window.location.href = "user.html";
-    return;
-  }
-
-  window.location.href = `chat.html?user=${encodeURIComponent(userId)}&room=${encodeURIComponent(postId)}&source=roomdetails&type=${encodeURIComponent(postKind)}`;
-}
-
-const style = document.createElement("style");
-style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
-document.head.appendChild(style);
-</script>
+        // ================================================================
+        //  RECOVER SCROLL POSITION ON SLIDER AFTER IMAGES LOAD
+        // ================================================================
+        document.addEventListener("DOMContentLoaded", () => {
+            const slider = document.getElementById("imageSlider");
+            if (slider) {
+                // Small delay to let images paint
+                setTimeout(() => {
+                    if (slider.scrollLeft === 0) {
+                        updateSliderDots();
+                        updateSliderCounter();
+                    }
+                }, 400);
+            }
+        });
+    </script>
 
 </body>
 </html>
