@@ -1472,6 +1472,7 @@ function setLoggedDeviceMarker(lat, lng, options = {}) {
     .bindPopup(`<b>${sourceText}</b><br><span style="color:#64748B;font-size:11px;font-weight:700;">${escapeHtml(deviceName)}</span>${accuracyText}`);
 
   if (options.openPopup !== false) userMarker.openPopup();
+  keepUserLocationVisible();
 
   if (allPosts.length) {
     clearTimeout(window.__tingoUserDistanceRenderTimer);
@@ -1639,6 +1640,20 @@ function makeUserIcon() {
   });
 }
 
+
+function keepUserLocationVisible() {
+  if (!map || !userLocation || !isValidCoord(userLocation.lat, userLocation.lng)) return;
+  if (userMarker) {
+    try {
+      userMarker.setLatLng([userLocation.lat, userLocation.lng]).addTo(map);
+      if (userMarker.setZIndexOffset) userMarker.setZIndexOffset(1000);
+    } catch (e) {}
+  } else {
+    userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: makeUserIcon(), zIndexOffset: 1000 }).addTo(map);
+  }
+  if (userMarker && userMarker.bringToFront) userMarker.bringToFront();
+}
+
 function makeSearchIcon() {
   return L.divIcon({
     className: "tingo-search-area-marker",
@@ -1698,6 +1713,7 @@ function focusSearchAreaOnMap(target, posts = [], zoomToTarget = false) {
     map.stop();
     map.setView([normalizedTarget.lat, normalizedTarget.lng], 16, { animate: true });
     map.invalidateSize();
+    keepUserLocationVisible();
     return;
   }
 
@@ -2028,6 +2044,7 @@ async function renderMap(options = {}) {
   });
 
   // Zoom to show search area and nearby posts
+  keepUserLocationVisible();
   if (hasSearch && currentSearchTarget) {
     focusSearchAreaOnMap(currentSearchTarget, posts, options.zoomToTarget === true);
   } else if (posts.length && userLocation && isValidCoord(userLocation.lat, userLocation.lng)) {
