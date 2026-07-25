@@ -1014,6 +1014,19 @@ function isValidCoord(lat, lng) {
   return Number.isFinite(a) && Number.isFinite(b) && Math.abs(a) <= 90 && Math.abs(b) <= 180 && !(a === 0 && b === 0);
 }
 
+function normalizeSearchTarget(target) {
+  if (!target) return null;
+  const lat = Number(target.lat);
+  const lng = Number(target.lng ?? target.lon);
+  if (!isValidCoord(lat, lng)) return null;
+  return {
+    ...target,
+    lat,
+    lng,
+    lon: Number.isFinite(Number(target.lon)) ? Number(target.lon) : lng
+  };
+}
+
 function cleanSearchTerm(value) {
   return String(value || "")
     .replace(/[,%()]/g, " ")
@@ -1225,7 +1238,9 @@ function tingoBuildPhotonSuggestion(feature) {
 }
 
 async function tingoFetchJson(url, signal) {
-  const response = await fetch(url, { headers: { "Accept": "application/json" }, signal });
+  const options = { headers: { "Accept": "application/json" } };
+  if (signal) options.signal = signal;
+  const response = await fetch(url, options);
   if (!response.ok) throw new Error(`Location search failed ${response.status}`);
   return response.json();
 }
@@ -1311,10 +1326,17 @@ function tingoAttachClickHandler(input, box) {
     const item = (box.__tingoItems || [])[Number(row.dataset.index)];
     if (!item) return;
     input.value = item.displayName || `${item.label}, ${item.subLabel}`;
-    selectedMapPlace = { lat: Number(item.lat), lon: Number(item.lon), label: item.label, displayName: input.value };
+    selectedMapPlace = normalizeSearchTarget({
+      lat: Number(item.lat),
+      lng: Number(item.lon),
+      lon: Number(item.lon),
+      label: item.label,
+      displayName: input.value,
+      subLabel: item.subLabel
+    });
 
-    if (map && isValidCoord(item.lat, item.lon)) {
-      map.setView([Number(item.lat), Number(item.lon)], 16, { animate: true });
+    if (map && selectedMapPlace) {
+      map.setView([selectedMapPlace.lat, selectedMapPlace.lng], 16, { animate: true });
       drawSearchArea(selectedMapPlace, input.value);
     }
 
@@ -1331,7 +1353,6 @@ function setupTingoAutocomplete() {
 
   let timer = null;
   let requestId = 0;
-  let controller = null;
 
   tingoAttachClickHandler(input, box);
 
@@ -1340,7 +1361,6 @@ function setupTingoAutocomplete() {
     requestId += 1;
     const thisRequest = requestId;
     clearTimeout(timer);
-    if (controller) controller.abort();
 
     if (term.length < 2) {
       box.classList.remove("show");
@@ -1355,9 +1375,8 @@ function setupTingoAutocomplete() {
     tingoRenderSuggestions(box, instant, instant.length ? "Searching Pune district locations..." : "Searching Pune district locations...");
 
     timer = setTimeout(async () => {
-      controller = new AbortController();
       try {
-        const live = await tingoLiveSuggestions(term, controller.signal);
+        const live = await tingoLiveSuggestions(term);
         if (thisRequest !== requestId) return;
         const merged = tingoDeduplicateSuggestions([...local, ...live]);
         if (merged.length) {
@@ -1644,15 +1663,16 @@ function clearSearchArea() {
 
 function drawSearchArea(target, queryText = "") {
   clearSearchArea();
-  if (!map || !target || !isValidCoord(target.lat, target.lng)) return;
+  const normalizedTarget = normalizeSearchTarget(target);
+  if (!map || !normalizedTarget) return;
 
   const fromYouText = userLocation && isValidCoord(userLocation.lat, userLocation.lng)
-    ? `<br><span style="color:#0EA5E9;font-size:11px;font-weight:900;">From you: ${escapeHtml(formatKm(distanceKm(userLocation.lat, userLocation.lng, target.lat, target.lng)))}</span>`
+    ? `<br><span style="color:#0EA5E9;font-size:11px;font-weight:900;">From you: ${escapeHtml(formatKm(distanceKm(userLocation.lat, userLocation.lng, normalizedTarget.lat, normalizedTarget.lng)))}</span>`
     : "";
 
-  const label = target.label || queryText || "Searched area";
+  const label = normalizedTarget.label || queryText || "Searched area";
 
-  searchAreaCircle = L.circle([target.lat, target.lng], {
+  searchAreaCircle = L.circle([normalizedTarget.lat, normalizedTarget.lng], {
     radius: SEARCH_AREA_RADIUS_METERS,
     color: "#DC2626",
     weight: 2.5,
@@ -1662,23 +1682,34 @@ function drawSearchArea(target, queryText = "") {
     dashArray: "7,8"
   }).addTo(map);
 
-  searchAreaMarker = L.marker([target.lat, target.lng], { icon: makeSearchIcon(), zIndexOffset: 900 })
+  searchAreaMarker = L.marker([normalizedTarget.lat, normalizedTarget.lng], { icon: makeSearchIcon(), zIndexOffset: 900 })
     .addTo(map)
     .bindPopup(`<b>Searched area</b><br><span style="color:#64748B;font-size:11px;font-weight:800;">${escapeHtml(label)}</span>${fromYouText}`);
 }
 
 function focusSearchAreaOnMap(target, posts = [], zoomToTarget = false) {
-  if (!map || !target || !isValidCoord(target.lat, target.lng)) return;
+  const normalizedTarget = normalizeSearchTarget(target);
+  if (!map || !normalizedTarget) return;
+
+  // When a suggestion is explicitly selected, zoom directly to that exact area.
+  // This keeps the map focused on the chosen place instead of zooming out to
+  // include the user's location or nearby posts.
+  if (zoomToTarget) {
+    map.stop();
+    map.setView([normalizedTarget.lat, normalizedTarget.lng], 16, { animate: true });
+    map.invalidateSize();
+    return;
+  }
 
   const bounds = L.latLngBounds(
-    [target.lat, target.lng],
-    [target.lat, target.lng]
+    [normalizedTarget.lat, normalizedTarget.lng],
+    [normalizedTarget.lat, normalizedTarget.lng]
   );
 
   // Add a small buffer so the selected area is zoomed in clearly.
-  const buffer = zoomToTarget ? 0.006 : 0.01;
-  bounds.extend([target.lat + buffer, target.lng + buffer]);
-  bounds.extend([target.lat - buffer, target.lng - buffer]);
+  const buffer = 0.01;
+  bounds.extend([normalizedTarget.lat + buffer, normalizedTarget.lng + buffer]);
+  bounds.extend([normalizedTarget.lat - buffer, normalizedTarget.lng - buffer]);
 
   (posts || []).slice(0, 8).forEach(post => {
     const coords = getPostCoords(post);
@@ -1692,7 +1723,7 @@ function focusSearchAreaOnMap(target, posts = [], zoomToTarget = false) {
   map.fitBounds(bounds, {
     paddingTopLeft: [28, 145],
     paddingBottomRight: [28, 132],
-    maxZoom: zoomToTarget ? 16 : 14
+    maxZoom: 14
   });
 }
 
@@ -1830,13 +1861,14 @@ async function geocodeMapLocation(text) {
     const first = flat.find(place => isValidCoord(place.lat, place.lon));
     if (!first) return null;
 
-    const result = {
+    const result = normalizeSearchTarget({
       label: first.display_name ? String(first.display_name).split(",")[0] : locationText,
       subLabel: first.display_name || locationText,
       lat: Number(first.lat),
+      lng: Number(first.lon),
       lon: Number(first.lon),
       displayName: first.display_name || locationText
-    };
+    });
 
     if (isValidCoord(result.lat, result.lon)) {
       localStorage.setItem(cacheKey, JSON.stringify(result));
@@ -1850,7 +1882,8 @@ async function geocodeMapLocation(text) {
 }
 
 async function resolveSearchTarget(searchText) {
-  if (selectedMapPlace && isValidCoord(selectedMapPlace.lat, selectedMapPlace.lon)) return selectedMapPlace;
+  const selected = normalizeSearchTarget(selectedMapPlace);
+  if (selected) return selected;
   return await geocodeMapLocation(searchText);
 }
 
@@ -1871,7 +1904,7 @@ async function getFilteredMapPosts() {
   }
 
   const target = await resolveSearchTarget(q);
-  currentSearchTarget = target && isValidCoord(target.lat, target.lng) ? target : null;
+  currentSearchTarget = normalizeSearchTarget(target);
 
   const withDistance = addPostDistances(base, currentSearchTarget);
   const textMatches = withDistance.filter(post => postMatchesSearchText(post, q));
