@@ -3,72 +3,52 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Room Details · TingoRooms</title>
+    <title>Property Details · TingoRooms</title>
 
     <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js">
-    </script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
 
     <style>
         /* ============================================================
-                   ROOT — Professional, minimal palette
-                   ============================================================ */
+           PROFESSIONAL SPLIT-SCREEN DESIGN SYSTEM
+           ============================================================ */
         :root {
-            --primary: #0F172A;
-            --primary-light: #1E293B;
-            --primary-muted: #334155;
-
-            --accent: #2563EB;
-            --accent-hover: #1D4ED8;
-            --accent-soft: #EFF6FF;
-            --accent-glow: rgba(37, 99, 235, 0.30);
-
+            --primary: #111827;
+            --brand-red: #E11D48;
+            --brand-red-hover: #BE123C;
+            
             --surface: #FFFFFF;
-            --surface-soft: #F8FAFC;
-            --bg: #F1F5F9;
+            --surface-alt: #F9FAFB;
+            
+            --text: #111827;
+            --text-secondary: #4B5563;
+            --text-muted: #9CA3AF;
 
-            --text: #0F172A;
-            --text-secondary: #475569;
-            --text-muted: #94A3B8;
-
-            --border: #E2E8F0;
-            --border-light: #F1F5F9;
+            --border: #E5E7EB;
+            --border-light: #F3F4F6;
 
             --success: #059669;
-            --success-soft: #ECFDF5;
+            --success-soft: #D1FAE5;
 
             --radius-sm: 8px;
             --radius-md: 16px;
             --radius-lg: 24px;
-            --radius-xl: 32px;
 
-            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
-            --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.12);
-
-            --header-h: 68px;
-            --action-bar-w: 80px;
-            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --header-h: 72px;
+            --transition: 0.2s ease-in-out;
         }
 
-        /* ============================================================
-                   RESET & BASE
-                   ============================================================ */
-        *,
-        *::before,
-        *::after {
+        *, *::before, *::after {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -77,56 +57,33 @@
         html {
             -webkit-text-size-adjust: 100%;
             -webkit-tap-highlight-color: transparent;
+            scroll-behavior: smooth;
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #CBD5E1;
+            background: var(--surface);
             color: var(--text);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            min-height: 100vh;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
         /* ============================================================
-                   APP SHELL — full viewport, no gaps
-                   ============================================================ */
-        .app-shell {
-            width: 100%;
-            max-width: 1440px;
-            height: 100vh;
-            height: 100dvh;
-            background: var(--bg);
-            display: grid;
-            grid-template-rows: var(--header-h) 1fr;
-            grid-template-columns: 1fr var(--action-bar-w);
-            grid-template-areas:
-                "header actions"
-                "main actions";
-            overflow: hidden;
-            position: relative;
-            box-shadow: var(--shadow-xl);
-            transition: all var(--transition);
-        }
-
-        /* ============================================================
-                   HEADER
-                   ============================================================ */
+           HEADER
+           ============================================================ */
         .header {
-            grid-area: header;
+            position: sticky;
+            top: 0;
+            height: var(--header-h);
             display: flex;
             align-items: center;
-            padding: 0 24px;
-            background: rgba(255, 255, 255, 0.88);
-            backdrop-filter: blur(16px) saturate(1.4);
-            -webkit-backdrop-filter: blur(16px) saturate(1.4);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-            z-index: 100;
-            gap: 12px;
+            padding: 0 5%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            gap: 16px;
         }
 
         .back-btn {
@@ -137,26 +94,20 @@
             height: 40px;
             border-radius: 50%;
             cursor: pointer;
-            transition: background var(--transition);
+            transition: all var(--transition);
             color: var(--text);
-            border: none;
-            background: transparent;
+            border: 1px solid var(--border);
+            background: var(--surface);
             flex-shrink: 0;
         }
         .back-btn:hover {
-            background: var(--border-light);
-        }
-        .back-btn:active {
-            transform: scale(0.92);
-        }
-        .back-btn .material-symbols-rounded {
-            font-size: 24px;
+            background: var(--surface-alt);
+            border-color: #D1D5DB;
         }
 
         .header-title {
             font-weight: 700;
-            font-size: 18px;
-            letter-spacing: -0.01em;
+            font-size: 16px;
             color: var(--text);
             flex: 1;
             white-space: nowrap;
@@ -165,87 +116,49 @@
         }
 
         .header-badge {
-            flex-shrink: 0;
-            padding: 4px 14px;
+            padding: 4px 12px;
             border-radius: 999px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-            color: #fff;
-            background: var(--accent);
-            box-shadow: 0 4px 12px var(--accent-glow);
-        }
-
-        /* ============================================================
-                   MAIN CONTENT — scrollable
-                   ============================================================ */
-        .main {
-            grid-area: main;
-            overflow-y: auto;
-            padding: 20px 24px 24px 24px;
-            -webkit-overflow-scrolling: touch;
-            background: var(--bg);
-            scroll-behavior: smooth;
-        }
-
-        .main::-webkit-scrollbar {
-            width: 5px;
-        }
-        .main::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .main::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 10px;
-        }
-
-        /* ============================================================
-                   LOADING STATE
-                   ============================================================ */
-        .loading-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            gap: 16px;
-            color: var(--text-muted);
-        }
-        .loading-state .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3.5px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        .loading-state p {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
-        }
-
-        .hidden {
-            display: none !important;
+            color: #fff;
+            background: var(--success);
         }
 
         /* ============================================================
-                   IMAGE GALLERY — full-bleed, swipeable
-                   ============================================================ */
+           MAIN LAYOUT (SPLIT SCREEN FOR DESKTOP)
+           ============================================================ */
+        .main {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 40px 5%;
+            width: 100%;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr; /* 55% Image / 45% Info */
+            gap: 60px;
+            align-items: start;
+        }
+
+        /* ============================================================
+           LEFT SIDE: MEDIA COLUMN (STICKY)
+           ============================================================ */
+        .media-column {
+            position: sticky;
+            top: calc(var(--header-h) + 40px);
+            height: calc(100vh - var(--header-h) - 80px); /* Fill available height */
+            min-height: 500px;
+        }
+
         .gallery-wrap {
             position: relative;
             width: 100%;
-            background: var(--primary);
+            height: 100%;
+            background: #000;
             border-radius: var(--radius-md);
             overflow: hidden;
-            margin-bottom: 20px;
-            aspect-ratio: 16 / 9;
-            max-height: 460px;
-            min-height: 200px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
         }
 
         .gallery-track {
@@ -257,46 +170,53 @@
             scrollbar-width: none;
             -webkit-overflow-scrolling: touch;
         }
-        .gallery-track::-webkit-scrollbar {
-            display: none;
-        }
+        .gallery-track::-webkit-scrollbar { display: none; }
 
         .gallery-slide {
             min-width: 100%;
             height: 100%;
             scroll-snap-align: center;
             flex-shrink: 0;
-            background: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
         }
+        
         .gallery-slide img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            display: block;
+            object-fit: contain; /* Fully visible */
+            z-index: 2;
+        }
+        
+        .gallery-slide::before {
+            content: '';
+            position: absolute;
+            top: -10%; left: -10%; right: -10%; bottom: -10%;
+            background: inherit;
+            filter: blur(30px) brightness(0.4);
+            z-index: 1;
         }
 
         .gallery-dots {
             position: absolute;
-            bottom: 14px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 7px;
+            gap: 8px;
             z-index: 10;
-            background: rgba(0, 0, 0, 0.40);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            padding: 5px 12px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            padding: 8px 12px;
             border-radius: 20px;
         }
         .gallery-dots .dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.45);
+            background: rgba(255, 255, 255, 0.4);
             transition: all var(--transition);
             cursor: pointer;
             border: none;
@@ -304,751 +224,381 @@
         }
         .gallery-dots .dot.active {
             background: #fff;
-            transform: scale(1.25);
+            transform: scale(1.5);
         }
 
         .gallery-counter {
             position: absolute;
-            bottom: 14px;
-            right: 16px;
-            background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            bottom: 24px;
+            right: 24px;
+            background: rgba(0, 0, 0, 0.6);
             color: #fff;
-            padding: 3px 13px;
-            border-radius: 12px;
+            padding: 6px 14px;
+            border-radius: 8px;
             font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.3px;
+            font-weight: 600;
             z-index: 10;
         }
 
         .gallery-placeholder {
             width: 100%;
-            aspect-ratio: 16 / 9;
-            background: linear-gradient(135deg, var(--primary-light), var(--primary-muted));
+            height: 100%;
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
             border-radius: var(--radius-md);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: rgba(255, 255, 255, 0.50);
+            color: var(--text-muted);
             font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 20px;
+            gap: 12px;
         }
         .gallery-placeholder .material-symbols-rounded {
             font-size: 48px;
-            margin-right: 12px;
+            color: #D1D5DB;
         }
 
         /* ============================================================
-                   CONTENT CARDS
-                   ============================================================ */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .card {
-            background: var(--surface);
-            border-radius: var(--radius-md);
-            padding: 22px 24px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-light);
-            transition: box-shadow var(--transition);
-        }
-        .card:hover {
-            box-shadow: var(--shadow-md);
-        }
-        .card-full {
-            grid-column: 1 / -1;
-        }
-
-        /* --- Title row --- */
-        .title-row {
-            margin-bottom: 16px;
-        }
-        .room-title {
-            font-size: 26px;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-        .room-location {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .room-location .material-symbols-rounded {
-            font-size: 18px;
-            color: var(--text-muted);
-        }
-
-        /* --- Price row --- */
-        .price-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 0;
-            border-top: 1px solid var(--border-light);
-            border-bottom: 1px solid var(--border-light);
-            margin-bottom: 14px;
-        }
-        .rent-group {
+           RIGHT SIDE: INFO COLUMN
+           ============================================================ */
+        .info-column {
             display: flex;
             flex-direction: column;
         }
-        .rent-price {
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--success);
-            letter-spacing: -0.02em;
-            line-height: 1.1;
+
+        .info-section {
+            padding-bottom: 32px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--border);
         }
-        .rent-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            letter-spacing: 0.3px;
-            margin-top: 2px;
-        }
-        .deposit-box {
-            text-align: right;
-        }
-        .deposit-price {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text);
-        }
-        .deposit-box .rent-label {
-            margin-top: 2px;
+        .info-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
 
-        /* --- Tags --- */
+        .room-title {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+        
+        .room-location {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+        .room-location .material-symbols-rounded {
+            font-size: 20px;
+            color: var(--text-muted);
+        }
+
+        .price-group {
+            margin-top: 24px;
+            display: flex;
+            align-items: flex-end;
+            gap: 32px;
+        }
+        .rent-price {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1;
+        }
+        .rent-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+        .deposit-price {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
         .tags-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 2px;
+            gap: 10px;
+            margin-top: 24px;
         }
         .tag {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            background: var(--accent-soft);
-            color: var(--accent);
-            padding: 5px 14px 5px 12px;
-            border-radius: 20px;
-            font-size: 12.5px;
-            font-weight: 700;
-            border: 1px solid rgba(37, 99, 235, 0.08);
+            gap: 6px;
+            background: var(--surface-alt);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid var(--border);
         }
         .tag .material-symbols-rounded {
-            font-size: 16px;
-        }
-        .tag.tag-status {
-            background: #FEF3C7;
-            color: #D97706;
-            border-color: rgba(217, 119, 6, 0.12);
-        }
-        .tag.tag-success {
-            background: var(--success-soft);
-            color: var(--success);
-            border-color: rgba(5, 150, 105, 0.12);
+            font-size: 18px;
+            color: var(--text-secondary);
         }
 
-        /* --- Description --- */
         .section-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 10px;
-        }
-        .section-title .material-symbols-rounded {
             font-size: 20px;
-            color: var(--text-muted);
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 16px;
         }
         .description-text {
-            font-size: 14.5px;
+            font-size: 16px;
             color: var(--text-secondary);
             line-height: 1.7;
             white-space: pre-wrap;
-            word-break: break-word;
         }
 
-        /* --- Map --- */
         #map {
-            height: 200px;
+            height: 280px;
             border-radius: var(--radius-sm);
             border: 1px solid var(--border);
-            overflow: hidden;
-            background: var(--surface-soft);
+            background: var(--surface-alt);
+            z-index: 1;
         }
         .map-placeholder {
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 200px;
+            height: 280px;
             color: var(--text-muted);
-            font-size: 14px;
-            background: var(--surface-soft);
+            background: var(--surface-alt);
             border-radius: var(--radius-sm);
             border: 1px solid var(--border);
-            flex-direction: column;
-            gap: 6px;
-        }
-        .map-placeholder .material-symbols-rounded {
-            font-size: 32px;
-            color: var(--border);
+            gap: 8px;
         }
 
         /* ============================================================
-                   ACTION SIDEBAR — fixed on the right
-                   ============================================================ */
+           ACTION BUTTONS (Integrated in Info Column for Desktop)
+           ============================================================ */
         .action-sidebar {
-            grid-area: actions;
-            background: var(--primary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            padding: 16px 10px;
-            border-left: 1px solid rgba(255, 255, 255, 0.06);
-            position: relative;
-            z-index: 50;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-top: 32px;
         }
 
         .action-sidebar .action-btn {
-            width: 100%;
-            max-width: 56px;
-            aspect-ratio: 1 / 1;
             border: none;
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 16px;
+            cursor: pointer;
+            transition: opacity var(--transition);
+        }
+        .action-sidebar .action-btn:hover {
+            opacity: 0.9;
+        }
+
+        .action-btn.call { background: var(--primary); }
+        .action-btn.whatsapp { background: #16A34A; }
+        .action-btn.chat { background: var(--brand-red); }
+
+        /* ============================================================
+           LOADING
+           ============================================================ */
+        .loading-state {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 3px;
-            color: rgba(255, 255, 255, 0.80);
-            background: rgba(255, 255, 255, 0.08);
-            cursor: pointer;
-            transition: all var(--transition);
-            font-family: inherit;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.2px;
-            padding: 8px 4px;
-            text-align: center;
-            line-height: 1.1;
-            -webkit-appearance: none;
-            appearance: none;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            min-height: 40vh;
+            gap: 16px;
+            color: var(--text-secondary);
         }
-        .action-sidebar .action-btn:hover {
-            background: rgba(255, 255, 255, 0.16);
-            color: #fff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        .loading-state .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
-        .action-sidebar .action-btn:active {
-            transform: scale(0.94);
-        }
-        .action-sidebar .action-btn .material-symbols-rounded {
-            font-size: 26px;
-            transition: transform var(--transition);
-        }
-        .action-sidebar .action-btn:hover .material-symbols-rounded {
-            transform: scale(1.08);
-        }
-
-        .action-sidebar .action-btn.call {
-            background: rgba(37, 99, 235, 0.50);
-            border-color: rgba(37, 99, 235, 0.30);
-        }
-        .action-sidebar .action-btn.call:hover {
-            background: #2563EB;
-            border-color: #2563EB;
-        }
-
-        .action-sidebar .action-btn.whatsapp {
-            background: rgba(37, 211, 102, 0.40);
-            border-color: rgba(37, 211, 102, 0.25);
-        }
-        .action-sidebar .action-btn.whatsapp:hover {
-            background: #25D366;
-            border-color: #25D366;
-        }
-
-        .action-sidebar .action-btn.chat {
-            background: rgba(108, 92, 231, 0.40);
-            border-color: rgba(108, 92, 231, 0.25);
-        }
-        .action-sidebar .action-btn.chat:hover {
-            background: #6C5CE7;
-            border-color: #6C5CE7;
-        }
-
-        .action-sidebar .action-divider {
-            width: 40%;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.10);
-            margin: 2px 0;
-        }
-
-        .action-sidebar .action-label {
-            font-size: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: rgba(255, 255, 255, 0.35);
-            font-weight: 800;
-            margin-top: 2px;
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
 
         /* ============================================================
-                   MOBILE — stacked layout, bottom action bar
-                   ============================================================ */
-        @media (max-width: 820px) {
-            .app-shell {
-                grid-template-rows: var(--header-h) 1fr auto;
-                grid-template-columns: 1fr;
-                grid-template-areas:
-                    "header"
-                    "main"
-                    "actions";
-                max-width: 100%;
-                height: 100vh;
-                height: 100dvh;
-                border-radius: 0;
-                box-shadow: none;
-            }
-
-            .header {
-                padding: 0 14px;
-                height: var(--header-h);
-                min-height: var(--header-h);
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(16px);
-                -webkit-backdrop-filter: blur(16px);
-            }
-            .header-title {
-                font-size: 16px;
-            }
-            .header-badge {
-                font-size: 10px;
-                padding: 3px 12px;
-            }
-
+           MOBILE RESPONSIVENESS
+           ============================================================ */
+        @media (max-width: 960px) {
             .main {
-                padding: 14px 14px 80px 14px;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
+                padding: 24px 5% 100px 5%;
             }
-
             .content-grid {
                 grid-template-columns: 1fr;
-                gap: 14px;
+                gap: 32px;
             }
-            .card {
-                padding: 16px 18px;
+            
+            .media-column {
+                position: relative;
+                top: 0;
+                height: auto;
+                min-height: auto;
             }
-            .card-full {
-                grid-column: 1;
-            }
-
-            .room-title {
-                font-size: 20px;
-            }
-            .rent-price {
-                font-size: 22px;
-            }
-
             .gallery-wrap {
-                aspect-ratio: 16 / 10;
-                max-height: 320px;
-                min-height: 160px;
+                aspect-ratio: 4 / 3;
                 border-radius: var(--radius-sm);
-                margin-bottom: 14px;
-            }
-            .gallery-placeholder {
-                aspect-ratio: 16 / 10;
-                border-radius: var(--radius-sm);
-                margin-bottom: 14px;
-                font-size: 13px;
-            }
-            .gallery-placeholder .material-symbols-rounded {
-                font-size: 36px;
             }
 
+            .room-title { font-size: 26px; }
+            .rent-price { font-size: 32px; }
+            
+            .info-section {
+                padding-bottom: 24px;
+                margin-bottom: 24px;
+            }
+
+            /* Mobile Bottom Fixed Bar */
             .action-sidebar {
-                grid-area: actions;
-                flex-direction: row;
-                justify-content: space-around;
-                padding: 10px 12px 18px 12px;
-                background: rgba(255, 255, 255, 0.94);
-                backdrop-filter: blur(20px) saturate(1.4);
-                -webkit-backdrop-filter: blur(20px) saturate(1.4);
-                border-top: 1px solid rgba(0, 0, 0, 0.05);
-                box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.04);
-                gap: 6px;
                 position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                z-index: 200;
-                border-radius: 0;
-                max-width: none;
+                bottom: 0; left: 0; right: 0;
+                margin: 0;
+                display: flex;
+                padding: 12px 16px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(12px);
+                border-top: 1px solid var(--border);
+                gap: 12px;
+                z-index: 2000;
             }
             .action-sidebar .action-btn {
-                max-width: none;
                 flex: 1;
-                aspect-ratio: auto;
-                flex-direction: row;
-                gap: 6px;
-                padding: 10px 8px;
-                border-radius: var(--radius-sm);
-                background: rgba(15, 23, 42, 0.06);
-                color: var(--text);
-                border: 1px solid var(--border-light);
-                font-size: 12px;
-                font-weight: 700;
-                min-height: 48px;
-            }
-            .action-sidebar .action-btn .material-symbols-rounded {
-                font-size: 20px;
-            }
-            .action-sidebar .action-btn .action-label {
-                display: none;
-            }
-            .action-sidebar .action-btn.call {
-                background: rgba(37, 99, 235, 0.12);
-                border-color: rgba(37, 99, 235, 0.15);
-                color: #2563EB;
-            }
-            .action-sidebar .action-btn.call:hover {
-                background: rgba(37, 99, 235, 0.20);
-            }
-            .action-sidebar .action-btn.whatsapp {
-                background: rgba(37, 211, 102, 0.12);
-                border-color: rgba(37, 211, 102, 0.15);
-                color: #25D366;
-            }
-            .action-sidebar .action-btn.whatsapp:hover {
-                background: rgba(37, 211, 102, 0.20);
-            }
-            .action-sidebar .action-btn.chat {
-                background: rgba(108, 92, 231, 0.12);
-                border-color: rgba(108, 92, 231, 0.15);
-                color: #6C5CE7;
-            }
-            .action-sidebar .action-btn.chat:hover {
-                background: rgba(108, 92, 231, 0.20);
-            }
-            .action-sidebar .action-btn span:last-child {
-                display: inline;
-            }
-            .action-sidebar .action-divider {
-                display: none;
-            }
-
-            .action-sidebar .action-btn:hover {
-                transform: none;
-                box-shadow: none;
-            }
-
-            #map {
-                height: 160px;
-            }
-            .map-placeholder {
-                height: 160px;
+                padding: 14px 8px;
+                font-size: 14px;
             }
         }
 
         @media (max-width: 480px) {
-            .header {
-                padding: 0 10px;
-                gap: 6px;
-            }
-            .back-btn {
-                width: 34px;
-                height: 34px;
-            }
-            .back-btn .material-symbols-rounded {
-                font-size: 20px;
-            }
-            .header-title {
-                font-size: 14px;
-            }
-            .header-badge {
-                font-size: 9px;
-                padding: 2px 10px;
-            }
-            .main {
-                padding: 10px 10px 72px 10px;
-            }
-            .card {
-                padding: 14px 14px;
-            }
-            .room-title {
-                font-size: 18px;
-            }
-            .rent-price {
-                font-size: 20px;
-            }
-            .gallery-wrap {
-                aspect-ratio: 16 / 11;
-                max-height: 260px;
-                min-height: 140px;
-                border-radius: var(--radius-sm);
-                margin-bottom: 10px;
-            }
-            .action-sidebar {
-                padding: 8px 8px 14px 8px;
-                gap: 4px;
-            }
-            .action-sidebar .action-btn {
-                min-height: 40px;
-                padding: 6px 6px;
-                font-size: 10px;
-                gap: 4px;
-                border-radius: var(--radius-sm);
-            }
-            .action-sidebar .action-btn .material-symbols-rounded {
-                font-size: 17px;
-            }
-            .gallery-dots {
-                bottom: 10px;
-                padding: 3px 10px;
-                gap: 5px;
-            }
-            .gallery-dots .dot {
-                width: 6px;
-                height: 6px;
-            }
-            .gallery-counter {
-                bottom: 10px;
-                right: 10px;
-                font-size: 10px;
-                padding: 2px 10px;
-            }
-            .tags-row {
-                gap: 5px;
-            }
-            .tag {
-                font-size: 11px;
-                padding: 4px 10px 4px 8px;
-            }
-            .tag .material-symbols-rounded {
-                font-size: 14px;
-            }
-        }
-
-        @media (max-width: 374px) {
-            .action-sidebar .action-btn {
-                font-size: 9px;
-                min-height: 34px;
-                padding: 4px 4px;
-            }
-            .action-sidebar .action-btn .material-symbols-rounded {
-                font-size: 15px;
-            }
-            .room-title {
-                font-size: 16px;
-            }
-            .rent-price {
-                font-size: 18px;
-            }
-        }
-
-        /* ============================================================
-                   UTILITY
-                   ============================================================ */
-        .flex-center {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .gap-1 {
-            gap: 4px;
-        }
-        .gap-2 {
-            gap: 8px;
-        }
-        .gap-3 {
-            gap: 12px;
-        }
-
-        .text-muted {
-            color: var(--text-muted);
-        }
-        .text-secondary {
-            color: var(--text-secondary);
-        }
-
-        .mt-1 {
-            margin-top: 6px;
-        }
-        .mt-2 {
-            margin-top: 12px;
-        }
-        .mb-1 {
-            margin-bottom: 6px;
-        }
-        .mb-2 {
-            margin-bottom: 12px;
-        }
-
-        .w-full {
-            width: 100%;
-        }
-
-        .no-images .gallery-wrap {
-            display: none;
-        }
-        .no-images .gallery-placeholder {
-            display: none;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
+            .header { padding: 0 16px; }
+            .main { padding: 16px 16px 90px 16px; }
+            .gallery-wrap { aspect-ratio: 1 / 1; }
+            .price-group { flex-direction: column; align-items: flex-start; gap: 12px; }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="app-shell" id="appShell">
+    <!-- ===== HEADER ===== -->
+    <header class="header">
+        <button class="back-btn" onclick="history.back()" aria-label="Go back">
+            <span class="material-symbols-rounded">arrow_back</span>
+        </button>
+        <span class="header-title" id="headerTitle">Property Details</span>
+        <span class="header-badge" id="headerBadge">Active</span>
+    </header>
 
-        <!-- ===== HEADER ===== -->
-        <header class="header">
-            <button class="back-btn" onclick="history.back()" aria-label="Go back">
-                <span class="material-symbols-rounded">arrow_back</span>
-            </button>
-            <span class="header-title" id="headerTitle">Property Details</span>
-            <span class="header-badge" id="headerBadge">● Active</span>
-        </header>
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main" id="mainContent">
 
-        <!-- ===== MAIN CONTENT ===== -->
-        <main class="main" id="mainContent">
+        <!-- Loading State -->
+        <div class="loading-state" id="loadingState">
+            <div class="spinner"></div>
+            <p>Loading details…</p>
+        </div>
 
-            <!-- Loading -->
-            <div class="loading-state" id="loadingState">
-                <div class="spinner"></div>
-                <p>Loading details…</p>
+        <!-- Main Layout Grid -->
+        <div class="content-grid hidden" id="contentGrid">
+
+            <!-- Left Side: Image Gallery -->
+            <div class="media-column">
+                <div class="gallery-wrap hidden" id="galleryWrap">
+                    <div class="gallery-track" id="galleryTrack"></div>
+                    <div class="gallery-dots" id="galleryDots"></div>
+                    <div class="gallery-counter" id="galleryCounter">1 / 1</div>
+                </div>
+                <div class="gallery-placeholder hidden" id="galleryPlaceholder">
+                    <span class="material-symbols-rounded">photo_library</span>
+                    <span>No images available</span>
+                </div>
             </div>
 
-            <!-- Gallery -->
-            <div class="gallery-wrap hidden" id="galleryWrap">
-                <div class="gallery-track" id="galleryTrack"></div>
-                <div class="gallery-dots" id="galleryDots"></div>
-                <div class="gallery-counter" id="galleryCounter">1 / 1</div>
-            </div>
-            <div class="gallery-placeholder hidden" id="galleryPlaceholder">
-                <span class="material-symbols-rounded">image</span>
-                <span>No images available</span>
-            </div>
-
-            <!-- Content Grid -->
-            <div class="content-grid hidden" id="contentGrid">
-
-                <!-- Card: Title + Price + Tags -->
-                <div class="card card-full">
-                    <div class="title-row">
-                        <h1 class="room-title" id="roomTitle">Loading…</h1>
-                        <div class="room-location">
-                            <span class="material-symbols-rounded">location_on</span>
-                            <span id="roomLocation">Location</span>
-                        </div>
+            <!-- Right Side: Details & Actions -->
+            <div class="info-column">
+                
+                <!-- Title & Price -->
+                <div class="info-section">
+                    <h1 class="room-title" id="roomTitle">Loading…</h1>
+                    <div class="room-location">
+                        <span class="material-symbols-rounded">location_on</span>
+                        <span id="roomLocation">Location</span>
                     </div>
 
-                    <div class="price-row">
-                        <div class="rent-group">
-                            <span class="rent-price" id="roomRent">₹ 0</span>
-                            <span class="rent-label" id="rentLabel">Per Month</span>
+                    <div class="price-group">
+                        <div>
+                            <div class="rent-price" id="roomRent">₹ 0</div>
+                            <div class="rent-label" id="rentLabel">Per Month</div>
                         </div>
-                        <div class="deposit-box">
-                            <span class="deposit-price" id="roomDeposit">₹ 0</span>
-                            <span class="rent-label" id="depositLabel">Security Deposit</span>
+                        <div>
+                            <div class="deposit-price" id="roomDeposit">₹ 0</div>
+                            <div class="rent-label" id="depositLabel">Security Deposit</div>
                         </div>
                     </div>
 
                     <div class="tags-row" id="roomTags"></div>
+
+                    <!-- Action Sidebar (Appears inline on Desktop, Fixed bottom on Mobile) -->
+                    <div class="action-sidebar hidden" id="actionSidebar">
+                        <!-- Buttons injected by JavaScript -->
+                    </div>
                 </div>
 
-                <!-- Card: Description -->
-                <div class="card card-full">
-                    <div class="section-title">
-                        <span class="material-symbols-rounded">description</span>
-                        <span id="descTitle">About Property</span>
-                    </div>
+                <!-- Description -->
+                <div class="info-section">
+                    <div class="section-title" id="descTitle">About Property</div>
                     <div class="description-text" id="roomDesc">No description provided.</div>
                 </div>
 
-                <!-- Card: Map -->
-                <div class="card card-full">
-                    <div class="section-title">
-                        <span class="material-symbols-rounded">map</span>
-                        Map View
-                    </div>
+                <!-- Map -->
+                <div class="info-section" style="border-bottom: none;">
+                    <div class="section-title">Location Overview</div>
                     <div id="map"></div>
                 </div>
 
             </div>
 
-        </main>
+        </div>
 
-        <!-- ===== ACTION SIDEBAR ===== -->
-        <aside class="action-sidebar hidden" id="actionSidebar" aria-label="Quick actions">
-            <!-- Buttons injected by JS -->
-        </aside>
-
-    </div>
+    </main>
 
     <script>
         // ================================================================
-        //  SUPABASE
+        //  SUPABASE & CORE STATE
         // ================================================================
         const SUPABASE_URL = "https://slhbrakvprrxtqzodcyy.supabase.co";
         const SUPABASE_KEY =
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsaGJyYWt2cHJyeHRxem9kY3l5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5Mzk4NzksImV4cCI6MjA5MTUxNTg3OX0.zygNCH4m_Zoz0ybgoyhlQKySHkV_uuFHAEhzqG5WRZ0";
 
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // ================================================================
-        //  STATE
-        // ================================================================
         let totalImages = 0;
+
+        // Auto Slider State
+        let autoSlideInterval = null;
+        let currentSlideIndex = 0;
 
         // ================================================================
         //  URL PARAMS
         // ================================================================
         const params = new URLSearchParams(window.location.search);
         const roomId =
-            params.get("id") ||
-            params.get("room") ||
-            params.get("post_id") ||
-            params.get("requirement_id");
-
+            params.get("id") || params.get("room") || params.get("post_id") || params.get("requirement_id");
         const requestedType = String(
-            params.get("type") ||
-            params.get("post_type") ||
-            params.get("listing_type") ||
-            ""
+            params.get("type") || params.get("post_type") || params.get("listing_type") || ""
         ).toLowerCase();
 
         if (!roomId || roomId === "null" || roomId === "undefined") {
@@ -1088,70 +638,40 @@
         }
 
         function escapeHtml(value) {
-            return String(value || "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+            return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
         function getTableCandidates() {
             const available = [{ table: "room_posts", kind: "available" }];
             const needed = [
-                { table: "room_requirements", kind: "needed" },
-                { table: "room_requirement", kind: "needed" },
-                { table: "rooms_needed", kind: "needed" },
-                { table: "room_needed", kind: "needed" },
-                { table: "room_needs", kind: "needed" },
-                { table: "needed_rooms", kind: "needed" },
-                { table: "requirement_posts", kind: "needed" },
-                { table: "requirements", kind: "needed" }
+                { table: "room_requirements", kind: "needed" }, { table: "room_requirement", kind: "needed" },
+                { table: "rooms_needed", kind: "needed" }, { table: "room_needed", kind: "needed" },
+                { table: "room_needs", kind: "needed" }, { table: "needed_rooms", kind: "needed" },
+                { table: "requirement_posts", kind: "needed" }, { table: "requirements", kind: "needed" }
             ];
-            if (
-                requestedType.includes("need") ||
-                requestedType.includes("require") ||
-                requestedType.includes("wanted")
-            ) {
+            if (requestedType.includes("need") || requestedType.includes("require") || requestedType.includes("wanted")) {
                 return [...needed, ...available];
             }
             return [...available, ...needed];
         }
 
         function normalizeRoom(raw, kind, sourceTable) {
-            const detectedKind = String(firstValue(raw, ["post_type", "listing_type", "category_type"], kind))
-                .toLowerCase();
-            const isNeeded =
-                kind === "needed" ||
-                detectedKind.includes("need") ||
-                detectedKind.includes("require") ||
-                detectedKind.includes("wanted");
+            const detectedKind = String(firstValue(raw, ["post_type", "listing_type", "category_type"], kind)).toLowerCase();
+            const isNeeded = kind === "needed" || detectedKind.includes("need") || detectedKind.includes("require") || detectedKind.includes("wanted");
 
             return {
-                raw,
-                id: firstValue(raw, ["id", "post_id", "requirement_id"]),
-                sourceTable,
-                postKind: isNeeded ? "needed" : "available",
+                raw, id: firstValue(raw, ["id", "post_id", "requirement_id"]), sourceTable, postKind: isNeeded ? "needed" : "available",
                 user_id: firstValue(raw, ["user_id", "posted_by", "owner_id", "created_by", "seeker_id"]),
-                title: firstValue(raw, ["title", "post_title", "requirement_title", "room_title"], isNeeded ?
-                    "Room Requirement" : "Room Details"),
-                location: firstValue(raw, ["location", "preferred_location", "area", "locality", "address", "city"],
-                    "Location not provided"),
-                rent: firstValue(raw, ["rent", "budget", "max_budget", "monthly_budget", "expected_rent", "price",
-                    "amount"
-                ]),
+                title: firstValue(raw, ["title", "post_title", "requirement_title", "room_title"], isNeeded ? "Room Requirement" : "Room Details"),
+                location: firstValue(raw, ["location", "preferred_location", "area", "locality", "address", "city"], "Location not provided"),
+                rent: firstValue(raw, ["rent", "budget", "max_budget", "monthly_budget", "expected_rent", "price", "amount"]),
                 deposit: firstValue(raw, ["deposit", "security_deposit", "max_deposit", "expected_deposit"]),
-                description: firstValue(raw, ["description", "details", "requirement", "requirements", "notes",
-                    "about"
-                ], "No additional details provided."),
-                type: firstValue(raw, ["type", "room_type", "property_type", "preferred_type", "category"],
-                    isNeeded ? "Room Needed" : "Property"),
+                description: firstValue(raw, ["description", "details", "requirement", "requirements", "notes", "about"], "No additional details provided."),
+                type: firstValue(raw, ["type", "room_type", "property_type", "preferred_type", "category"], isNeeded ? "Room Needed" : "Property"),
                 images: firstValue(raw, ["images", "image_urls", "photos", "photo_urls"], ""),
-                latitude: firstValue(raw, ["latitude", "lat"]),
-                longitude: firstValue(raw, ["longitude", "lng", "lon"]),
+                latitude: firstValue(raw, ["latitude", "lat"]), longitude: firstValue(raw, ["longitude", "lng", "lon"]),
                 contact_number: firstValue(raw, ["contact_number", "contact", "phone", "mobile"]),
-                show_contact: raw.show_contact !== undefined ? raw.show_contact : raw.show_phone !== undefined ? raw
-                    .show_phone : true,
+                show_contact: raw.show_contact !== undefined ? raw.show_contact : raw.show_phone !== undefined ? raw.show_phone : true,
                 whatsapp_number: firstValue(raw, ["whatsapp_number", "whatsapp", "whatsapp_no"]),
                 show_whatsapp: raw.show_whatsapp !== undefined ? raw.show_whatsapp : true,
                 brokerage_type: firstValue(raw, ["brokerage_type", "brokerage"], ""),
@@ -1165,27 +685,15 @@
         // ================================================================
         async function loadRoom() {
             const candidates = getTableCandidates();
-
             for (const item of candidates) {
                 try {
-                    const { data, error } = await db
-                        .from(item.table)
-                        .select("*")
-                        .eq("id", roomId)
-                        .maybeSingle();
-
+                    const { data, error } = await db.from(item.table).select("*").eq("id", roomId).maybeSingle();
                     if (data) {
                         renderRoom(normalizeRoom(data, item.kind, item.table));
                         return;
                     }
-                    if (error) {
-                        console.warn(`Could not load from ${item.table}:`, error.message || error);
-                    }
-                } catch (err) {
-                    console.warn(`Skipped ${item.table}:`, err.message || err);
-                }
+                } catch (err) { console.warn(`Skipped ${item.table}:`, err); }
             }
-
             alert("Post not found or has been removed.");
             window.location.href = "index.html";
         }
@@ -1196,32 +704,23 @@
         function renderRoom(room) {
             const isNeeded = room.postKind === "needed";
 
-            // Hide loading
             document.getElementById("loadingState").classList.add("hidden");
-
-            // Show content
             document.getElementById("contentGrid").classList.remove("hidden");
             document.getElementById("actionSidebar").classList.remove("hidden");
 
-            // Header
             document.getElementById("headerTitle").innerText = isNeeded ? "Requirement Details" : "Property Details";
             document.getElementById("descTitle").innerText = isNeeded ? "About Requirement" : "About Property";
 
             const badge = document.getElementById("headerBadge");
             if (room.status && room.status !== "active" && room.status !== "approved") {
-                badge.innerText = "● " + (room.status || "Inactive");
+                badge.innerText = room.status || "Inactive";
                 badge.style.background = "#D97706";
             } else {
-                badge.innerText = "● Active";
-                badge.style.background = "var(--accent)";
+                badge.innerText = "Active";
+                badge.style.background = "var(--success)";
             }
 
-            // Store last
-            localStorage.setItem("last_roomdetails_post", JSON.stringify({
-                id: room.id,
-                type: room.postKind,
-                table: room.sourceTable
-            }));
+            localStorage.setItem("last_roomdetails_post", JSON.stringify({ id: room.id, type: room.postKind, table: room.sourceTable }));
 
             // ---- IMAGES ----
             const track = document.getElementById("galleryTrack");
@@ -1236,17 +735,22 @@
             if (images.length === 0) {
                 wrap.classList.add("hidden");
                 placeholder.classList.remove("hidden");
-                document.getElementById("appShell").classList.add("no-images");
                 totalImages = 0;
             } else {
                 wrap.classList.remove("hidden");
                 placeholder.classList.add("hidden");
-                document.getElementById("appShell").classList.remove("no-images");
                 totalImages = images.length;
 
-                track.innerHTML = images.map(src =>
-                    `<div class="gallery-slide"><img src="${escapeHtml(src)}" loading="lazy" alt="Room image"></div>`
-                ).join("");
+                track.innerHTML = images.map(src => {
+                    const cleanSrc = escapeHtml(src);
+                    return `<div class="gallery-slide" style="--bg-url: url('${cleanSrc}')">
+                                <img src="${cleanSrc}" loading="lazy" alt="Room image">
+                            </div>`;
+                }).join("");
+
+                const styleSheet = document.createElement("style");
+                styleSheet.innerText = `.gallery-slide::before { background-image: var(--bg-url); background-size: cover; background-position: center; }`;
+                document.head.appendChild(styleSheet);
 
                 dotsContainer.innerHTML = Array.from({ length: totalImages }, (_, i) =>
                     `<button class="dot ${i === 0 ? 'active' : ''}" data-index="${i}" aria-label="Image ${i+1}"></button>`
@@ -1254,16 +758,17 @@
 
                 dotsContainer.querySelectorAll(".dot").forEach(dot => {
                     dot.addEventListener("click", function() {
-                        const idx = parseInt(this.dataset.index);
-                        const slideW = track.clientWidth || track.scrollWidth / totalImages;
-                        track.scrollTo({ left: idx * slideW, behavior: "smooth" });
+                        stopAutoSlide();
+                        goToSlide(parseInt(this.dataset.index));
                     });
                 });
 
-                track.addEventListener("scroll", updateGalleryUI);
-                track.addEventListener("scroll", updateGalleryCounter);
+                track.addEventListener("scroll", () => { updateGalleryUI(); updateGalleryCounter(); });
+                track.addEventListener("touchstart", stopAutoSlide, { passive: true });
+                track.addEventListener("mousedown", stopAutoSlide, { passive: true });
 
                 document.getElementById("galleryCounter").innerText = `1 / ${totalImages}`;
+                if (totalImages > 1) startAutoSlide();
             }
 
             // ---- TEXT ----
@@ -1286,45 +791,34 @@
 
             // ---- TAGS ----
             let tagsHtml = `
-                        <span class="tag">
-                            <span class="material-symbols-rounded">${isNeeded ? "person_search" : "apartment"}</span>
-                            ${escapeHtml(isNeeded ? "Room Needed" : room.type)}
-                        </span>
-                    `;
+                <span class="tag">
+                    <span class="material-symbols-rounded">${isNeeded ? "person_search" : "apartment"}</span>
+                    ${escapeHtml(isNeeded ? "Room Needed" : room.type)}
+                </span>
+            `;
 
             if (isNeeded && room.type && room.type !== "Room Needed") {
                 tagsHtml += `
-                            <span class="tag">
-                                <span class="material-symbols-rounded">category</span>
-                                ${escapeHtml(room.type)}
-                            </span>
-                        `;
+                    <span class="tag">
+                        <span class="material-symbols-rounded">category</span>
+                        ${escapeHtml(room.type)}
+                    </span>
+                `;
             }
 
             if (!isNeeded && room.brokerage_type) {
                 let bDisplay = room.brokerage_type;
-                if ((room.brokerage_type === "Applicable" || room.brokerage_type === "Negotiable") && room
-                    .brokerage_amount) {
+                if ((room.brokerage_type === "Applicable" || room.brokerage_type === "Negotiable") && room.brokerage_amount) {
                     bDisplay += ` (${money(room.brokerage_amount)})`;
                 }
                 const isNoBroker = String(room.brokerage_type || "").toLowerCase().includes("no broker");
                 tagsHtml += `
-                            <span class="tag ${isNoBroker ? 'tag-success' : ''}">
-                                <span class="material-symbols-rounded">handshake</span>
-                                ${escapeHtml(bDisplay)}
-                            </span>
-                        `;
+                    <span class="tag" style="${isNoBroker ? 'color: var(--success); background: var(--success-soft); border-color: transparent;' : ''}">
+                        <span class="material-symbols-rounded">handshake</span>
+                        ${escapeHtml(bDisplay)}
+                    </span>
+                `;
             }
-
-            if (room.status && room.status !== "active" && room.status !== "approved") {
-                tagsHtml += `
-                            <span class="tag tag-status">
-                                <span class="material-symbols-rounded">info</span>
-                                ${escapeHtml(room.status)}
-                            </span>
-                        `;
-            }
-
             document.getElementById("roomTags").innerHTML = tagsHtml;
 
             // ---- MAP ----
@@ -1336,38 +830,50 @@
                 initMap(lat, lng);
             } else {
                 mapContainer.innerHTML = `
-                            <div class="map-placeholder">
-                                <span class="material-symbols-rounded">location_off</span>
-                                <span>Map location not provided</span>
-                            </div>
-                        `;
+                    <div class="map-placeholder">
+                        <span class="material-symbols-rounded">location_off</span>
+                        <span>Map location not provided</span>
+                    </div>
+                `;
             }
 
-            // ---- ACTIONS ----
             renderActions(room);
-
-            // Auto-action from URL
-            const autoAction = params.get("auto");
-            const autoInfo = cleanPhone(params.get("info"));
-            if (autoAction === "call" && autoInfo && isTruthy(room.show_contact)) {
-                setTimeout(() => { window.location.href = `tel:${autoInfo}`; }, 400);
-            } else if (autoAction === "wa" && autoInfo && isTruthy(room.show_whatsapp)) {
-                setTimeout(() => { window.open(`https://wa.me/${autoInfo}`, "_blank"); }, 400);
-            }
         }
 
         // ================================================================
-        //  GALLERY HELPERS
+        //  GALLERY JS HELPERS
         // ================================================================
+        function startAutoSlide() {
+            if (autoSlideInterval) clearInterval(autoSlideInterval);
+            autoSlideInterval = setInterval(() => {
+                const track = document.getElementById("galleryTrack");
+                if (!track) return;
+                currentSlideIndex++;
+                if (currentSlideIndex >= totalImages) currentSlideIndex = 0;
+                goToSlide(currentSlideIndex);
+            }, 3500);
+        }
+
+        function stopAutoSlide() {
+            if (autoSlideInterval) { clearInterval(autoSlideInterval); autoSlideInterval = null; }
+        }
+
+        function goToSlide(idx) {
+            const track = document.getElementById("galleryTrack");
+            if (!track) return;
+            const slideW = track.clientWidth || (track.scrollWidth / totalImages);
+            track.scrollTo({ left: idx * slideW, behavior: "smooth" });
+            currentSlideIndex = idx;
+        }
+
         function updateGalleryUI() {
             const track = document.getElementById("galleryTrack");
             const dots = document.querySelectorAll(".dot");
             if (!dots.length || !track) return;
             const slideW = track.clientWidth || 1;
             const idx = Math.round(track.scrollLeft / slideW);
-            dots.forEach((dot, i) => {
-                dot.classList.toggle("active", i === idx);
-            });
+            currentSlideIndex = idx;
+            dots.forEach((dot, i) => { dot.classList.toggle("active", i === idx); });
         }
 
         function updateGalleryCounter() {
@@ -1386,110 +892,73 @@
             const map = L.map(container, { zoomControl: false }).setView([lat, lng], 14);
             L.control.zoom({ position: "bottomright" }).addTo(map);
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                attribution: '&copy; OpenStreetMap'
             }).addTo(map);
             L.marker([lat, lng]).addTo(map);
         }
 
         // ================================================================
-        //  ACTIONS — side bar
+        //  ACTIONS
         // ================================================================
         function renderActions(room) {
             const sidebar = document.getElementById("actionSidebar");
             let html = "";
-
             const phone = cleanPhone(room.contact_number);
             const whatsapp = cleanPhone(room.whatsapp_number || room.contact_number);
 
             if (isTruthy(room.show_contact) && phone) {
                 html += `
-                            <button class="action-btn call" onclick="window.location.href='tel:${phone}'">
-                                <span class="material-symbols-rounded">call</span>
-                                <span>Call</span>
-                                <span class="action-label">Phone</span>
-                            </button>
-                        `;
+                    <button class="action-btn call" onclick="window.location.href='tel:${phone}'">
+                        <span class="material-symbols-rounded">call</span> Contact
+                    </button>`;
             }
-
             if (isTruthy(room.show_whatsapp) && whatsapp) {
                 html += `
-                            <button class="action-btn whatsapp" onclick="window.open('https://wa.me/${whatsapp}', '_blank')">
-                                <span class="material-symbols-rounded">chat</span>
-                                <span>WA</span>
-                                <span class="action-label">WhatsApp</span>
-                            </button>
-                        `;
+                    <button class="action-btn whatsapp" onclick="window.open('https://wa.me/${whatsapp}', '_blank')">
+                        <span class="material-symbols-rounded">chat</span> WhatsApp
+                    </button>`;
             }
-
             if (room.user_id) {
                 html += `
-                            <button class="action-btn chat" onclick="startChat('${escapeHtml(room.user_id)}', '${escapeHtml(room.id)}', '${room.postKind}')">
-                                <span class="material-symbols-rounded">forum</span>
-                                <span>Chat</span>
-                                <span class="action-label">Message</span>
-                            </button>
-                        `;
-            } else {
-                html += `
-                            <button class="action-btn chat" onclick="alert('Chat is not available for this post.')">
-                                <span class="material-symbols-rounded">forum</span>
-                                <span>Chat</span>
-                                <span class="action-label">Unavailable</span>
-                            </button>
-                        `;
+                    <button class="action-btn chat" onclick="startChat('${escapeHtml(room.user_id)}', '${escapeHtml(room.id)}', '${room.postKind}')">
+                        <span class="material-symbols-rounded">forum</span> Chat
+                    </button>`;
             }
-
-            // If no actions, show a back button
             if (!html) {
                 html = `
-                            <button class="action-btn" onclick="history.back()" style="background:rgba(255,255,255,0.06);">
-                                <span class="material-symbols-rounded">arrow_back</span>
-                                <span>Back</span>
-                                <span class="action-label">Return</span>
-                            </button>
-                        `;
+                    <button class="action-btn call" onclick="history.back()">
+                        <span class="material-symbols-rounded">arrow_back</span> Back
+                    </button>`;
             }
-
             sidebar.innerHTML = html;
         }
 
         // ================================================================
-        //  CHAT
+        //  CHAT REDIRECT
         // ================================================================
         function startChat(userId, postId, postKind) {
             const user = JSON.parse(localStorage.getItem("user"));
-
             if (user && user.id === userId) {
-                alert(postKind === "needed" ? "This is your own requirement post!" : "This is your own property!");
+                alert(postKind === "needed" ? "This is your requirement." : "This is your property.");
                 return;
             }
-
             if (!user) {
                 localStorage.setItem("chat_redirect", JSON.stringify({ userId, roomId: postId, type: postKind }));
                 alert("Please log in to chat.");
                 window.location.href = "user.html";
                 return;
             }
-
-            window.location.href =
-                `chat.html?user=${encodeURIComponent(userId)}&room=${encodeURIComponent(postId)}&source=roomdetails&type=${encodeURIComponent(postKind)}`;
+            window.location.href = `chat.html?user=${encodeURIComponent(userId)}&room=${encodeURIComponent(postId)}&source=roomdetails&type=${encodeURIComponent(postKind)}`;
         }
 
-        // ================================================================
-        //  RECOVER SCROLL
-        // ================================================================
         document.addEventListener("DOMContentLoaded", () => {
             const track = document.getElementById("galleryTrack");
             if (track) {
                 setTimeout(() => {
-                    if (track.scrollLeft === 0) {
-                        updateGalleryUI();
-                        updateGalleryCounter();
-                    }
+                    if (track.scrollLeft === 0) { updateGalleryUI(); updateGalleryCounter(); }
                 }, 400);
             }
         });
     </script>
-
 </body>
 </html>
