@@ -110,7 +110,6 @@
             z-index: 1000;
             box-shadow: inset 0 -40px 60px -20px var(--bg);
             width: 100%;
-            overflow: hidden;
         }
 
         @keyframes gradientShift {
@@ -119,7 +118,14 @@
             100% { background-position: 0% 50%; }
         }
 
-        .hero-vector { position: absolute; z-index: 0; opacity: 0.6; pointer-events: none; }
+        .hero-bg-wrapper {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .hero-vector { position: absolute; opacity: 0.6; }
         .vector-1 { top: -10%; left: -5%; width: 300px; animation: float 6s ease-in-out infinite; }
         .vector-2 { bottom: 10%; right: -5%; width: 250px; animation: float 8s ease-in-out infinite reverse; }
         
@@ -250,6 +256,14 @@
         }
         .mode-btn.active { background: var(--surface); color: var(--primary); box-shadow: var(--shadow-sm); }
 
+        .search-top-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
         /* Input Area */
         .search-box {
             flex: 1 1 200px;
@@ -343,7 +357,7 @@
         .trust-badge .material-symbols-rounded { font-size: 18px; color: var(--accent); }
 
         /* ─── AFTER SEARCH (STRICT SINGLE ROW GRID ALIGNMENT) ─── */
-        body.search-active .hero-vector { display: none; }
+        body.search-active .hero-bg-wrapper { display: none; }
         body.search-active .hero-content { display: none; }
         
         body.search-active .discovery-header {
@@ -385,7 +399,21 @@
         @media(min-width: 900px){ body.search-active .tingo-brand-title { display: block; } }
 
         /* 2. Search Bar */
-        body.search-active #modeSwitchWrap { display: none; } /* Hidden to save space */
+        body.search-active #modeSwitchWrap { display: none; }
+        
+        body.search-active .search-top-row {
+            order: 2;
+            flex: 1 1 auto;
+            min-width: 0;
+            background: var(--surface); 
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full); 
+            padding: 4px;
+            display: flex;
+            position: relative;
+            z-index: 10;
+        }
+        
         body.search-active .search-box {
             grid-area: search;
             background: var(--surface);
@@ -566,12 +594,14 @@
         <header class="discovery-header" id="mainHeader">
             
             <!-- Abstract Background Vectors -->
-            <svg class="hero-vector vector-1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-              <path fill="#93C5FD" d="M44.7,-76.4C58.8,-69.2,71.8,-59.1,81.4,-46.3C91,-33.5,97.2,-18,96.3,-2.8C95.4,12.4,87.4,27.3,77.3,40.1C67.2,52.9,55,63.6,41.4,71.2C27.8,78.8,12.8,83.3,-1.9,86.6C-16.6,89.9,-32.1,92,-45.4,86.1C-58.7,80.2,-69.8,66.3,-77.8,51.5C-85.8,36.7,-90.7,21,-92,-0.5C-93.3,-22,-91,-42.8,-81.4,-58.5C-71.8,-74.2,-54.9,-84.8,-38.8,-89.7C-22.7,-94.6,-7.4,-93.8,6.8,-89.8C21,-85.8,30.6,-83.6,44.7,-76.4Z" transform="translate(100 100) scale(1.1)" />
-            </svg>
-            <svg class="hero-vector vector-2" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-              <path fill="#C4B5FD" d="M39.9,-65.7C54.1,-58.5,69.6,-52.2,78.7,-40.7C87.8,-29.2,90.5,-12.5,88.1,3.4C85.7,19.3,78.2,34.4,67.7,46.5C57.2,58.6,43.7,67.7,28.8,73.2C13.9,78.7,-2.4,80.6,-18.2,77.4C-34,74.2,-49.3,65.9,-60.2,54C-71.1,42.1,-77.6,26.6,-81.1,10.6C-84.6,-5.4,-85.1,-21.9,-78.2,-35.1C-71.3,-48.3,-57,-58.2,-42.6,-65.2C-28.2,-72.2,-13.7,-76.3,-0.1,-76.1C13.5,-75.9,25.7,-72.9,39.9,-65.7Z" transform="translate(100 100) scale(1.1)" />
-            </svg>
+            <div class="hero-bg-wrapper">
+                <svg class="hero-vector vector-1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <path fill="#93C5FD" d="M44.7,-76.4C58.8,-69.2,71.8,-59.1,81.4,-46.3C91,-33.5,97.2,-18,96.3,-2.8C95.4,12.4,87.4,27.3,77.3,40.1C67.2,52.9,55,63.6,41.4,71.2C27.8,78.8,12.8,83.3,-1.9,86.6C-16.6,89.9,-32.1,92,-45.4,86.1C-58.7,80.2,-69.8,66.3,-77.8,51.5C-85.8,36.7,-90.7,21,-92,-0.5C-93.3,-22,-91,-42.8,-81.4,-58.5C-71.8,-74.2,-54.9,-84.8,-38.8,-89.7C-22.7,-94.6,-7.4,-93.8,6.8,-89.8C21,-85.8,30.6,-83.6,44.7,-76.4Z" transform="translate(100 100) scale(1.1)" />
+                </svg>
+                <svg class="hero-vector vector-2" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <path fill="#C4B5FD" d="M39.9,-65.7C54.1,-58.5,69.6,-52.2,78.7,-40.7C87.8,-29.2,90.5,-12.5,88.1,3.4C85.7,19.3,78.2,34.4,67.7,46.5C57.2,58.6,43.7,67.7,28.8,73.2C13.9,78.7,-2.4,80.6,-18.2,77.4C-34,74.2,-49.3,65.9,-60.2,54C-71.1,42.1,-77.6,26.6,-81.1,10.6C-84.6,-5.4,-85.1,-21.9,-78.2,-35.1C-71.3,-48.3,-57,-58.2,-42.6,-65.2C-28.2,-72.2,-13.7,-76.3,-0.1,-76.1C13.5,-75.9,25.7,-72.9,39.9,-65.7Z" transform="translate(100 100) scale(1.1)" />
+                </svg>
+            </div>
 
             <div class="top-nav">
                 <div class="logo-wrapper">
@@ -592,21 +622,23 @@
             <!-- AIRBNB STYLE SEARCH & FILTER CARD (Unified & CSS Grid Ready) -->
             <div class="search-widget-container">
                 
-                <div id="modeSwitchWrap">
-                    <div class="mode-switch">
-                        <button type="button" class="mode-btn active" id="modeAvailableBtn" onclick="setPostMode('available')">Find Room</button>
-                        <button type="button" class="mode-btn" id="modeNeededBtn" onclick="setPostMode('needed')">Find Roommate</button>
+                <div class="search-top-row">
+                    <div id="modeSwitchWrap">
+                        <div class="mode-switch">
+                            <button type="button" class="mode-btn active" id="modeAvailableBtn" onclick="setPostMode('available')">Find Room</button>
+                            <button type="button" class="mode-btn" id="modeNeededBtn" onclick="setPostMode('needed')">Find Roommate</button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="search-box">
-                    <span class="material-symbols-rounded search-leading">search</span>
-                    <input type="text" id="search" placeholder="Search location or area..." autocomplete="off" inputmode="search">
-                    <button type="button" class="search-action-btn" onclick="runManualSearch()">
-                        <span class="material-symbols-rounded">arrow_forward</span>
-                    </button>
-                    <!-- Search Suggestions Container -->
-                    <div id="searchSuggestions" class="search-suggestions"></div>
+                    <div class="search-box">
+                        <span class="material-symbols-rounded search-leading">search</span>
+                        <input type="text" id="search" placeholder="Search location or area..." autocomplete="off" inputmode="search">
+                        <button type="button" class="search-action-btn" onclick="runManualSearch()">
+                            <span class="material-symbols-rounded">arrow_forward</span>
+                        </button>
+                        <!-- Search Suggestions Container -->
+                        <div id="searchSuggestions" class="search-suggestions"></div>
+                    </div>
                 </div>
 
                 <!-- Filters attached exactly below -->
@@ -1411,10 +1443,33 @@
             return true;
         }
 
+        // UPDATED: Now queries public_user_profiles view for accurate user names!
         window.attachOwnerProfiles = async function(items) {
             var rows = Array.isArray(items) ? items : [];
             if (!rows.length) return rows;
+            
             var cache = tingoSafeJsonRead(TINGO_PROFILE_CACHE_KEY, {}) || {};
+            var missingIds = rows.map(r => r.user_id).filter(id => id && !cache[id]);
+            missingIds = [...new Set(missingIds)];
+
+            if (missingIds.length > 0) {
+                try {
+                    const { data: profiles, error } = await db
+                        .from('public_user_profiles')
+                        .select('id, name, avatar_url, gender')
+                        .in('id', missingIds);
+
+                    if (!error && profiles) {
+                        profiles.forEach(p => {
+                            cache[p.id] = p;
+                        });
+                        tingoSafeJsonWrite(TINGO_PROFILE_CACHE_KEY, cache);
+                    }
+                } catch (e) {
+                    console.warn("Profile fetch failed:", e);
+                }
+            }
+
             var mapped = rows.map(function(item) {
                 var p = cache[String(item && item.user_id)] || null;
                 return {
@@ -1744,7 +1799,7 @@
             // Deep extract user name
             var ownerObj = room.users || room.user || room.owner || room.profiles || {};
             if (Array.isArray(ownerObj)) ownerObj = ownerObj[0] || {};
-            var ownerName = room.name || ownerObj.name || ownerObj.full_name || ownerObj.first_name || 'User';
+            var ownerName = ownerObj.name || room.name || ownerObj.full_name || ownerObj.first_name || 'User';
             var ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
 
             var dateText = escapeHtml(formatPostDate(room));
@@ -1801,7 +1856,7 @@
             // Deep extract user name
             var ownerObj = req.users || req.user || req.owner || req.profiles || {};
             if (Array.isArray(ownerObj)) ownerObj = ownerObj[0] || {};
-            var ownerName = req.name || ownerObj.name || ownerObj.full_name || ownerObj.first_name || 'User';
+            var ownerName = ownerObj.name || req.name || ownerObj.full_name || ownerObj.first_name || 'User';
             var ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
             
             var dateText = escapeHtml(formatPostDate(req));
