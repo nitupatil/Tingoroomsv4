@@ -58,7 +58,6 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* Strict screen boundaries to prevent horizontal scroll */
         html, body { 
             height: 100%; 
             width: 100vw; 
@@ -91,11 +90,11 @@
         @media (min-width: 900px) { 
             .app-container { 
                 padding-bottom: 0; 
-                padding-right: 120px; /* Space for desktop side nav */
+                padding-right: 120px;
             } 
         }
 
-        /* ─── DISCOVERY HERO (Animated & Colorful with Vectors) ─── */
+        /* ─── DISCOVERY HERO ─── */
         .discovery-header {
             position: relative;
             background: linear-gradient(125deg, #e0e7ff 0%, #f3e8ff 40%, #e0f2fe 80%, #dbeafe 100%);
@@ -120,13 +119,7 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Abstract Background Vectors */
-        .hero-vector {
-            position: absolute;
-            z-index: 0;
-            opacity: 0.6;
-            pointer-events: none;
-        }
+        .hero-vector { position: absolute; z-index: 0; opacity: 0.6; pointer-events: none; }
         .vector-1 { top: -10%; left: -5%; width: 300px; animation: float 6s ease-in-out infinite; }
         .vector-2 { bottom: 10%; right: -5%; width: 250px; animation: float 8s ease-in-out infinite reverse; }
         
@@ -185,11 +178,6 @@
             animation: pulseBadge 2s infinite;
         }
         #notificationBadge.badge.has-unread { display: inline-flex; }
-        @keyframes pulseBadge {
-            0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(225, 29, 72, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
-        }
 
         /* Hero Text */
         .hero-content {
@@ -218,8 +206,11 @@
             padding: 0 10px;
         }
 
-        /* ─── UNIFIED SEARCH & FILTER CARD ─── */
+        /* ─── UNIFIED SEARCH & FILTER CARD (Flat layout for Grid control) ─── */
         .search-widget-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
@@ -230,27 +221,18 @@
             width: calc(100% - 32px);
             max-width: 860px;
             margin: 0 auto 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
             position: relative;
             z-index: 1200;
             transition: all 0.4s ease;
         }
 
-        .search-top-row {
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
-
-        /* Mode Switch inside Search Card */
+        /* Mode Switch */
         #modeSwitchWrap {
-            display: flex;
+            flex: 0 0 auto;
             padding-right: 16px;
             border-right: 1px solid var(--border);
+            display: flex;
         }
-        
         .mode-switch {
             display: inline-flex;
             gap: 4px;
@@ -266,73 +248,54 @@
             font-weight: 700;
             transition: all 0.2s ease;
         }
-        .mode-btn.active {
-            background: var(--surface);
-            color: var(--primary);
-            box-shadow: var(--shadow-sm);
-        }
+        .mode-btn.active { background: var(--surface); color: var(--primary); box-shadow: var(--shadow-sm); }
 
         /* Input Area */
         .search-box {
+            flex: 1 1 200px;
             position: relative;
-            flex: 1;
             display: flex;
             align-items: center;
-            padding: 0 16px 0 24px;
-            width: 100%;
+            padding: 0 12px 0 20px;
             min-width: 0;
         }
-
-        .search-box .search-leading {
-            color: var(--accent);
-            font-size: 24px;
-            margin-right: 12px;
-            flex-shrink: 0;
-        }
-
+        .search-box .search-leading { color: var(--accent); font-size: 24px; margin-right: 12px; flex-shrink: 0; }
         .search-box input {
-            flex: 1;
-            min-width: 0;
-            height: 56px;
-            background: transparent;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--primary);
-            width: 100%;
-            text-overflow: ellipsis;
+            flex: 1; min-width: 0; height: 56px; background: transparent;
+            font-size: 16px; font-weight: 600; color: var(--primary); width: 100%; text-overflow: ellipsis;
         }
         .search-box input::placeholder { color: #94A3B8; font-weight: 500; }
 
         .search-action-btn {
-            background: var(--accent);
-            color: white;
-            height: 48px;
-            width: 48px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 16px var(--accent-glow);
-            transition: transform 0.2s, background 0.2s;
-            flex-shrink: 0;
+            background: var(--accent); color: white; height: 48px; width: 48px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 16px var(--accent-glow); transition: transform 0.2s, background 0.2s; flex-shrink: 0;
         }
         .search-action-btn:hover { background: #1D4ED8; transform: scale(1.05); }
-        .search-action-btn:active { transform: scale(0.95); }
 
         /* Attached Filters Row */
         .filter-row {
+            flex: 0 0 100%;
             display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none;
-            width: 100%; padding: 4px 4px 4px 8px; align-items: center;
+            width: 100%; padding: 12px 4px 4px 8px; align-items: center;
+            border-top: 1px solid var(--border);
+            margin-top: 12px;
         }
         .filter-row::-webkit-scrollbar { display: none; }
+        
+        @media (max-width: 860px) {
+            #modeSwitchWrap {
+                flex: 0 0 100%; border-right: none; border-bottom: 1px solid var(--border);
+                padding-right: 0; padding-bottom: 12px; margin-bottom: 8px; justify-content: center;
+            }
+            .search-box { flex: 0 0 100%; padding: 0 8px; }
+            .search-box input { height: 46px; }
+        }
 
         .filter-select, .filter-reset {
-            flex: 0 0 auto; height: 38px; padding: 0 20px;
-            border-radius: var(--radius-full);
-            border: 1px solid var(--border);
-            background: var(--surface); color: var(--text-secondary);
-            font-size: 13px; font-weight: 600; cursor: pointer;
-            transition: all 0.2s; -webkit-appearance: none; appearance: none;
+            flex: 0 0 auto; height: 38px; padding: 0 20px; border-radius: var(--radius-full);
+            border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary);
+            font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; -webkit-appearance: none; appearance: none;
         }
         
         .filter-select {
@@ -346,54 +309,23 @@
             border-color: var(--primary); background: var(--primary); color: var(--surface);
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23FFFFFF' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
         }
-
         .filter-reset { display: none; align-items: center; gap: 6px; }
         .filter-reset.visible { display: inline-flex; }
         #filterBrokerage.hidden-for-mode { display: none !important; }
 
         /* Search Suggestions */
         .search-suggestions {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            right: 0;
-            background: var(--surface);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            max-height: 340px;
-            overflow-y: auto;
-            z-index: 9999;
-            display: none;
-            border: 1px solid var(--border);
-            width: 100%;
+            position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: var(--surface);
+            border-radius: var(--radius-md); box-shadow: var(--shadow-lg); max-height: 340px;
+            overflow-y: auto; z-index: 9999; display: none; border: 1px solid var(--border); width: 100%;
         }
         .search-suggestions.show { display: block; animation: slideDown 0.2s ease-out; }
-        
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .suggestion-item {
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+        .suggestion-item { padding: 14px 20px; display: flex; align-items: flex-start; gap: 16px; cursor: pointer; transition: background 0.2s; }
         .suggestion-item:hover { background: #F8FAFC; }
-        .suggestion-item .material-symbols-rounded {
-            background: #EFF6FF;
-            padding: 10px;
-            border-radius: var(--radius-sm);
-            color: var(--accent);
-            flex-shrink: 0;
-        }
-        .suggestion-item.history-item .material-symbols-rounded {
-            background: #F1F5F9;
-            color: var(--text-muted);
-        }
+        .suggestion-item .material-symbols-rounded { background: #EFF6FF; padding: 10px; border-radius: var(--radius-sm); color: var(--accent); flex-shrink: 0; margin-top: 2px;}
+        .suggestion-item.history-item .material-symbols-rounded { background: #F1F5F9; color: var(--text-muted); }
         .suggestion-main { font-weight: 700; font-size: 15px; color: var(--primary); display: block; overflow-wrap: break-word; word-break: break-word;}
         .suggestion-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; display: block; overflow-wrap: break-word; word-break: break-word;}
         .suggestion-empty { padding: 20px; text-align: center; color: var(--text-muted); font-weight: 500; }
@@ -404,22 +336,24 @@
             opacity: 0.85; transition: opacity 0.3s; z-index: 2; position: relative;
         }
         .trust-badge {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 13px; font-weight: 700; color: var(--secondary);
-            background: rgba(255, 255, 255, 0.5);
-            padding: 8px 14px; border-radius: var(--radius-full);
-            backdrop-filter: blur(4px);
-            white-space: nowrap;
+            display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--secondary);
+            background: rgba(255, 255, 255, 0.5); padding: 8px 14px; border-radius: var(--radius-full);
+            backdrop-filter: blur(4px); white-space: nowrap;
         }
         .trust-badge .material-symbols-rounded { font-size: 18px; color: var(--accent); }
 
-        /* ─── AFTER SEARCH (Compact Sticky Mode - SINGLE ROW ALIGNMENT) ─── */
+        /* ─── AFTER SEARCH (STRICT SINGLE ROW GRID ALIGNMENT) ─── */
         body.search-active .hero-vector { display: none; }
         body.search-active .hero-content { display: none; }
         
         body.search-active .discovery-header {
-            min-height: auto;
-            padding: 10px 16px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            grid-template-areas: 
+                "logo search notif"
+                "filter filter filter";
+            gap: 12px 16px;
+            padding: 12px 20px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
@@ -428,74 +362,74 @@
             animation: none;
             position: sticky;
             top: 0;
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 12px;
+            min-height: auto;
         }
 
+        /* Flatten nested divs to enable Grid layout on descendants */
         body.search-active .top-nav,
         body.search-active .search-widget-container {
-            display: contents; /* Unwraps children to place them perfectly in the single row flex header */
+            display: contents; 
         }
         
+        /* 1. Logo */
         body.search-active .logo-wrapper { 
-            order: 1; 
+            grid-area: logo;
             padding: 4px;
-            gap: 6px; 
+            margin: 0;
             border: none;
             background: transparent;
             box-shadow: none;
+            align-self: center;
         }
         body.search-active .tingo-brand-title { display: none; } 
         @media(min-width: 900px){ body.search-active .tingo-brand-title { display: block; } }
-        
-        body.search-active .search-top-row {
-            order: 2;
-            flex: 1;
-            min-width: 150px;
-            background: var(--surface); 
-            border: 1px solid var(--border);
-            border-radius: var(--radius-full); 
-            padding: 4px;
-        }
 
-        body.search-active .notification {
-            order: 3;
-            width: 42px;
-            height: 42px;
+        /* 2. Search Bar */
+        body.search-active #modeSwitchWrap { display: none; } /* Hidden to save space */
+        body.search-active .search-box {
+            grid-area: search;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            padding: 0 6px 0 16px;
+            height: 48px;
+            margin: 0;
+            align-self: center;
         }
-        
-        body.search-active .filter-row {
-            order: 4;
-            flex: 0 0 100%; /* Drops filter down below the row nicely */
-            padding: 4px 0 0 0; 
-        }
-        
-        body.search-active #modeSwitchWrap {
-            width: auto; padding-right: 12px; border-right: 1px solid var(--border);
-        }
-        body.search-active .mode-switch { background: transparent; padding: 0; }
-        body.search-active .mode-btn { padding: 8px 16px; font-size: 13px; }
-        body.search-active .search-box { padding: 0 8px 0 16px; }
-        body.search-active .search-box input { height: 40px; }
-        body.search-active .search-action-btn { height: 36px; width: 36px; }
+        body.search-active .search-box input { height: 100%; font-size: 15px; }
+        body.search-active .search-action-btn { height: 38px; width: 38px; }
         body.search-active .search-action-btn .material-symbols-rounded { font-size: 20px; }
+
+        /* 3. Notification */
+        body.search-active .notification {
+            grid-area: notif;
+            align-self: center;
+            margin: 0;
+        }
+        
+        /* 4. Filters Row */
+        body.search-active .filter-row {
+            grid-area: filter;
+            border-top: none;
+            margin-top: 0;
+            padding: 0 0 6px 0;
+        }
 
         @media (max-width: 860px) {
             body.search-active .discovery-header {
                 padding: 10px 12px;
-                gap: 8px;
+                gap: 8px 10px;
             }
-            body.search-active #modeSwitchWrap { display: none; } /* Hide mode switch text/tabs in sticky mobile to save space */
-            body.search-active .search-box { padding: 0 4px; }
-            body.search-active .search-box input { height: 38px; font-size: 14px; }
-            body.search-active .logo-wrapper { margin-right: -4px; }
+            body.search-active .logo-wrapper { padding: 0; }
+            body.search-active .logo { width: 34px; height: 34px; }
+            body.search-active .notification { width: 40px; height: 40px; }
+            body.search-active .search-box { height: 44px; padding: 0 4px 0 12px; }
+            body.search-active .search-box input { font-size: 14px; }
+            body.search-active .search-action-btn { height: 36px; width: 36px; }
+            body.search-active .search-action-btn .material-symbols-rounded { font-size: 18px; }
         }
 
-
-        /* ─── MAIN CONTENT & NEW LISTING CARDS (Premium Container Style) ─── */
+        /* ─── MAIN CONTENT & NEW LISTING CARDS ─── */
         .main-content {
             display: grid; 
             max-width: 1240px; margin: 0 auto; padding: 24px 20px;
@@ -507,132 +441,54 @@
         .card {
             display: flex; flex-direction: column;
             cursor: pointer; position: relative; min-width: 0; width: 100%; max-width: 100%;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
             transition: transform 0.2s, box-shadow 0.2s;
-            animation: cardEntrance 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-            overflow: hidden;
+            animation: cardEntrance 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; overflow: hidden;
         }
-        
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
         
         /* Highlighting for Posts related to "Girls" */
-        .card.girls-post {
-            border: 2px solid #F472B6;
-            background: #FDF2F8;
-        }
-        .card.girls-post .card-title {
-            color: #BE185D;
-        }
-        .card.girls-post .card-price-badge {
-            background: #FCE7F3;
-            color: #9D174D;
-        }
+        .card.girls-post { border: 2px solid #F472B6; background: #FDF2F8; }
+        .card.girls-post .card-title { color: #BE185D; }
+        .card.girls-post .card-price-badge { background: #FCE7F3; color: #9D174D; }
 
-        @keyframes cardEntrance {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes cardEntrance { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card:nth-child(1) { animation-delay: 0.05s; }
-        .card:nth-child(2) { animation-delay: 0.1s; }
-        .card:nth-child(3) { animation-delay: 0.15s; }
-        .card:nth-child(4) { animation-delay: 0.2s; }
-
-        /* Full Width Image Container */
-        .card-img-wrapper {
-            position: relative; width: 100%; aspect-ratio: 4 / 3;
-            background: #E2E8F0; overflow: hidden;
-            border-bottom: 1px solid var(--border);
-        }
-        
+        .card-img-wrapper { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #E2E8F0; overflow: hidden; border-bottom: 1px solid var(--border); }
         .slides-track { display: flex; width: 100%; height: 100%; transition: transform 0.4s ease-in-out; }
         .slide { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; }
 
-        .ig-heart-btn {
-            position: absolute; top: 12px; right: 12px; z-index: 10;
-            color: rgba(0,0,0,0.4); -webkit-text-stroke: 2px #FFF; font-size: 28px;
-            transition: transform 0.2s, color 0.2s;
-        }
+        .ig-heart-btn { position: absolute; top: 12px; right: 12px; z-index: 10; color: rgba(0,0,0,0.4); -webkit-text-stroke: 2px #FFF; font-size: 28px; transition: transform 0.2s, color 0.2s; }
         .card:hover .ig-heart-btn { transform: scale(1.1); color: #E11D48; -webkit-text-stroke: 0; }
         
-        /* Floating Price on Image */
-        .card-price-badge {
-            position: absolute; bottom: 12px; left: 12px; z-index: 10;
-            background: rgba(255,255,255,0.95); padding: 6px 12px;
-            border-radius: var(--radius-full); font-size: 16px; font-weight: 800;
-            color: var(--primary); box-shadow: var(--shadow-md);
-            backdrop-filter: blur(8px);
-        }
+        .card-price-badge { position: absolute; bottom: 12px; left: 12px; z-index: 10; background: rgba(255,255,255,0.95); padding: 6px 12px; border-radius: var(--radius-full); font-size: 16px; font-weight: 800; color: var(--primary); box-shadow: var(--shadow-md); backdrop-filter: blur(8px); }
         .card-price-badge span { font-size: 13px; font-weight: 600; color: var(--text-muted); }
 
-        /* Card Content Hierarchy */
         .card-content { display: flex; flex-direction: column; gap: 14px; padding: 16px; min-width: 0; width: 100%; }
-        
         .card-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; min-width: 0;}
+        .card-title { font-size: 17px; font-weight: 700; color: var(--primary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; white-space: normal; overflow-wrap: break-word; word-break: break-word; line-height: 1.3; }
         
-        /* Mobile-safe Text Clamping */
-        .card-title {
-            font-size: 17px; font-weight: 700; color: var(--primary);
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-            overflow: hidden; text-overflow: ellipsis; white-space: normal;
-            overflow-wrap: break-word; word-break: break-word; line-height: 1.3;
-        }
-        
-        /* Complete Address display */
-        .card-address { 
-            font-size: 14px; color: var(--text-muted); line-height: 1.4; 
-            display: flex; align-items: flex-start; gap: 6px;
-            overflow-wrap: break-word; word-break: break-word;
-        }
+        .card-address { font-size: 14px; color: var(--text-muted); line-height: 1.4; display: flex; align-items: flex-start; gap: 6px; overflow-wrap: break-word; word-break: break-word; }
         .card-address svg { flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px; fill: var(--text-muted); }
 
-        /* User & Date Row */
-        .card-user-row {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border); padding-bottom: 14px; min-width: 0; width: 100%; gap: 10px;
-        }
+        .card-user-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; min-width: 0; width: 100%; gap: 10px; }
         .card-user { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;}
         .card-user-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
-        .card-user-name { 
-            font-size: 14px; font-weight: 600; color: var(--secondary);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .card-user-name { font-size: 14px; font-weight: 600; color: var(--secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .card-date { font-size: 13px; color: var(--text-muted); font-weight: 500; flex-shrink: 0; text-align: right; }
 
-        /* Meta Details Row */
-        .card-meta-row {
-            display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
-            font-size: 13px; color: var(--text-muted); font-weight: 500; line-height: 1.4; width: 100%; min-width: 0;
-        }
+        .card-meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); font-weight: 500; line-height: 1.4; width: 100%; min-width: 0; }
         .meta-item { white-space: nowrap; }
         .meta-dot { color: #CBD5E1; }
         .meta-success { color: var(--success); font-weight: 600; background: var(--success-bg); padding: 2px 6px; border-radius: 4px;}
-        
-        .card-distance {
-            color: var(--accent);
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .card-distance .material-symbols-rounded { font-size: 14px; color: var(--accent); }
+        .card-distance { color: var(--accent); font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+        .card-distance .material-symbols-rounded { font-size: 14px; color: var(--accent); margin-top: -1px; }
 
-        /* Requirement specific styles */
-        .requirement-image {
-            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
-            display: flex; align-items: center; justify-content: center;
-        }
+        .requirement-image { background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); display: flex; align-items: center; justify-content: center; }
         .requirement-image .req-icon { font-size: 64px; color: #93C5FD; opacity: 0.5; }
 
-        /* Status Banner */
         .search-status { grid-column: 1 / -1; font-size: 20px; font-weight: 800; color: var(--primary); padding-bottom: 8px; overflow-wrap: break-word; word-break: break-word;}
-        
         .no-results { grid-column: 1 / -1; text-align: center; padding: 80px 20px; display: flex; flex-direction: column; align-items: center;}
         .no-results svg { width: 120px; height: 120px; opacity: 0.8; margin-bottom: 24px; }
         .no-results h3 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
@@ -649,8 +505,7 @@
         }
         .nav-item {
             display: flex; flex-direction: column; align-items: center; gap: 4px;
-            color: var(--text-muted); font-size: 11px; font-weight: 600; text-decoration: none;
-            transition: color 0.2s;
+            color: var(--text-muted); font-size: 11px; font-weight: 600; text-decoration: none; transition: color 0.2s;
         }
         .nav-item.active { color: var(--accent); }
         .nav-item .material-symbols-rounded { font-size: 26px; }
@@ -658,23 +513,11 @@
         @media (min-width: 900px) {
             .bottom-nav-embedded {
                 display: flex; /* Converts to Desktop Vertical Nav */
-                top: 50%;
-                transform: translateY(-50%);
-                right: 24px;
-                bottom: auto;
-                left: auto;
-                width: 80px;
-                height: auto;
-                border-radius: 24px;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                gap: 16px;
-                padding: 24px 8px;
-                background: var(--surface);
-                box-shadow: var(--shadow-lg);
-                border: 1px solid var(--border);
-                border-top: 1px solid var(--border);
+                top: 50%; transform: translateY(-50%); right: 24px; bottom: auto; left: auto;
+                width: 80px; height: auto; border-radius: 24px; flex-direction: column;
+                justify-content: center; align-items: center; gap: 16px; padding: 24px 8px;
+                background: var(--surface); box-shadow: var(--shadow-lg);
+                border: 1px solid var(--border); border-top: 1px solid var(--border);
             }
             .nav-item { width: 100%; flex-direction: column; padding: 0; }
             .nav-item span { margin-top: 4px; font-size: 11px; }
@@ -746,26 +589,24 @@
                 <p class="hero-subtitle">Discover verified rooms, trusted roommates, and rental opportunities across Pune.</p>
             </div>
 
-            <!-- AIRBNB STYLE SEARCH & FILTER CARD (Unified) -->
+            <!-- AIRBNB STYLE SEARCH & FILTER CARD (Unified & CSS Grid Ready) -->
             <div class="search-widget-container">
                 
-                <div class="search-top-row">
-                    <div id="modeSwitchWrap">
-                        <div class="mode-switch">
-                            <button type="button" class="mode-btn active" id="modeAvailableBtn" onclick="setPostMode('available')">Find Room</button>
-                            <button type="button" class="mode-btn" id="modeNeededBtn" onclick="setPostMode('needed')">Find Roommate</button>
-                        </div>
+                <div id="modeSwitchWrap">
+                    <div class="mode-switch">
+                        <button type="button" class="mode-btn active" id="modeAvailableBtn" onclick="setPostMode('available')">Find Room</button>
+                        <button type="button" class="mode-btn" id="modeNeededBtn" onclick="setPostMode('needed')">Find Roommate</button>
                     </div>
+                </div>
 
-                    <div class="search-box">
-                        <span class="material-symbols-rounded search-leading">search</span>
-                        <input type="text" id="search" placeholder="Search location or area..." autocomplete="off" inputmode="search">
-                        <button type="button" class="search-action-btn" onclick="runManualSearch()">
-                            <span class="material-symbols-rounded">arrow_forward</span>
-                        </button>
-                        <!-- Search Suggestions Container -->
-                        <div id="searchSuggestions" class="search-suggestions"></div>
-                    </div>
+                <div class="search-box">
+                    <span class="material-symbols-rounded search-leading">search</span>
+                    <input type="text" id="search" placeholder="Search location or area..." autocomplete="off" inputmode="search">
+                    <button type="button" class="search-action-btn" onclick="runManualSearch()">
+                        <span class="material-symbols-rounded">arrow_forward</span>
+                    </button>
+                    <!-- Search Suggestions Container -->
+                    <div id="searchSuggestions" class="search-suggestions"></div>
                 </div>
 
                 <!-- Filters attached exactly below -->
@@ -1030,9 +871,14 @@
         }
 
         function tingoBrokerageText(room) {
-            const type = String(room?.brokerage_type || '').trim();
+            let type = String(room?.brokerage_type || '').trim();
             if (!type || type.toLowerCase() === 'no brokerage' || type.toLowerCase().includes('no broker'))
-            return 'No Brokerage';
+                return 'No Brokerage';
+            
+            // Map "Applicable" directly to "Brokerage Applicable"
+            if (type.toLowerCase() === 'applicable' || type.toLowerCase() === 'brokerage applicable') {
+                type = 'Brokerage Applicable';
+            }
             
             const amount = String(room?.brokerage_amount || '').trim();
             if (amount) return type + ': ' + formatListingRent(amount);
@@ -1044,7 +890,7 @@
             return !type || type === 'no brokerage' || type.includes('no broker');
         }
 
-        // ─── EXACT LOCATION SEARCH LOGIC FROM ORIGINAL SCRIPT ───
+        // ─── EXACT LOCATION SEARCH LOGIC FROM INDEX 71 ───
         const TINGO_PUNE_CENTER = { lat: 18.5204, lon: 73.8567 };
         const TINGO_PUNE_VIEWBOX = "73.20,19.45,75.10,17.75";
         const TINGO_PUNE_BOUNDS = { west: 73.20, east: 75.10, south: 17.75, north: 19.45 };
@@ -1052,18 +898,83 @@
 
         const TINGO_LOCAL_PUNE_PLACES = [
             { label: "Bavdhan", subLabel: "Pune, Maharashtra", lat: 18.5116, lon: 73.7788, aliases: "bhavdhan bavadhan bavdan" },
+            { label: "Bhukum", subLabel: "Mulshi, Pune District", lat: 18.5029, lon: 73.7107, aliases: "bhukhum bhukam bhukum village" },
+            { label: "Bhusari Colony", subLabel: "Kothrud, Pune", lat: 18.5078, lon: 73.7952, aliases: "bhusari kothrud busari bhoosari colony" },
             { label: "Kothrud", subLabel: "Pune, Maharashtra", lat: 18.5074, lon: 73.8077, aliases: "kotharud kothrud depot karve road" },
+            { label: "Karve Nagar", subLabel: "Pune, Maharashtra", lat: 18.4904, lon: 73.8175, aliases: "karvenagar karve nagar" },
+            { label: "Warje", subLabel: "Pune, Maharashtra", lat: 18.4846, lon: 73.7966, aliases: "warje malwadi" },
             { label: "Baner", subLabel: "Pune, Maharashtra", lat: 18.5590, lon: 73.7868, aliases: "baner road balewadi baner" },
             { label: "Balewadi", subLabel: "Pune, Maharashtra", lat: 18.5820, lon: 73.7680, aliases: "balewadi high street" },
             { label: "Aundh", subLabel: "Pune, Maharashtra", lat: 18.5593, lon: 73.8078, aliases: "aundh road parihar chowk" },
             { label: "Pashan", subLabel: "Pune, Maharashtra", lat: 18.5386, lon: 73.7927, aliases: "pashan sus road" },
+            { label: "Sus", subLabel: "Pune, Maharashtra", lat: 18.5564, lon: 73.7540, aliases: "sus gaon sus road" },
             { label: "Hinjewadi Phase 1", subLabel: "Pune District", lat: 18.5913, lon: 73.7389, aliases: "hinjawadi hinjewadi phase one wakad" },
+            { label: "Hinjewadi Phase 2", subLabel: "Pune District", lat: 18.5966, lon: 73.7188, aliases: "hinjawadi phase two" },
             { label: "Wakad", subLabel: "Pimpri-Chinchwad, Pune", lat: 18.5973, lon: 73.7898, aliases: "wakad chowk bhumkar chowk" },
+            { label: "Bhumkar Chowk", subLabel: "Wakad, Pune", lat: 18.6026, lon: 73.7667, aliases: "bhumkar chok bhumkar chouk wakad" },
+            { label: "Dange Chowk", subLabel: "Thergaon, Pune", lat: 18.6142, lon: 73.7892, aliases: "dange chok chouk" },
+            { label: "Chandani Chowk", subLabel: "Bavdhan/Kothrud, Pune", lat: 18.5071, lon: 73.7811, aliases: "chandni chowk chandani chok chouk" },
+            { label: "Nal Stop", subLabel: "Karve Road, Pune", lat: 18.5097, lon: 73.8316, aliases: "nalstop karve road" },
+            { label: "Goodluck Chowk", subLabel: "FC Road, Pune", lat: 18.5209, lon: 73.8413, aliases: "good luck chowk fc road deccan" },
+            { label: "Deccan Gymkhana", subLabel: "Pune, Maharashtra", lat: 18.5162, lon: 73.8418, aliases: "deccan gymkhana fc road" },
+            { label: "FC Road", subLabel: "Shivajinagar, Pune", lat: 18.5227, lon: 73.8412, aliases: "fergusson college road f c road" },
+            { label: "JM Road", subLabel: "Shivajinagar, Pune", lat: 18.5196, lon: 73.8476, aliases: "jangli maharaj road j m road" },
             { label: "Shivajinagar", subLabel: "Pune, Maharashtra", lat: 18.5308, lon: 73.8475, aliases: "shivaji nagar court bus stand" },
-            { label: "Kharadi", subLabel: "Pune, Maharashtra", lat: 18.5515, lon: 73.9348, aliases: "kharadi eon it park world trade center" },
+            { label: "SPPU", subLabel: "Ganeshkhind, Pune", lat: 18.5526, lon: 73.8246, aliases: "savitribai phule pune university pune university university of pune" },
+            { label: "COEP Technological University", subLabel: "Shivajinagar, Pune", lat: 18.5294, lon: 73.8564, aliases: "coep clg college engineering pune" },
+            { label: "Fergusson College", subLabel: "FC Road, Pune", lat: 18.5224, lon: 73.8382, aliases: "fc college fergusson clg" },
+            { label: "MIT World Peace University", subLabel: "Kothrud, Pune", lat: 18.5185, lon: 73.8154, aliases: "mit wpu mit college mit clg kothrud" },
+            { label: "Arihant Institute", subLabel: "Bavdhan, Pune", lat: 18.5192, lon: 73.7724, aliases: "arihant mba institute bavdhan arihant clg" },
+            { label: "Sinhgad College Vadgaon", subLabel: "Vadgaon Budruk, Pune", lat: 18.4647, lon: 73.8353, aliases: "sinhgad clg sinhgad college vadgaon budruk" },
+            { label: "Bharati Vidyapeeth", subLabel: "Katraj, Pune", lat: 18.4575, lon: 73.8526, aliases: "bharati vidyapeeth clg college university katraj" },
+            { label: "Symbiosis International University", subLabel: "Lavale, Pune", lat: 18.5388, lon: 73.7336, aliases: "symbiosis lavale clg college siu" },
+            { label: "Katraj", subLabel: "Pune, Maharashtra", lat: 18.4529, lon: 73.8652, aliases: "katraj chowk snake park" },
+            { label: "Katraj Chowk", subLabel: "Pune, Maharashtra", lat: 18.4538, lon: 73.8585, aliases: "katraj chok chouk" },
+            { label: "Swargate", subLabel: "Pune, Maharashtra", lat: 18.5018, lon: 73.8636, aliases: "swargate bus stand" },
+            { label: "Hadapsar", subLabel: "Pune, Maharashtra", lat: 18.5089, lon: 73.9259, aliases: "hadapsar gadital magarpatta amanora" },
+            { label: "Magarpatta City", subLabel: "Hadapsar, Pune", lat: 18.5158, lon: 73.9272, aliases: "magarpatta cybercity" },
+            { label: "Amanora Park Town", subLabel: "Hadapsar, Pune", lat: 18.5182, lon: 73.9396, aliases: "amanora mall township" },
             { label: "Viman Nagar", subLabel: "Pune, Maharashtra", lat: 18.5679, lon: 73.9143, aliases: "viman nagar airport phoenix mall" },
+            { label: "Kharadi", subLabel: "Pune, Maharashtra", lat: 18.5515, lon: 73.9348, aliases: "kharadi eon it park world trade center" },
+            { label: "EON IT Park", subLabel: "Kharadi, Pune", lat: 18.5512, lon: 73.9514, aliases: "eon kharadi it park" },
             { label: "Koregaon Park", subLabel: "Pune, Maharashtra", lat: 18.5362, lon: 73.8938, aliases: "kp koregaon park lane" },
-            { label: "Kalyani Nagar", subLabel: "Pune, Maharashtra", lat: 18.5463, lon: 73.9033, aliases: "kalyani nagar" }
+            { label: "Kalyani Nagar", subLabel: "Pune, Maharashtra", lat: 18.5463, lon: 73.9033, aliases: "kalyani nagar" },
+            { label: "Pune Railway Station", subLabel: "Pune, Maharashtra", lat: 18.5289, lon: 73.8744, aliases: "pune station railway pune junction" },
+            { label: "Yerawada", subLabel: "Pune, Maharashtra", lat: 18.5525, lon: 73.8797, aliases: "yerawada yerwada" },
+            { label: "Wagholi", subLabel: "Pune District", lat: 18.5793, lon: 73.9830, aliases: "wagholi baif road" },
+            { label: "Dhanori", subLabel: "Pune, Maharashtra", lat: 18.5968, lon: 73.8905, aliases: "dhanori lohegaon" },
+            { label: "Lohegaon", subLabel: "Pune, Maharashtra", lat: 18.5993, lon: 73.9143, aliases: "lohegaon airport" },
+            { label: "Pimpri", subLabel: "Pimpri-Chinchwad, Pune", lat: 18.6298, lon: 73.7997, aliases: "pimpri chinchwad" },
+            { label: "Chinchwad", subLabel: "Pimpri-Chinchwad, Pune", lat: 18.6476, lon: 73.8001, aliases: "chinchwad station" },
+            { label: "Nigdi", subLabel: "Pimpri-Chinchwad, Pune", lat: 18.6518, lon: 73.7612, aliases: "akurdi nigdi pradhikaran" },
+            { label: "Akurdi", subLabel: "Pimpri-Chinchwad, Pune", lat: 18.6497, lon: 73.7729, aliases: "akurdi railway station" },
+            { label: "Talegaon Dabhade", subLabel: "Pune District", lat: 18.7350, lon: 73.6751, aliases: "talegaon dabhade" },
+            { label: "Lonavala", subLabel: "Pune District", lat: 18.7546, lon: 73.4062, aliases: "lonavla lonavala" },
+            { label: "Pirangut", subLabel: "Mulshi, Pune District", lat: 18.5120, lon: 73.6845, aliases: "pirangut ghotawade phata" },
+            { label: "Lavasa Road", subLabel: "Pune District", lat: 18.4459, lon: 73.6711, aliases: "lavasa road mulshi" },
+            { label: "Paud Road", subLabel: "Kothrud/Bavdhan, Pune", lat: 18.5079, lon: 73.7867, aliases: "paud rd" },
+            { label: "Sus Road", subLabel: "Pashan/Baner, Pune", lat: 18.5547, lon: 73.7714, aliases: "sus road pashan" },
+            { label: "Baner Road", subLabel: "Pune, Maharashtra", lat: 18.5596, lon: 73.7948, aliases: "baner rd" },
+            { label: "Karve Road", subLabel: "Pune, Maharashtra", lat: 18.5036, lon: 73.8214, aliases: "karve rd kothrud" },
+            { label: "Senapati Bapat Road", subLabel: "Pune, Maharashtra", lat: 18.5376, lon: 73.8297, aliases: "sb road senapati bapat rd" },
+            { label: "Law College Road", subLabel: "Pune, Maharashtra", lat: 18.5205, lon: 73.8291, aliases: "law clg road law college rd" },
+            { label: "Tilak Road", subLabel: "Sadashiv Peth, Pune", lat: 18.5085, lon: 73.8523, aliases: "tilak rd" },
+            { label: "Laxmi Road", subLabel: "Pune, Maharashtra", lat: 18.5153, lon: 73.8569, aliases: "lakshmi road" },
+            { label: "Camp", subLabel: "Pune, Maharashtra", lat: 18.5131, lon: 73.8797, aliases: "pune camp mg road" },
+            { label: "MG Road", subLabel: "Camp, Pune", lat: 18.5165, lon: 73.8796, aliases: "m g road camp" },
+            { label: "Shaniwar Wada", subLabel: "Pune, Maharashtra", lat: 18.5195, lon: 73.8553, aliases: "shanivar wada" },
+            { label: "Dagadusheth Halwai Ganpati", subLabel: "Budhwar Peth, Pune", lat: 18.5164, lon: 73.8562, aliases: "dagdusheth ganpati temple" },
+            { label: "Narhe", subLabel: "Pune, Maharashtra", lat: 18.4530, lon: 73.8175, aliases: "narhe ambegaon" },
+            { label: "Ambegaon Budruk", subLabel: "Pune, Maharashtra", lat: 18.4566, lon: 73.8427, aliases: "ambegaon budruk" },
+            { label: "Dhayari", subLabel: "Pune, Maharashtra", lat: 18.4475, lon: 73.8076, aliases: "dhayari phata" },
+            { label: "Nanded City", subLabel: "Sinhagad Road, Pune", lat: 18.4572, lon: 73.7910, aliases: "nanded city sinhgad road" },
+            { label: "Sinhagad Road", subLabel: "Pune, Maharashtra", lat: 18.4710, lon: 73.8172, aliases: "sinhgad road sinhagad road" },
+            { label: "Wagholi Kesnand Road", subLabel: "Wagholi, Pune", lat: 18.5798, lon: 74.0010, aliases: "kesnand road wagholi" },
+            { label: "Moshi", subLabel: "Pimpri-Chinchwad, Pune", lat: 18.6711, lon: 73.8536, aliases: "moshi pradhikaran" },
+            { label: "Ravet", subLabel: "Pimpri-Chinchwad, Pune", lat: 18.6512, lon: 73.7347, aliases: "ravet kiwale" },
+            { label: "Punawale", subLabel: "Pimpri-Chinchwad, Pune", lat: 18.6336, lon: 73.7421, aliases: "punawale" },
+            { label: "Tathawade", subLabel: "Pimpri-Chinchwad, Pune", lat: 18.6254, lon: 73.7551, aliases: "tathawade" },
+            { label: "Kiwale", subLabel: "Pimpri-Chinchwad, Pune", lat: 18.6521, lon: 73.7071, aliases: "kiwale ravet" }
         ];
 
         function tingoIsInsidePuneDistrict(lt, ln) {
@@ -1075,14 +986,56 @@
         }
 
         function tingoCleanLocationText(value) {
-            return String(value || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+            return String(value || "")
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
         }
 
         function tingoNormalizeLocationQuery(value) {
             let text = tingoCleanLocationText(value);
-            const replacements = [ [/\bclg\b|\bcollage\b|\bcolg\b/g, "college"], [/\bchok\b|\bchouk\b|\bchowk\b/g, "chowk"] ];
+            const replacements = [
+                [/\bclg\b|\bcollage\b|\bcolg\b/g, "college"],
+                [/\bchok\b|\bchouk\b|\bchowk\b/g, "chowk"],
+                [/\bgali\b|\bgully\b|\blane\b/g, "galli"],
+                [/\bbldg\b|\bbld\b/g, "building"],
+                [/\bsoc\b|\bscty\b/g, "society"],
+                [/\bapt\b|\baprt\b|\bapartment\b/g, "apartment"],
+                [/\brd\b/g, "road"],
+                [/\bnr\b/g, "near"],
+                [/\bfata\b|\bphata\b/g, "phata"],
+                [/\bpunee\b|\bpoona\b/g, "pune"],
+                [/\bhavdhan\b|\bbavadhan\b|\bbavdan\b/g, "bavdhan"],
+                [/\bbhukhum\b|\bbhukam\b/g, "bhukum"],
+                [/\bkotharud\b/g, "kothrud"],
+                [/\bhinjawadi\b/g, "hinjewadi"]
+            ];
             replacements.forEach(([pattern, replacement]) => { text = text.replace(pattern, replacement); });
             return text.replace(/\s+/g, " ").trim();
+        }
+
+        function tingoLevenshtein(a, b) {
+            a = tingoCleanLocationText(a);
+            b = tingoCleanLocationText(b);
+            if (a === b) return 0;
+            if (!a.length) return b.length;
+            if (!b.length) return a.length;
+            const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+            for (let i = 1; i <= a.length; i++) {
+                let previous = i - 1;
+                row[0] = i;
+                for (let j = 1; j <= b.length; j++) {
+                    const old = row[j];
+                    row[j] = Math.min(
+                        row[j] + 1,
+                        row[j - 1] + 1,
+                        previous + (a[i - 1] === b[j - 1] ? 0 : 1)
+                    );
+                    previous = old;
+                }
+            }
+            return row[b.length];
         }
 
         function tingoTextScore(term, haystack) {
@@ -1092,13 +1045,26 @@
             if (h === q) return 100;
             if (h.startsWith(q)) return 92;
             if (h.includes(q)) return 82;
-            return 50; 
+            const words = q.split(" ").filter(Boolean);
+            let score = 0;
+            words.forEach(word => {
+                if (h.includes(word)) score += 18;
+                else if (word.length >= 4) {
+                    const closest = h.split(" ").some(hw => Math.abs(hw.length - word.length) <= 2 && tingoLevenshtein(hw, word) <= 2);
+                    if (closest) score += 10;
+                }
+            });
+            return Math.min(score, 75);
         }
 
         function tingoIconForLocation(text) {
             const t = tingoCleanLocationText(text);
-            if (/college|university|institute/.test(t)) return "school";
-            if (/station|railway|metro|bus/.test(t)) return "directions_transit";
+            if (/college|university|institute|school|academy|clg/.test(t)) return "school";
+            if (/hospital|clinic|medical|doctor|health/.test(t)) return "local_hospital";
+            if (/mall|market|store|shop|complex/.test(t)) return "storefront";
+            if (/station|railway|metro|bus|depot|airport/.test(t)) return "directions_transit";
+            if (/road|street|lane|galli|gully|chowk|phata|naka|circle|bridge/.test(t)) return "alt_route";
+            if (/society|apartment|building|tower|residency|heights|villa|park|city|colony|nagar/.test(t)) return "apartment";
             return "location_on";
         }
 
@@ -1113,7 +1079,16 @@
                 const key = `${tingoCleanLocationText(item.label)}_${latVal.toFixed(4)}_${lonVal.toFixed(4)}`;
                 if (seen.has(key)) return;
                 seen.add(key);
-                final.push({ ...item, icon: item.icon || tingoIconForLocation(item.label) });
+                final.push({
+                    source: item.source || "map",
+                    label: item.label,
+                    subLabel: item.subLabel || "Pune District, Maharashtra",
+                    displayName: item.displayName || `${item.label}, ${item.subLabel || "Pune District, Maharashtra"}`,
+                    lat: latVal,
+                    lon: lonVal,
+                    icon: item.icon || tingoIconForLocation(`${item.label} ${item.subLabel || ""}`),
+                    score: item.score || 0
+                });
             });
             return final;
         }
@@ -1124,11 +1099,22 @@
             return tingoDeduplicateSuggestions(TINGO_LOCAL_PUNE_PLACES.map(place => {
                 const haystack = `${place.label} ${place.subLabel} ${place.aliases || ""}`;
                 const score = tingoTextScore(query, haystack);
-                return { ...place, displayName: `${place.label}, ${place.subLabel}`, score };
+                return {
+                    source: "local",
+                    label: place.label,
+                    subLabel: place.subLabel,
+                    displayName: `${place.label}, ${place.subLabel}`,
+                    lat: place.lat,
+                    lon: place.lon,
+                    icon: tingoIconForLocation(haystack),
+                    score
+                };
             }).filter(item => item.score > 0)).sort((a, b) => b.score - a.score).slice(0, limit);
         }
 
-        function tingoCacheKey(term) { return TINGO_LOCATION_CACHE_PREFIX + tingoNormalizeLocationQuery(term).slice(0, 70); }
+        function tingoCacheKey(term) {
+            return TINGO_LOCATION_CACHE_PREFIX + tingoNormalizeLocationQuery(term).slice(0, 70);
+        }
 
         function tingoReadLocationCache(term) {
             try {
@@ -1139,7 +1125,9 @@
                 if (!payload || !Array.isArray(payload.items)) return [];
                 if (Date.now() - Number(payload.time || 0) > 1000 * 60 * 60 * 24 * 14) return [];
                 return payload.items;
-            } catch (e) { return []; }
+            } catch (e) {
+                return [];
+            }
         }
 
         function tingoWriteLocationCache(term, items) {
@@ -1150,71 +1138,109 @@
             } catch (e) {}
         }
 
-        async function tingoFetchNominatim(term, signal) {
-            const common = `format=json&addressdetails=1&limit=12&countrycodes=in&viewbox=${encodeURIComponent(TINGO_PUNE_VIEWBOX)}&bounded=1`;
-            const url = `https://nominatim.openstreetmap.org/search?${common}&q=${encodeURIComponent(term + " Pune")}`;
+        function tingoBuildNominatimSuggestion(place) {
+            const address = place.address || {};
+            const named = place.namedetails || {};
+            const firstDisplay = String(place.display_name || "").split(",")[0];
+            const label = named.name || place.name || address.building || address.house_name || address.amenity || address.shop || address.office || address.tourism || address.leisure || address.road || address.neighbourhood || firstDisplay;
+            const roadLine = [address.house_number, address.road].filter(Boolean).join(" ");
+            const areaLine = [address.neighbourhood || address.suburb || address.quarter || address.city_district || address.village || address.town || address.city || "Pune", address.county || address.state].filter(Boolean).join(", ");
+            const subLabel = [roadLine, areaLine].filter(Boolean).join(" · ") || "Pune District, Maharashtra";
+            return {
+                source: "map",
+                label: label || firstDisplay || "Location",
+                subLabel,
+                displayName: place.display_name || `${label}, ${subLabel}`,
+                lat: Number(place.lat),
+                lon: Number(place.lon),
+                icon: tingoIconForLocation(`${label} ${subLabel} ${place.type || ""} ${place.class || ""}`),
+                score: Number(place.importance || 0) * 10
+            };
+        }
+
+        function tingoBuildPhotonSuggestion(feature) {
+            const props = feature.properties || {};
+            const coords = feature.geometry && feature.geometry.coordinates ? feature.geometry.coordinates : [];
+            const labelParts = [props.name, props.housenumber && props.street ? `${props.housenumber} ${props.street}` : null, props.street].filter(Boolean);
+            const label = labelParts[0] || "Location";
+            const subLabel = [props.district || props.locality || props.city || props.county || "Pune", props.state || "Maharashtra"].filter(Boolean).join(", ");
+            return {
+                source: "map",
+                label,
+                subLabel,
+                displayName: [props.name, props.street, props.locality || props.city || props.county, props.state].filter(Boolean).join(", "),
+                lat: Number(coords[1]),
+                lon: Number(coords[0]),
+                icon: tingoIconForLocation(`${props.name || ""} ${props.street || ""} ${props.osm_value || ""}`),
+                score: 20
+            };
+        }
+
+        async function tingoFetchJson(url, signal) {
             const response = await fetch(url, { headers: { "Accept": "application/json" }, signal });
-            if (!response.ok) throw new Error(`Location search failed`);
-            const data = await response.json();
-            return (data || []).map(place => {
-                const firstDisplay = String(place.display_name || "").split(",")[0];
-                return {
-                    source: "map",
-                    label: place.name || firstDisplay || "Location",
-                    subLabel: "Pune District",
-                    displayName: place.display_name,
-                    lat: Number(place.lat),
-                    lon: Number(place.lon),
-                    score: Number(place.importance || 0) * 10
-                };
+            if (!response.ok) throw new Error(`Location search failed ${response.status}`);
+            return response.json();
+        }
+
+        async function tingoFetchPhoton(term, signal) {
+            const normalized = tingoNormalizeLocationQuery(term);
+            const variants = [...new Set([term, normalized, `${normalized} Pune`, `${normalized} Pune Maharashtra`].filter(Boolean))].slice(0, 3);
+            const urls = variants.map(q => `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=${TINGO_PUNE_CENTER.lat}&lon=${TINGO_PUNE_CENTER.lon}&limit=12&lang=en`);
+            const results = await Promise.allSettled(urls.map(url => tingoFetchJson(url, signal)));
+            const items = [];
+            results.forEach(result => {
+                if (result.status !== "fulfilled") return;
+                (result.value.features || []).forEach(feature => items.push(tingoBuildPhotonSuggestion(feature)));
             });
+            return items;
+        }
+
+        async function tingoFetchNominatim(term, signal) {
+            const normalized = tingoNormalizeLocationQuery(term);
+            const variants = [...new Set([term, normalized, `${normalized} Pune District Maharashtra India`, `${normalized} Pune Maharashtra India`].filter(Boolean))].slice(0, 3);
+            const common = `format=json&addressdetails=1&namedetails=1&extratags=1&limit=12&countrycodes=in&viewbox=${encodeURIComponent(TINGO_PUNE_VIEWBOX)}&bounded=1`;
+            const urls = variants.map(q => `https://nominatim.openstreetmap.org/search?${common}&q=${encodeURIComponent(q)}`);
+            const results = await Promise.allSettled(urls.map(url => tingoFetchJson(url, signal)));
+            const items = [];
+            results.forEach(result => {
+                if (result.status !== "fulfilled") return;
+                (result.value || []).forEach(place => items.push(tingoBuildNominatimSuggestion(place)));
+            });
+            return items;
         }
 
         async function tingoLiveSuggestions(term, signal) {
             const cached = tingoReadLocationCache(term);
             if (cached.length) return cached;
-            try {
-                const results = await tingoFetchNominatim(term, signal);
-                const final = tingoDeduplicateSuggestions(results).sort((a, b) => b.score - a.score).slice(0, 14);
-                if (final.length) tingoWriteLocationCache(term, final);
-                return final;
-            } catch (e) { return []; }
-        }
 
-        // ─── PERMANENT SEARCH HISTORY ───
-        function saveRecentSearch(item) {
-            if (!item || !item.label) return;
-            try {
-                let history = JSON.parse(localStorage.getItem('tingo_recent_searches') || '[]');
-                history = history.filter(h => h.label !== item.label);
-                history.unshift(item);
-                if (history.length > 5) history.pop(); // Keep top 5
-                localStorage.setItem('tingo_recent_searches', JSON.stringify(history));
-            } catch(e) {}
-        }
+            const [photon, nominatim] = await Promise.allSettled([
+                tingoFetchPhoton(term, signal),
+                tingoFetchNominatim(term, signal)
+            ]);
 
-        function getRecentSearches() {
-            try {
-                return JSON.parse(localStorage.getItem('tingo_recent_searches') || '[]');
-            } catch(e) { return []; }
-        }
+            const merged = [
+                ...(photon.status === "fulfilled" ? photon.value : []),
+                ...(nominatim.status === "fulfilled" ? nominatim.value : [])
+            ];
 
-        function showRecentSearches(box) {
-            const history = getRecentSearches();
-            if (history.length > 0) {
-                const mapped = history.map(item => ({...item, isHistory: true}));
-                tingoRenderSuggestions(box, mapped, "");
-            } else {
-                tingoRenderSuggestions(box, [], "Type to search Pune locations...");
-            }
+            const query = tingoNormalizeLocationQuery(term);
+            const final = tingoDeduplicateSuggestions(merged).map(item => {
+                item.score = (item.score || 0) + tingoTextScore(query, `${item.label} ${item.subLabel} ${item.displayName}`);
+                return item;
+            }).filter(item => item.score > 8 || tingoTextScore(query, item.displayName) > 8)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 14);
+
+            if (final.length) tingoWriteLocationCache(term, final);
+            return final;
         }
 
         function tingoRenderSuggestions(box, items, message = "") {
             if (!box) return;
             const unique = tingoDeduplicateSuggestions(items).slice(0, 12);
             const rows = unique.map((item, index) => `
-                <div class="suggestion-item ${item.isHistory ? 'history-item' : ''}" data-index="${index}">
-                    <span class="material-symbols-rounded">${item.isHistory ? 'history' : escapeHtml(item.icon || "location_on")}</span>
+                <div class="suggestion-item" data-index="${index}">
+                    <span class="material-symbols-rounded">${escapeHtml(item.icon || "location_on")}</span>
                     <div>
                         <div class="suggestion-main">${escapeHtml(item.label)}</div>
                         <div class="suggestion-sub">${escapeHtml(item.subLabel)}</div>
@@ -1236,25 +1262,20 @@
                 if (!row) return;
                 const item = (box.__tingoItems || [])[Number(row.dataset.index)];
                 if (!item) return;
-                
                 input.value = item.displayName || `${item.label}, ${item.subLabel}`;
                 selectedSearchPlace = { lat: Number(item.lat), lon: Number(item.lon), label: item.label, displayName: input.value };
-                
-                // Save to permanent history
-                saveRecentSearch(selectedSearchPlace);
-
                 box.classList.remove("show");
                 
-                // Keep UI Collapsed for the session
                 document.body.classList.add('search-active');
                 sessionStorage.setItem('tingo_ui_collapsed', 'true');
                 sessionStorage.setItem('tingo_search_query', input.value);
                 sessionStorage.setItem('tingo_search_place', JSON.stringify(selectedSearchPlace));
-                
+
                 loadRooms(input.value, selectedSearchPlace);
             });
         }
 
+        // ─── Search suggestions setup ───
         let selectedSearchPlace = null;
         let suggestionRequestId = 0;
         const searchInput = document.getElementById('search');
@@ -1266,7 +1287,6 @@
             let requestId = 0;
             let controller = null;
 
-            // Load value if returning from another page
             if (window.__TINGO_SAVED_QUERY) {
                 searchInput.value = window.__TINGO_SAVED_QUERY;
             }
@@ -1276,18 +1296,6 @@
 
             tingoAttachClickHandler(searchInput, suggestionsBox);
 
-            searchInput.addEventListener("focus", () => {
-                if (!searchInput.value.trim()) {
-                    showRecentSearches(suggestionsBox);
-                }
-            });
-
-            searchInput.addEventListener("click", () => {
-                if (!searchInput.value.trim()) {
-                    showRecentSearches(suggestionsBox);
-                }
-            });
-
             searchInput.addEventListener("input", () => {
                 const term = searchInput.value.trim();
                 requestId += 1;
@@ -1296,19 +1304,16 @@
                 if (controller) controller.abort();
 
                 if (term.length < 2) {
-                    if (term.length === 0) showRecentSearches(suggestionsBox);
-                    else {
-                        suggestionsBox.classList.remove("show");
-                        suggestionsBox.innerHTML = "";
-                        suggestionsBox.__tingoItems = [];
-                    }
+                    suggestionsBox.classList.remove("show");
+                    suggestionsBox.innerHTML = "";
+                    suggestionsBox.__tingoItems = [];
                     return;
                 }
 
                 const local = tingoLocalSuggestions(term, 8);
                 const cached = tingoReadLocationCache(term);
                 const instant = tingoDeduplicateSuggestions([...local, ...cached]);
-                tingoRenderSuggestions(suggestionsBox, instant, instant.length ? "" : "Searching Pune locations...");
+                tingoRenderSuggestions(suggestionsBox, instant, instant.length ? "Searching Pune district locations..." : "Searching Pune district locations...");
 
                 timer = setTimeout(async () => {
                     controller = new AbortController();
@@ -1319,14 +1324,18 @@
                         if (merged.length) {
                             tingoRenderSuggestions(suggestionsBox, merged, "");
                         } else {
-                            tingoRenderSuggestions(suggestionsBox, [], "No exact place found yet. Try area name.");
+                            tingoRenderSuggestions(suggestionsBox, [], "No exact place found yet. Try society/building + area, for example ‘ABC Society Bavdhan’.");
                         }
                     } catch (error) {
                         if (error && error.name === "AbortError") return;
+                        if (thisRequest !== requestId) return;
+                        const fallback = tingoDeduplicateSuggestions([...local, ...cached]);
+                        tingoRenderSuggestions(suggestionsBox, fallback, fallback.length ? "Showing saved suggestions. Keep typing for exact place." : "Live location search is slow. Check spelling or add Pune area name.");
                     }
-                }, 200);
+                }, 160);
             });
 
+            // Close suggestions on click outside
             document.addEventListener('click', (e) => {
                 if (searchInput && suggestionsBox && !searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
                     suggestionsBox.classList.remove("show");
@@ -1503,19 +1512,29 @@
                 if (!word) return false;
                 var t = normalizeSearchKey(text);
                 if (t.includes(normalizeSearchKey(word))) return true;
-                return false;
+                return t.split(/\s+/).some(function(part) {
+                    if (!part) return false;
+                    if (part.startsWith(normalizeSearchKey(word)) || normalizeSearchKey(word).startsWith(part))
+                        return true;
+                    if (normalizeSearchKey(word).length < 3 || part.length < 3) return false;
+                    return part.indexOf(normalizeSearchKey(word)) !== -1;
+                });
             }
 
             return (rows || []).filter(function(item) {
-                var haystack = [item.location, item.title, item.description, item.type].join(' ');
+                var haystack = [item.location, item.title, item.description, item.type, item.brokerage_type,
+                    item.name, item.users?.name
+                ].filter(Boolean).join(' ');
                 var text = normalizeSearchKey(haystack);
                 if (text.includes(normalizeSearchKey(term))) return true;
+                if (words.length > 1 && words.every(function(w) { return looseMatch(text, w); })) return true;
                 return words.some(function(w) { return w.length >= 3 && looseMatch(text, w); });
             });
         };
 
         window.sortRowsByTarget = async function(rows, target) {
-            if (!target || !Number.isFinite(Number(target.lat))) return rows || [];
+            if (!target || !Number.isFinite(Number(target.lat)) || !Number.isFinite(Number(target.lon)))
+            return rows || [];
             var sorted = [];
             for (var i = 0; i < (rows || []).length; i++) {
                 var row = rows[i];
@@ -1523,21 +1542,26 @@
                 if (!coords) { sorted.push(row); continue; }
                 var km = distanceKm(Number(target.lat), Number(target.lon), coords.lat, coords.lon);
                 sorted.push({ ...row, _distanceKm: km });
+                if (!roomHasCoordinates(row)) await sleep(140);
             }
-            sorted.sort((a, b) => {
-                var da = Number(a._distanceKm); var db = Number(b._distanceKm);
+            sorted.sort(function(a, b) {
+                var da = Number(a._distanceKm);
+                var db = Number(b._distanceKm);
                 if (Number.isFinite(da) && Number.isFinite(db)) return da - db;
+                if (Number.isFinite(da)) return -1;
+                if (Number.isFinite(db)) return 1;
                 return 0;
             });
             return sorted;
         };
 
         window.getTargetFromSearch = async function(search, selectedPlace) {
-            if (selectedPlace && Number.isFinite(Number(selectedPlace.lat))) return selectedPlace;
+            if (selectedPlace && Number.isFinite(Number(selectedPlace.lat)) && Number.isFinite(Number(selectedPlace
+                .lon))) return selectedPlace;
             return await geocodeLocation(search);
         };
 
-        // LOAD ROOMS - ALWAYS SORT NEARBY IF NO SEARCH TERM
+        // LOAD ROOMS - With specific distance & exact matching integration
         window.loadRooms = async function(search, selectedPlace) {
             var cleanSearch = cleanSearchTerm(search || '');
             var requestedMode = activePostMode;
@@ -1556,7 +1580,6 @@
                 if (isStale()) { tingoFeedUpdateInProgress = false; if (container) container.style.opacity = 1; return; }
 
                 if (!cleanSearch) {
-                    // Automatically sort by User's Location or Pune Center if no specific search
                     var targetLoc = window.userLocation || TINGO_PUNE_CENTER;
                     var distanceSorted = await window.sortRowsByTarget(allRows, targetLoc);
                     var finalItems = await window.attachOwnerProfiles(distanceSorted.slice(0, 36));
@@ -1588,8 +1611,33 @@
                 if (target) {
                     var distanceSorted = await window.sortRowsByTarget(allRows, target);
                     if (isStale()) { tingoFeedUpdateInProgress = false; if (container) container.style.opacity = 1; return; }
-                    addUnique(exactRows);
-                    addUnique(distanceSorted);
+                    var distMap = {};
+                    distanceSorted.forEach(function(row) {
+                        var key = String(row?.id || row?.title + '|' + row?.location || '');
+                        if (key) distMap[key] = row;
+                    });
+                    var exactWithDist = exactRows.map(function(row) {
+                        var key = String(row?.id || row?.title + '|' + row?.location || '');
+                        return distMap[key] || row;
+                    });
+                    var nearby = distanceSorted.filter(function(row) {
+                        var km = Number(row._distanceKm);
+                        return Number.isFinite(km) && km <= 35;
+                    });
+                    addUnique(exactWithDist);
+                    addUnique(nearby);
+                    if (!finalRows.length) addUnique(distanceSorted);
+
+                    finalRows.sort(function(a, b) {
+                        var da = Number(a?._distanceKm);
+                        var db = Number(b?._distanceKm);
+                        var aHas = Number.isFinite(da);
+                        var bHas = Number.isFinite(db);
+                        if (aHas && bHas) return da - db;
+                        if (aHas) return -1;
+                        if (bHas) return 1;
+                        return new Date(getPostTimestamp(b) || 0) - new Date(getPostTimestamp(a) || 0);
+                    });
                 } else {
                     addUnique(exactRows);
                 }
@@ -1598,8 +1646,14 @@
                 if (isStale()) { tingoFeedUpdateInProgress = false; if (container) container.style.opacity = 1; return; }
                 
                 var noun = activePostMode === 'needed' ? 'requirements' : 'rooms';
-                var statusText = target && finalItems.length ? 'Showing nearest ' + noun + ' for "' + cleanSearch + '"' : (exactRows.length ? 'Showing matching ' + noun + ' for "' + cleanSearch + '"' : '');
-                
+                var statusText = '';
+                if (target && finalItems.length) {
+                    statusText = 'Showing nearest ' + noun + ' for "' + cleanSearch + '"';
+                } else if (exactRows.length) {
+                    statusText = 'Showing matching ' + noun + ' for "' + cleanSearch + '"';
+                } else if (finalItems.length) {
+                    statusText = 'No exact match for "' + cleanSearch + '". Showing related ' + noun + '.';
+                }
                 renderRooms(finalItems, statusText);
             } catch (error) {
                 if (isStale()) { tingoFeedUpdateInProgress = false; if (container) container.style.opacity = 1; return; }
@@ -1614,7 +1668,6 @@
         window.tingoSliderIntervals = window.tingoSliderIntervals || [];
 
         window.initCardSliders = function() {
-            // Clear old intervals
             window.tingoSliderIntervals.forEach(clearInterval);
             window.tingoSliderIntervals = [];
 
@@ -1688,9 +1741,11 @@
             var typeText = escapeHtml(room.type || 'Room');
             var depositText = 'Dep: ' + escapeHtml(formatListingRent(room.deposit || 0));
 
-            var owner = room.users || room.user || room.owner || room.profiles || {};
-            var ownerName = owner.name || owner.full_name || owner.first_name || 'Posted by user';
-            var ownerAvatar = (owner.avatar_url && owner.avatar_url.trim()) ? owner.avatar_url : getDefaultAvatar(owner.gender);
+            // Deep extract user name
+            var ownerObj = room.users || room.user || room.owner || room.profiles || {};
+            if (Array.isArray(ownerObj)) ownerObj = ownerObj[0] || {};
+            var ownerName = room.name || ownerObj.name || ownerObj.full_name || ownerObj.first_name || 'User';
+            var ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
 
             var dateText = escapeHtml(formatPostDate(room));
             var titleText = escapeHtml(room.title || 'Room Available');
@@ -1743,9 +1798,11 @@
         };
 
         window.renderRequirementCard = function(req) {
-            var owner = req.users || req.user || req.owner || req.profiles || {};
-            var ownerName = owner.name || owner.full_name || owner.first_name || 'Posted by user';
-            var ownerAvatar = (owner.avatar_url && owner.avatar_url.trim()) ? owner.avatar_url : getDefaultAvatar(owner.gender);
+            // Deep extract user name
+            var ownerObj = req.users || req.user || req.owner || req.profiles || {};
+            if (Array.isArray(ownerObj)) ownerObj = ownerObj[0] || {};
+            var ownerName = req.name || ownerObj.name || ownerObj.full_name || ownerObj.first_name || 'User';
+            var ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
             
             var dateText = escapeHtml(formatPostDate(req));
             var titleText = escapeHtml(req.title || 'Room Required');
@@ -1825,7 +1882,6 @@
             var box = document.getElementById('searchSuggestions');
             if (box) box.classList.remove('show');
             
-            // Persist the UI collapsed state and save search query locally
             document.body.classList.add('search-active');
             sessionStorage.setItem('tingo_ui_collapsed', 'true');
             sessionStorage.setItem('tingo_search_query', value);
@@ -1836,7 +1892,6 @@
         // ─── NAV RESET LOGIC (EXPLORE BUTTON) ───
         window.resetToHome = function() {
             if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/')) {
-                // If on Home page, Reset UI completely
                 document.body.classList.remove('search-active');
                 
                 var searchInput = document.getElementById('search');
@@ -1858,7 +1913,6 @@
                 loadRooms('', null);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
-                // Return to home page normally if on another page
                 window.location.href = 'index.html';
             }
         };
@@ -1925,7 +1979,6 @@
                     selectedSearchPlace = null;
                     updateFilterUI();
                     
-                    // Collapse Hero when filter is used
                     document.body.classList.add('search-active');
                     sessionStorage.setItem('tingo_ui_collapsed', 'true');
                     
