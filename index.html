@@ -259,6 +259,7 @@
         .search-top-row {
             display: flex;
             align-items: center;
+            flex-wrap: wrap; /* Allows wrapping on small screens to keep width contained */
             width: 100%;
             position: relative;
             z-index: 10;
@@ -297,13 +298,21 @@
         }
         .filter-row::-webkit-scrollbar { display: none; }
         
+        /* Mobile Enhancements: Gemini Dotted Glow Search Bar & Layout Fix */
         @media (max-width: 860px) {
             #modeSwitchWrap {
                 flex: 0 0 100%; border-right: none; border-bottom: 1px solid var(--border);
-                padding-right: 0; padding-bottom: 12px; margin-bottom: 8px; justify-content: center;
+                padding-right: 0; padding-bottom: 12px; margin-bottom: 12px; justify-content: center;
             }
-            .search-box { flex: 0 0 100%; padding: 0 8px; }
-            .search-box input { height: 46px; }
+            .search-box { 
+                flex: 0 0 100%; padding: 0 6px 0 16px; 
+                border: 2px dotted #8B5CF6; 
+                box-shadow: 0 0 24px rgba(139, 92, 246, 0.25), inset 0 0 12px rgba(139, 92, 246, 0.1); 
+                border-radius: var(--radius-full);
+                background: var(--surface);
+                margin-top: 4px;
+            }
+            .search-box input { height: 50px; }
         }
 
         .filter-select, .filter-reset {
@@ -404,6 +413,7 @@
         body.search-active .search-top-row {
             order: 2;
             flex: 1 1 auto;
+            flex-wrap: nowrap; /* Keep inline when active */
             min-width: 0;
             background: var(--surface); 
             border: 1px solid var(--border);
@@ -417,12 +427,13 @@
         body.search-active .search-box {
             grid-area: search;
             background: var(--surface);
-            border: 1px solid var(--border);
+            border: none; /* Removed default border here since .search-top-row handles it */
             border-radius: var(--radius-full);
             padding: 0 6px 0 16px;
             height: 48px;
             margin: 0;
             align-self: center;
+            box-shadow: none;
         }
         body.search-active .search-box input { height: 100%; font-size: 15px; }
         body.search-active .search-action-btn { height: 38px; width: 38px; }
@@ -451,7 +462,12 @@
             body.search-active .logo-wrapper { padding: 0; }
             body.search-active .logo { width: 34px; height: 34px; }
             body.search-active .notification { width: 40px; height: 40px; }
-            body.search-active .search-box { height: 44px; padding: 0 4px 0 12px; }
+            
+            body.search-active .search-box { 
+                height: 48px; padding: 0 4px 0 14px; 
+                border: 2px dotted #8B5CF6;
+                box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); 
+            }
             body.search-active .search-box input { font-size: 14px; }
             body.search-active .search-action-btn { height: 36px; width: 36px; }
             body.search-active .search-action-btn .material-symbols-rounded { font-size: 18px; }
@@ -469,15 +485,17 @@
         .card {
             display: flex; flex-direction: column;
             cursor: pointer; position: relative; min-width: 0; width: 100%; max-width: 100%;
-            background: var(--surface); border: 1px solid var(--border);
+            background: var(--surface); 
+            border: 2px solid #BFDBFE; /* Professional blue border for non-girl cards */
             border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
             animation: cardEntrance 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; overflow: hidden;
         }
-        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: #60A5FA; }
         
         /* Highlighting for Posts related to "Girls" */
         .card.girls-post { border: 2px solid #F472B6; background: #FDF2F8; }
+        .card.girls-post:hover { border-color: #EC4899; }
         .card.girls-post .card-title { color: #BE185D; }
         .card.girls-post .card-price-badge { background: #FCE7F3; color: #9D174D; }
 
@@ -485,7 +503,8 @@
 
         .card-img-wrapper { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #E2E8F0; overflow: hidden; border-bottom: 1px solid var(--border); }
         .slides-track { display: flex; width: 100%; height: 100%; transition: transform 0.4s ease-in-out; }
-        .slide { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; }
+        /* Object fit changed to contain to prevent image cropping */
+        .slide { flex: 0 0 100%; width: 100%; height: 100%; object-fit: contain; background: #E2E8F0; } 
 
         .ig-heart-btn { position: absolute; top: 12px; right: 12px; z-index: 10; color: rgba(0,0,0,0.4); -webkit-text-stroke: 2px #FFF; font-size: 28px; transition: transform 0.2s, color 0.2s; }
         .card:hover .ig-heart-btn { transform: scale(1.1); color: #E11D48; -webkit-text-stroke: 0; }
@@ -516,7 +535,9 @@
         .requirement-image { background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); display: flex; align-items: center; justify-content: center; }
         .requirement-image .req-icon { font-size: 64px; color: #93C5FD; opacity: 0.5; }
 
-        .search-status { grid-column: 1 / -1; font-size: 20px; font-weight: 800; color: var(--primary); padding-bottom: 8px; overflow-wrap: break-word; word-break: break-word;}
+        /* Minimized status text */
+        .search-status { grid-column: 1 / -1; font-size: 14px; font-weight: 600; color: var(--text-muted); padding-bottom: 8px; overflow-wrap: break-word; word-break: break-word; text-align: center; }
+
         .no-results { grid-column: 1 / -1; text-align: center; padding: 80px 20px; display: flex; flex-direction: column; align-items: center;}
         .no-results svg { width: 120px; height: 120px; opacity: 0.8; margin-bottom: 24px; }
         .no-results h3 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
@@ -685,6 +706,11 @@
                 <span class="material-symbols-rounded">add_circle</span>
                 <span>Post</span>
             </button>
+            <!-- Moved Map button here -->
+            <button class="nav-item" onclick="go('map.html')" type="button">
+                <span class="material-symbols-rounded">map</span>
+                <span>Map</span>
+            </button>
             <button class="nav-item" onclick="checkLogin('user.html')" type="button">
                 <span class="material-symbols-rounded">person</span>
                 <span>Profile</span>
@@ -804,7 +830,7 @@
         window.tingoDb = db;
         window.TINGO_AUTH_FUNCTION_NAME = "tingo-auth";
 
-        // GLOBAL: User location initialized to Pune center[cite: 1]
+        // GLOBAL: User location initialized to Pune center
         window.userLocation = { lat: 18.5204, lon: 73.8567 };
 
         function getDefaultAvatar(gender) {
