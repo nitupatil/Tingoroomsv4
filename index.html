@@ -107,7 +107,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 65vh;
-            z-index: 1000;
+            z-index: 1200; /* Elevated to stay above backdrop */
             box-shadow: inset 0 -40px 60px -20px var(--bg);
             width: 100%;
         }
@@ -212,7 +212,17 @@
             padding: 0 10px;
         }
 
-        /* ─── UNIFIED SEARCH & FILTER CARD (Flat layout for Grid control) ─── */
+        /* ─── UX/UI OVERLAY ─── */
+        .search-backdrop {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            z-index: 1100;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .search-backdrop.show { opacity: 1; pointer-events: auto; }
+
+        /* ─── UNIFIED SEARCH & FILTER CARD ─── */
         .search-widget-container {
             display: flex;
             flex-wrap: wrap;
@@ -228,7 +238,7 @@
             max-width: 860px;
             margin: 0 auto 40px;
             position: relative;
-            z-index: 1200;
+            z-index: 1250; /* Stay above backdrop */
             transition: all 0.4s ease;
         }
 
@@ -259,7 +269,7 @@
         .search-top-row {
             display: flex;
             align-items: center;
-            flex-wrap: wrap; /* Allows wrapping on small screens to keep width contained */
+            flex-wrap: wrap; 
             width: 100%;
             position: relative;
             z-index: 10;
@@ -281,6 +291,16 @@
         }
         .search-box input::placeholder { color: #94A3B8; font-weight: 500; }
 
+        .clear-search-btn {
+            display: none; background: #E2E8F0; color: var(--text-muted);
+            border-radius: 50%; width: 24px; height: 24px; align-items: center;
+            justify-content: center; margin-right: 12px; transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .clear-search-btn.show { display: flex; }
+        .clear-search-btn:hover { background: #CBD5E1; color: var(--primary); }
+        .clear-search-btn .material-symbols-rounded { font-size: 16px; }
+
         .search-action-btn {
             background: var(--accent); color: white; height: 48px; width: 48px;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -298,7 +318,7 @@
         }
         .filter-row::-webkit-scrollbar { display: none; }
         
-        /* Mobile Enhancements: Gemini Dotted Glow Search Bar & Layout Fix */
+        /* Mobile Enhancements: Auto-Zoom Fix, Gemini Glow & Layout Fix */
         @media (max-width: 860px) {
             #modeSwitchWrap {
                 flex: 0 0 100%; border-right: none; border-bottom: 1px solid var(--border);
@@ -312,7 +332,9 @@
                 background: var(--surface);
                 margin-top: 4px;
             }
-            .search-box input { height: 50px; }
+            /* Explicitly set to 16px to PREVENT Safari auto-zoom */
+            .search-box input { height: 50px; font-size: 16px !important; }
+            body.search-active .search-box input { font-size: 16px !important; }
         }
 
         .filter-select, .filter-reset {
@@ -427,7 +449,7 @@
         body.search-active .search-box {
             grid-area: search;
             background: var(--surface);
-            border: none; /* Removed default border here since .search-top-row handles it */
+            border: none; 
             border-radius: var(--radius-full);
             padding: 0 6px 0 16px;
             height: 48px;
@@ -468,7 +490,6 @@
                 border: 2px dotted #8B5CF6;
                 box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); 
             }
-            body.search-active .search-box input { font-size: 14px; }
             body.search-active .search-action-btn { height: 36px; width: 36px; }
             body.search-active .search-action-btn .material-symbols-rounded { font-size: 18px; }
         }
@@ -538,10 +559,12 @@
         /* Minimized status text */
         .search-status { grid-column: 1 / -1; font-size: 14px; font-weight: 600; color: var(--text-muted); padding-bottom: 8px; overflow-wrap: break-word; word-break: break-word; text-align: center; }
 
-        .no-results { grid-column: 1 / -1; text-align: center; padding: 80px 20px; display: flex; flex-direction: column; align-items: center;}
-        .no-results svg { width: 120px; height: 120px; opacity: 0.8; margin-bottom: 24px; }
-        .no-results h3 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-        .no-results p { color: var(--text-muted); font-size: 16px; }
+        .no-results { grid-column: 1 / -1; text-align: center; padding: 60px 20px; display: flex; flex-direction: column; align-items: center;}
+        .no-results svg { width: 100px; height: 100px; opacity: 0.8; margin-bottom: 24px; color: var(--text-muted); }
+        .no-results h3 { font-size: 22px; font-weight: 800; margin-bottom: 8px; color: var(--primary); }
+        .no-results p { color: var(--text-muted); font-size: 15px; margin-bottom: 24px;}
+        .no-results .mode-btn { background: var(--accent); color: white; padding: 12px 28px; font-size: 15px; }
+        .no-results .mode-btn:hover { background: #1D4ED8; }
 
         .card-actions, .ig-actions { display: none !important; }
 
@@ -610,6 +633,9 @@
 <body>
 
     <div class="app-container">
+        
+        <!-- Search Background Blur Overlay -->
+        <div id="searchBackdrop" class="search-backdrop"></div>
 
         <!-- ─── HEADER / HERO SECTION ─── -->
         <header class="discovery-header" id="mainHeader">
@@ -640,7 +666,7 @@
                 <p class="hero-subtitle">Discover verified rooms, trusted roommates, and rental opportunities across Pune.</p>
             </div>
 
-            <!-- AIRBNB STYLE SEARCH & FILTER CARD (Unified & CSS Grid Ready) -->
+            <!-- AIRBNB STYLE SEARCH & FILTER CARD -->
             <div class="search-widget-container">
                 
                 <div class="search-top-row">
@@ -654,6 +680,12 @@
                     <div class="search-box">
                         <span class="material-symbols-rounded search-leading">search</span>
                         <input type="text" id="search" placeholder="Search location or area..." autocomplete="off" inputmode="search">
+                        
+                        <!-- UX Clear Input Button -->
+                        <button class="clear-search-btn" id="clearSearchBtn" type="button" aria-label="Clear Search">
+                            <span class="material-symbols-rounded">close</span>
+                        </button>
+                        
                         <button type="button" class="search-action-btn" onclick="runManualSearch()">
                             <span class="material-symbols-rounded">arrow_forward</span>
                         </button>
@@ -687,12 +719,12 @@
             
         </header>
 
-        <!-- ─── LISTINGS FEED (Always Visible, Nearby on load) ─── -->
+        <!-- ─── LISTINGS FEED ─── -->
         <div class="main-content" id="roomList"></div>
 
         <!-- ─── BOTTOM NAVIGATION ─── -->
         <nav class="bottom-nav-embedded" id="tingoBottomNav">
-            <!-- Clicking Explore clears everything and resets the page to fresh state -->
+            <!-- Explore | Inbox | Post | Map | Profile -->
             <button class="nav-item active" onclick="resetToHome()" type="button">
                 <span class="material-symbols-rounded">explore</span>
                 <span>Explore</span>
@@ -706,7 +738,6 @@
                 <span class="material-symbols-rounded">add_circle</span>
                 <span>Post</span>
             </button>
-            <!-- Moved Map button here -->
             <button class="nav-item" onclick="go('map.html')" type="button">
                 <span class="material-symbols-rounded">map</span>
                 <span>Map</span>
@@ -1320,9 +1351,12 @@
                 if (!row) return;
                 const item = (box.__tingoItems || [])[Number(row.dataset.index)];
                 if (!item) return;
+                
                 input.value = item.displayName || `${item.label}, ${item.subLabel}`;
                 selectedSearchPlace = { lat: Number(item.lat), lon: Number(item.lon), label: item.label, displayName: input.value };
+                
                 box.classList.remove("show");
+                document.getElementById('searchBackdrop')?.classList.remove('show');
                 
                 document.body.classList.add('search-active');
                 sessionStorage.setItem('tingo_ui_collapsed', 'true');
@@ -1338,6 +1372,8 @@
         let suggestionRequestId = 0;
         const searchInput = document.getElementById('search');
         const suggestionsBox = document.getElementById('searchSuggestions');
+        const searchBackdrop = document.getElementById('searchBackdrop');
+        const clearBtn = document.getElementById('clearSearchBtn');
 
         function setupTingoAutocomplete() {
             if (!searchInput || !suggestionsBox) return;
@@ -1347,6 +1383,7 @@
 
             if (window.__TINGO_SAVED_QUERY) {
                 searchInput.value = window.__TINGO_SAVED_QUERY;
+                if(clearBtn) clearBtn.classList.toggle('show', window.__TINGO_SAVED_QUERY.length > 0);
             }
             if (window.__TINGO_SAVED_PLACE) {
                 try { selectedSearchPlace = JSON.parse(window.__TINGO_SAVED_PLACE); } catch(e){}
@@ -1354,8 +1391,36 @@
 
             tingoAttachClickHandler(searchInput, suggestionsBox);
 
+            if(clearBtn) {
+                clearBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    searchInput.value = '';
+                    clearBtn.classList.remove('show');
+                    suggestionsBox.classList.remove('show');
+                    searchInput.focus();
+                });
+            }
+            
+            // Smart Focus Event
+            searchInput.addEventListener("focus", () => {
+                searchBackdrop.classList.add('show');
+                if (searchInput.value.trim().length > 1) {
+                    searchInput.dispatchEvent(new Event('input'));
+                }
+            });
+
+            // Smart Blur Event (Hide suggestions aggressively)
+            searchInput.addEventListener("blur", () => {
+                setTimeout(() => {
+                    suggestionsBox.classList.remove('show');
+                    searchBackdrop.classList.remove('show');
+                }, 200); 
+            });
+
             searchInput.addEventListener("input", () => {
                 const term = searchInput.value.trim();
+                if(clearBtn) clearBtn.classList.toggle('show', term.length > 0);
+
                 requestId += 1;
                 const thisRequest = requestId;
                 clearTimeout(timer);
@@ -1368,6 +1433,8 @@
                     return;
                 }
 
+                searchBackdrop.classList.add('show');
+                
                 const local = tingoLocalSuggestions(term, 8);
                 const cached = tingoReadLocationCache(term);
                 const instant = tingoDeduplicateSuggestions([...local, ...cached]);
@@ -1393,16 +1460,17 @@
                 }, 160);
             });
 
-            // Close suggestions on click outside
-            document.addEventListener('click', (e) => {
-                if (searchInput && suggestionsBox && !searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+            // Close UI on backdrop click
+            if (searchBackdrop) {
+                searchBackdrop.addEventListener('click', (e) => {
                     suggestionsBox.classList.remove("show");
-                }
-            });
+                    searchBackdrop.classList.remove("show");
+                });
+            }
         }
 
 
-        // ─── CORE FEED LOGIC FROM ORIGINAL SCRIPT ───
+        // ─── CORE FEED LOGIC ───
         let tingoInitialFeedPainted = false;
         let tingoLoadRoomsSeq = 0;
         let tingoModeAwareLoadSeq = 0;
@@ -1410,7 +1478,7 @@
         let tingoFeedUpdateInProgress = false;
         const TINGO_FEED_CACHE_PREFIX = 'tingo_home_feed_v7';
         const TINGO_RAW_CACHE_PREFIX = 'tingo_home_rows_v7';
-        const TINGO_PROFILE_CACHE_KEY = 'tingo_public_profiles_v5';
+        const TINGO_PROFILE_CACHE_KEY = 'tingo_public_profiles_v6'; // Updated Cache Key to force refetch
         const TINGO_CACHE_TTL = 120 * 1000;
 
         function tingoSafeJsonRead(key, fallback) {
@@ -1469,7 +1537,6 @@
             return true;
         }
 
-        // UPDATED: Now queries public_user_profiles view for accurate user names!
         window.attachOwnerProfiles = async function(items) {
             var rows = Array.isArray(items) ? items : [];
             if (!rows.length) return rows;
@@ -1480,14 +1547,15 @@
 
             if (missingIds.length > 0) {
                 try {
+                    // Added full_name and first_name query to handle missing name columns perfectly
                     const { data: profiles, error } = await db
                         .from('public_user_profiles')
-                        .select('id, name, avatar_url, gender')
+                        .select('id, name, full_name, first_name, avatar_url, gender')
                         .in('id', missingIds);
 
                     if (!error && profiles) {
                         profiles.forEach(p => {
-                            cache[p.id] = p;
+                            if(p && p.id) cache[p.id] = p; // Ensure valid cache
                         });
                         tingoSafeJsonWrite(TINGO_PROFILE_CACHE_KEY, cache);
                     }
@@ -1498,11 +1566,15 @@
 
             var mapped = rows.map(function(item) {
                 var p = cache[String(item && item.user_id)] || null;
+                // Merge cleanly so we don't accidentally erase any item.users data that may already exist
+                var mergedUser = Object.assign({}, item?.users || item?.user || item?.owner || item?.profiles || {}, p || {});
+                if(Object.keys(mergedUser).length === 0) mergedUser = null;
+
                 return {
                     ...item,
-                    user: p || item?.user || item?.users || item?.owner || item?.profiles || null,
-                    users: p || item?.users || item?.user || item?.owner || item?.profiles || null,
-                    owner: p || item?.owner || item?.user || item?.users || item?.profiles || null
+                    user: mergedUser,
+                    users: mergedUser,
+                    owner: mergedUser
                 };
             });
             return mapped;
@@ -1642,7 +1714,6 @@
             return await geocodeLocation(search);
         };
 
-        // LOAD ROOMS - With specific distance & exact matching integration
         window.loadRooms = async function(search, selectedPlace) {
             var cleanSearch = cleanSearchTerm(search || '');
             var requestedMode = activePostMode;
@@ -1744,7 +1815,7 @@
             }
         };
 
-        // ─── NEW PROFESSIONAL CARD RENDERERS & AUTO-SLIDER ───
+        // ─── CARD RENDERERS & AUTO-SLIDER ───
         
         window.tingoSliderIntervals = window.tingoSliderIntervals || [];
 
@@ -1785,6 +1856,7 @@
                         </svg>
                         <h3>No ${noun} found</h3>
                         <p>Try adjusting your search or area.</p>
+                        <button class="mode-btn active" style="margin-top: 20px; background: var(--accent); color: white;" onclick="resetToHome()">Reset Search</button>
                     </div>`;
                 container.style.opacity = 1;
                 return;
@@ -1822,10 +1894,10 @@
             var typeText = escapeHtml(room.type || 'Room');
             var depositText = 'Dep: ' + escapeHtml(formatListingRent(room.deposit || 0));
 
-            // Deep extract user name
             var ownerObj = room.users || room.user || room.owner || room.profiles || {};
             if (Array.isArray(ownerObj)) ownerObj = ownerObj[0] || {};
-            var ownerName = ownerObj.name || room.name || ownerObj.full_name || ownerObj.first_name || 'User';
+            // Bulletproof name extractor
+            var ownerName = ownerObj.name || ownerObj.full_name || ownerObj.first_name || room.user_name || room.name || 'User';
             var ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
 
             var dateText = escapeHtml(formatPostDate(room));
@@ -1879,10 +1951,10 @@
         };
 
         window.renderRequirementCard = function(req) {
-            // Deep extract user name
             var ownerObj = req.users || req.user || req.owner || req.profiles || {};
             if (Array.isArray(ownerObj)) ownerObj = ownerObj[0] || {};
-            var ownerName = ownerObj.name || req.name || ownerObj.full_name || ownerObj.first_name || 'User';
+            // Bulletproof name extractor
+            var ownerName = ownerObj.name || ownerObj.full_name || ownerObj.first_name || req.user_name || req.name || 'User';
             var ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
             
             var dateText = escapeHtml(formatPostDate(req));
@@ -1956,12 +2028,31 @@
             window.location.href = 'chat.html?room=' + encodeURIComponent(roomId) + '&user=' + encodeURIComponent(ownerId) + '&source=index';
         };
 
+        // ─── STRICT LOCATION ENFORCEMENT SEARCH ───
         window.runManualSearch = function() {
             var input = document.getElementById('search');
             var value = input ? input.value.trim() : '';
-            
             var box = document.getElementById('searchSuggestions');
+            
+            if (!value) return resetToHome();
+
+            // Enforce location selection if not explicitly clicked
+            if (!selectedSearchPlace || selectedSearchPlace.displayName !== value) {
+                if (box && box.__tingoItems && box.__tingoItems.length > 0) {
+                    var topItem = box.__tingoItems[0];
+                    input.value = topItem.displayName || `${topItem.label}, ${topItem.subLabel}`;
+                    selectedSearchPlace = { lat: Number(topItem.lat), lon: Number(topItem.lon), label: topItem.label, displayName: input.value };
+                    value = input.value;
+                } else {
+                    showAppPopup("Please select a valid location from the suggestions.", "Invalid Search");
+                    if (box) box.classList.remove('show');
+                    document.getElementById('searchBackdrop')?.classList.remove('show');
+                    return;
+                }
+            }
+            
             if (box) box.classList.remove('show');
+            document.getElementById('searchBackdrop')?.classList.remove('show');
             
             document.body.classList.add('search-active');
             sessionStorage.setItem('tingo_ui_collapsed', 'true');
@@ -1977,6 +2068,9 @@
                 
                 var searchInput = document.getElementById('search');
                 if (searchInput) searchInput.value = '';
+                
+                var clearBtn = document.getElementById('clearSearchBtn');
+                if (clearBtn) clearBtn.classList.remove('show');
                 
                 var typeFilter = document.getElementById('filterType');
                 if (typeFilter) typeFilter.value = '';
@@ -2150,7 +2244,6 @@
                     function(pos) { 
                         window.userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
                         if (!document.body.classList.contains('search-active')) {
-                            // Re-sort feed based on new precision location
                             loadRooms(getCurrentSearchText(), selectedSearchPlace);
                         }
                     },
