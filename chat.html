@@ -1312,7 +1312,7 @@ async function loadChats(background = false) {
         chat.room = post || { title: 'Official Support', status: 'active', postKind: chat.postType || "" };
       } else {
         const { data: user } = await db
-          .from("users")
+          .from("public_user_profiles")
           .select("id, name, avatar_url")
           .eq("id", chat.otherId)
           .maybeSingle();
@@ -1479,7 +1479,7 @@ async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
     chatUser = { id: userId, name: 'TingoRooms Support', avatar_url: 'https://cdn-icons-png.flaticon.com/512/6024/6024190.png', gender: null };
   } else {
     const { data: user, error } = await db
-      .from("users")
+      .from("public_user_profiles")
       .select("id, name, avatar_url")
       .eq("id", userId)
       .maybeSingle();
