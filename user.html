@@ -571,54 +571,65 @@ const MIN_AUTH_PASSWORD_LENGTH = 6;
 
 const AUTH_FUNCTION_NAME = "tingo-auth";
 
-/* ---------------- 401 UNAUTHORIZED FIX APPLIED HERE ---------------- */
+/* ---------------- 401 UNAUTHORIZED FIX: BYPASS SUPABASE-JS ---------------- */
 async function callTingoAuth(action, payload = {}, requireSession = false) {
-  const options = { body: { action, ...payload }, headers: {} };
+  let token = SUPABASE_KEY; // Default to public anon key
 
   if (requireSession) {
     try {
       const { data: sessionData } = await db.auth.getSession();
-      const token = sessionData?.session?.access_token || null;
-      if (!token) {
+      if (!sessionData?.session?.access_token) {
         return { ok: false, message: "Your login session has expired. Please login again." };
       }
-      options.headers.Authorization = `Bearer ${token}`;
+      token = sessionData.session.access_token;
     } catch (err) {
-      console.warn("Could not attach auth session:", err);
+      console.warn("Could not read auth session:", err);
       return { ok: false, message: "Could not read the active login session." };
     }
-  } else {
-    // FIX: Force the use of the anon key for public actions (login/signup/verify).
-    // This prevents Supabase from auto-attaching a stale/expired user token from local storage,
-    // which causes the Edge Function API Gateway to reject the request with a 401 Unauthorized.
-    options.headers.Authorization = `Bearer ${SUPABASE_KEY}`;
   }
 
   const timeoutMs = 18000;
-  let timeoutId;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    const invokePromise = db.functions.invoke(AUTH_FUNCTION_NAME, options);
-    const timeoutPromise = new Promise((_, reject) => {
-      timeoutId = setTimeout(() => reject(new Error("Authentication server timed out. Check your internet connection and Edge Function deployment.")), timeoutMs);
+    // RAW FETCH: This prevents the supabase client from stealthily appending expired user tokens
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/${AUTH_FUNCTION_NAME}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'apikey': SUPABASE_KEY
+      },
+      body: JSON.stringify({ action, ...payload }),
+      signal: controller.signal
     });
 
-    const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
-    if (error) {
-      console.error(`Edge Function ${action} error:`, error);
-      return {
-        ok: false,
-        message: error.context?.body?.message || error.message || "Server request failed. Please try again.",
-        raw_error: error
-      };
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      let errorText = "Server request failed.";
+      try {
+        const errJson = await response.json();
+        errorText = errJson.message || errJson.error || errorText;
+      } catch (e) {
+        errorText = response.statusText;
+      }
+      console.error(`Edge Function ${action} failed (${response.status}):`, errorText);
+      return { ok: false, message: errorText };
     }
 
+    const data = await response.json();
     if (!data) return { ok: false, message: "The authentication server returned no response." };
     return data;
+
   } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      return { ok: false, message: "Authentication server timed out. Check your internet connection." };
+    }
     console.error(`Authentication request ${action} failed:`, error);
     return { ok: false, message: error?.message || "Authentication request failed." };
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
 
