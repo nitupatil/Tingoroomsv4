@@ -1478,7 +1478,7 @@
         let tingoFeedUpdateInProgress = false;
         const TINGO_FEED_CACHE_PREFIX = 'tingo_home_feed_v7';
         const TINGO_RAW_CACHE_PREFIX = 'tingo_home_rows_v7';
-        const TINGO_PROFILE_CACHE_KEY = 'tingo_public_profiles_v6'; // Updated Cache Key to force refetch
+        const TINGO_PROFILE_CACHE_KEY = 'tingo_public_profiles_v7'; 
         const TINGO_CACHE_TTL = 120 * 1000;
 
         function tingoSafeJsonRead(key, fallback) {
@@ -1545,29 +1545,35 @@
             var missingIds = rows.map(r => r.user_id).filter(id => id && !cache[id]);
             missingIds = [...new Set(missingIds)];
 
+            // 1. Fetch missing profiles from the safe database view
             if (missingIds.length > 0) {
                 try {
-                    // Added full_name and first_name query to handle missing name columns perfectly
+                    // Querying public_user_profiles WITHOUT the 'gender' column
                     const { data: profiles, error } = await db
                         .from('public_user_profiles')
-                        .select('id, name, full_name, first_name, avatar_url, gender')
+                        .select('id, name, avatar_url')
                         .in('id', missingIds);
 
                     if (!error && profiles) {
                         profiles.forEach(p => {
-                            if(p && p.id) cache[p.id] = p; // Ensure valid cache
+                            if(p && p.id) cache[p.id] = p; // Add fetched profiles to cache
                         });
+                        // Update the local storage cache
                         tingoSafeJsonWrite(TINGO_PROFILE_CACHE_KEY, cache);
+                    } else if (error) {
+                        console.error("Profile fetch failed:", error);
                     }
                 } catch (e) {
-                    console.warn("Profile fetch failed:", e);
+                    console.warn("Profile fetch error:", e);
                 }
             }
 
+            // 2. Map the cached/fetched profiles back to the posts
             var mapped = rows.map(function(item) {
                 var p = cache[String(item && item.user_id)] || null;
-                // Merge cleanly so we don't accidentally erase any item.users data that may already exist
-                var mergedUser = Object.assign({}, item?.users || item?.user || item?.owner || item?.profiles || {}, p || {});
+                
+                // Merge database fetched profile data with whatever came from the primary query
+                var mergedUser = Object.assign({}, item?.users || item?.user || item?.owner || {}, p || {});
                 if(Object.keys(mergedUser).length === 0) mergedUser = null;
 
                 return {
@@ -1577,6 +1583,7 @@
                     owner: mergedUser
                 };
             });
+            
             return mapped;
         };
 
@@ -1894,11 +1901,9 @@
             var typeText = escapeHtml(room.type || 'Room');
             var depositText = 'Dep: ' + escapeHtml(formatListingRent(room.deposit || 0));
 
-            var ownerObj = room.users || room.user || room.owner || room.profiles || {};
-            if (Array.isArray(ownerObj)) ownerObj = ownerObj[0] || {};
-            // Bulletproof name extractor
-            var ownerName = ownerObj.name || ownerObj.full_name || ownerObj.first_name || room.user_name || room.name || 'User';
-            var ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
+            var owner = room.users || room.user || room.owner || {};
+            var ownerName = owner.name || 'Posted by user';
+            var ownerAvatar = (owner.avatar_url && owner.avatar_url.trim()) ? owner.avatar_url : getDefaultAvatar(owner.gender);
 
             var dateText = escapeHtml(formatPostDate(room));
             var titleText = escapeHtml(room.title || 'Room Available');
@@ -1951,11 +1956,9 @@
         };
 
         window.renderRequirementCard = function(req) {
-            var ownerObj = req.users || req.user || req.owner || req.profiles || {};
-            if (Array.isArray(ownerObj)) ownerObj = ownerObj[0] || {};
-            // Bulletproof name extractor
-            var ownerName = ownerObj.name || ownerObj.full_name || ownerObj.first_name || req.user_name || req.name || 'User';
-            var ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
+            var owner = req.users || req.user || req.owner || {};
+            var ownerName = req.name || owner.name || 'Posted by user';
+            var ownerAvatar = (owner.avatar_url && owner.avatar_url.trim()) ? owner.avatar_url : getDefaultAvatar(owner.gender);
             
             var dateText = escapeHtml(formatPostDate(req));
             var titleText = escapeHtml(req.title || 'Room Required');
@@ -2007,8 +2010,8 @@
             </div>`;
         };
 
-        window.openRoom = function(id, source) {
-            var finalSource = source === 'requirement' || activePostMode === 'needed' ? 'requirement' : 'available';
+        window.openRoom = function(id, postKind = "") {
+            var finalSource = postKind === 'requirement' || activePostMode === 'needed' ? 'requirement' : 'available';
             if (finalSource === 'requirement') {
                 window.location.href = 'roomdetails.html?id=' + encodeURIComponent(id) + '&source=requirement';
             } else {
