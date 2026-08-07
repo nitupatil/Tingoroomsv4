@@ -1312,8 +1312,8 @@ async function loadChats(background = false) {
         chat.room = post || { title: 'Official Support', status: 'active', postKind: chat.postType || "" };
       } else {
         const { data: user } = await db
-          .from("public_user_profiles")
-          .select("id,name,avatar_url,gender")
+          .from("users")
+          .select("id, name, avatar_url")
           .eq("id", chat.otherId)
           .maybeSingle();
         if (user) { chat.user = user; chat.room = post; } else { delete map[key]; }
@@ -1479,12 +1479,18 @@ async function openChat(userId, postIdToLoad, postTypeToLoad = "") {
     chatUser = { id: userId, name: 'TingoRooms Support', avatar_url: 'https://cdn-icons-png.flaticon.com/512/6024/6024190.png', gender: null };
   } else {
     const { data: user, error } = await db
-      .from("public_user_profiles")
-      .select("id,name,avatar_url,gender")
+      .from("users")
+      .select("id, name, avatar_url")
       .eq("id", userId)
       .maybeSingle();
-    if (error || !user) {
-      console.warn("Public profile lookup failed:", error);
+      
+    if (error) {
+      console.error("User lookup failed:", error);
+      alert("Database Error: " + error.message);
+      goBack();
+      return;
+    }
+    if (!user) {
       alert("User profile not found. Please try again after refreshing.");
       goBack();
       return;
